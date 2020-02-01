@@ -4,8 +4,13 @@
     "imageName": "icon",
     "vendor": "Little Green Man Ltd",
     "description": "Automatically finds tasks from package.json files.",
-    "version": "0.1",
+    "version": "1.0",
     "categories": ["sidebars", "tasks"],
+    
+    "homepage": "https://github.com/little-green-man/nova-taskfinder",
+	"repository": "https://github.com/little-green-man/nova-taskfinder",
+	"bugs": "https://github.com/little-green-man/nova-taskfinder/issues",
+
     
     "main": "main.js",
     
