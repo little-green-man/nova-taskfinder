@@ -140,7 +140,7 @@ class CommandItem {
             this.process.onDidExit(function(line) {
                 console.log(`Exited: ${line}`);
                 cancelNotification();
-                notify("Process Ended", "sdafsd");
+                notify("Process Ended", this.script);
                 self.running = false;
             });
             
