@@ -1,0 +1,85 @@
+{
+    "identifier": "littlegreenman.TaskFinder",
+    "name": "Task Finder",
+    "vendor": "Little Green Man Ltd",
+    "description": "Automatically finds tasks from package.json files.",
+    "version": "0.1",
+    "categories": ["sidebars", "tasks"],
+    
+    "main": "main.js",
+    
+    "activationEvents": [
+        "onLanguage:javascript"
+    ],
+    
+    "entitlements": {
+        "filesystem": "readonly",
+        "process": true
+    },
+    
+    "sidebars": [
+        {
+            "id": "taskfinder",
+            "name": "Task Finder",
+            "imageName": "taskfinder",
+            "sections": [
+                {
+                    "id": "taskfinder",
+                    "name": "Package Tasks",
+                    "placeholderText": "No tasks were found.",
+                    "placeholderImage": "taskfinder",
+                    "headerCommands": [
+                        {
+                            "title": "Refresh",
+                            "image": "__builtin.refresh",
+                            "tooltip": "Refresh Commands",
+                            "command": "taskfinder.refresh"
+                        },
+                        {
+                            "title": "Options",
+                            "image": "__builtin.action",
+                            "tooltip": "Extension Options",
+                            "command": "taskfinder.loadOptions"
+                        }
+                    ],
+                    "contextCommands": [
+                        {
+                            "title": "Run",
+                            "command": "taskfinder.run",
+                            "when": "viewItem == 'false'"
+                        },
+                        {
+                            "title": "Show in Finder",
+                            "command": "taskfinder.showInFinder",
+                            "when": "viewItem == 'fileable'"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    
+    "config-workspace": [
+        {
+            "key": "taskfinder.recursive-search",
+            "title": "Recursive Search",
+            "description": "Whether to search for tasks in project subdirectories.",
+            "type": "boolean",
+            "default": false
+        },
+        {
+            "key": "taskfinder.package-manager",
+            "title": "Package Manager",
+            "type": "enum",
+            "values": ["npm", "yarn"],
+            "default": "npm"
+        },
+        {
+            "key": "taskfinder.ignored-files",
+            "title": "Files to ignore",
+            "description": "A list of files/folders not to traverse.",
+            "type": "text",
+            "default": "node_modules\nvendor"
+        }
+    ]
+}
