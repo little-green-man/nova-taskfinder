@@ -1,6 +1,7 @@
 {
     "identifier": "littlegreenman.TaskFinder",
     "name": "Task Finder",
+    "imageName": "icon",
     "vendor": "Little Green Man Ltd",
     "description": "Automatically finds tasks from package.json files.",
     "version": "0.1",
