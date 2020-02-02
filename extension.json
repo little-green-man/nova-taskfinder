@@ -4,7 +4,7 @@
     "imageName": "icon",
     "vendor": "Little Green Man Ltd",
     "description": "Automatically finds tasks from package.json files.",
-    "version": "1.1",
+    "version": "1.2",
     "categories": ["sidebars", "tasks"],
     
     "homepage": "https://github.com/little-green-man/nova-taskfinder",
@@ -67,13 +67,6 @@
     
     "config-workspace": [
         {
-            "key": "taskfinder.recursive-search",
-            "title": "Recursive Search",
-            "description": "Whether to search for tasks in project subdirectories.",
-            "type": "boolean",
-            "default": false
-        },
-        {
             "key": "taskfinder.package-manager",
             "title": "Package Manager",
             "type": "enum",
@@ -86,6 +79,13 @@
             "description": "A list of files/folders not to traverse.",
             "type": "text",
             "default": "node_modules\nvendor"
+        },
+        {
+            "key": "taskfinder.recursive-search",
+            "title": "Recursive Search",
+            "description": "Whether to search for tasks in project subdirectories.",
+            "type": "boolean",
+            "default": false
         }
     ]
 }
