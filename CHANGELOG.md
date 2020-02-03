@@ -1,3 +1,9 @@
+## Version 1.3
+
+Several bugs fixed.
+Configuration added (see Readme).
+Made into Treeware.
+
 ## Version 1.0
 
 Initial release based on how Nova Version 1.0b7 (145647) works.
