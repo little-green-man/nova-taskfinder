@@ -1,3 +1,7 @@
+## Version 1.4
+
+Sidebar image fixed
+
 ## Version 1.3
 
 Several bugs fixed.
