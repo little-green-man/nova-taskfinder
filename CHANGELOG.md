@@ -1,6 +1,7 @@
-## Version 1.5
+## Version 1.6
 
 Implemented the "Show in Finder" feature, for a given task. Thanks go to [Reüel van der Steege](https://github.com/rvdsteege).
+Removed the "Tasks" category, as it requires pre-determined tasks to be provided. This extension determines them automatically.
 
 ## Version 1.4
 
