@@ -1,3 +1,7 @@
+## Version 1.5
+
+Implemented the "Show in Finder" feature, for a given task. Thanks go to [Reüel van der Steege](https://github.com/rvdsteege).
+
 ## Version 1.4
 
 Sidebar image fixed
