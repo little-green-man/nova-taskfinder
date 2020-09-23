@@ -68,3 +68,12 @@ nova.commands.register("taskfinder.run", () => {
         e.startProcess();
     })
 });
+
+nova.commands.register("taskfinder.showInFinder", () => {
+   let selection = treeView.selection;
+    // console.log("ShowInFinder: " + selection.map((e) => `${e.name}: ${e.path}`));
+    selection.map((e) => {
+        console.log(`Reveal "${e.path}"`);
+        nova.fs.reveal(e.path);
+    })
+});
