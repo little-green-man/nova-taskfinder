@@ -12,9 +12,7 @@ Automatically runs through and finds all package.json files from the workspace d
 
 ## To Do
 
-Hoping to show tasks running by changing the TreeView Icon.
-
-Hoping to move the tasks from a sidebar to automatic integration with workspace Tasks.
+These can now be seen in the [issues log](https://github.com/little-green-man/nova-taskfinder/issues).
 
 ## Treeware
 
