@@ -1,7 +1,6 @@
 # These are supported funding model platforms
 
 github: [kurucu]
-custom: ["https://paypal.me/ElliotAli"]
 
 #patreon: # Replace with a single Patreon username
 #open_collective: # Replace with a single Open Collective username
@@ -11,4 +10,4 @@ custom: ["https://paypal.me/ElliotAli"]
 #liberapay: # Replace with a single Liberapay username
 #issuehunt: # Replace with a single IssueHunt username
 #otechie: # Replace with a single Otechie username
-
+#custom: ["https://paypal.me/ElliotAli"]
