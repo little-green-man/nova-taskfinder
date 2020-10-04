@@ -5,7 +5,7 @@
   "organization": "Little Green Man Ltd",
   "description": "Automatically finds tasks from package.json files.",
   "version": "1.6",
-  "categories": ["sidebars"],
+  "categories": ["sidebars", "tasks"],
 
   "homepage": "https://github.com/little-green-man/nova-taskfinder",
   "repository": "https://github.com/little-green-man/nova-taskfinder",
