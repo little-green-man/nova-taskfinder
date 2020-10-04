@@ -12,7 +12,13 @@ Automatically runs through and finds all package.json files from the workspace d
 
 ## To Do
 
-These can now be seen in the [issues log](https://github.com/little-green-man/nova-taskfinder/issues).
+These can now be seen (and added to) in the [issues log](https://github.com/little-green-man/nova-taskfinder/issues).
+
+Note: Panic have indicated that they are working on API integration with the native Build/Run Tasks in a future major version.
+Once established, Task Finder will take advantage of it. For now, running tasks are identified through notifications and a changed TreeItem icon.
+Output can be seen in the Extension Console.
+
+Pull requests are welcome.
 
 ## Treeware
 
