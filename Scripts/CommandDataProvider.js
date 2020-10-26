@@ -34,7 +34,10 @@ module.exports.CommandDataProvider = class CommandDataProvider {
         .get("taskfinder.ignored-files")
         .split(/\s/);
 
-      if (ignoredDirectories.includes(currentFileName)) {
+      if (
+        ignoredDirectories.includes(currentFileName) ||
+        nova.fs.stat(currentFilePath) == null
+      ) {
         console.log("Ignored: " + currentFileName);
       } else if (nova.fs.stat(currentFilePath).isFile()) {
         if (currentFileName == "package.json") {

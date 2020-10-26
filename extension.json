@@ -3,8 +3,8 @@
   "name": "Task Finder",
   "imageName": "icon",
   "organization": "Little Green Man Ltd",
-  "description": "Automatically finds tasks from package.json files.",
-  "version": "1.7",
+  "description": "Automatically offers Node and Composer actions as Nova Tasks.",
+  "version": "2.0",
   "categories": ["sidebars", "tasks"],
 
   "homepage": "https://github.com/little-green-man/nova-taskfinder",
@@ -13,7 +13,12 @@
 
   "main": "main.js",
 
-  "activationEvents": ["onLanguage:javascript"],
+  "min_runtime": "2.0",
+
+  "activationEvents": [
+    "onWorkspaceContains:*package.json",
+    "onWorkspaceContains:*composer.json"
+  ],
 
   "entitlements": {
     "filesystem": "readonly",
@@ -55,6 +60,16 @@
               "when": "viewItem == 'false'"
             },
             {
+              "title": "Terminate",
+              "command": "taskfinder.terminate",
+              "when": "viewItem.process != null"
+            },
+            {
+              "title": "Kill",
+              "command": "taskfinder.kill",
+              "when": "viewItem.process != null"
+            },
+            {
               "title": "Show in Finder",
               "command": "taskfinder.showInFinder",
               "when": "viewItem == 'fileable'"
@@ -67,25 +82,78 @@
 
   "config-workspace": [
     {
-      "key": "taskfinder.package-manager",
-      "title": "Package Manager",
-      "type": "enum",
-      "values": ["npm", "yarn"],
-      "default": "npm"
+      "title": "Package Manager Options",
+      "type": "section",
+      "children": [
+        {
+          "key": "taskfinder.package-manager",
+          "title": "Package Manager",
+          "type": "enum",
+          "values": ["npm", "yarn"],
+          "default": "npm"
+        },
+        {
+          "key": "taskfinder.npm.path",
+          "title": "The path for npm",
+          "type": "path",
+          "placeholder": "/usr/local/bin/npm",
+          "default": "/usr/local/bin/npm"
+        },
+        {
+          "key": "taskfinder.yarn.path",
+          "title": "The path for yarn",
+          "type": "path",
+          "placeholder": "/usr/local/bin/yarn",
+          "default": "/usr/local/bin/yarn"
+        }
+      ]
     },
     {
-      "key": "taskfinder.ignored-files",
-      "title": "Files to ignore",
-      "description": "A list of files/folders not to traverse.",
-      "type": "text",
-      "default": "node_modules\nvendor"
+      "title": "Sidebar Options",
+      "type": "section",
+      "children": [
+        {
+          "key": "taskfinder.ignored-files",
+          "title": "Files to ignore",
+          "description": "A list of files/folders not to traverse.",
+          "type": "text",
+          "default": "node_modules\nvendor"
+        },
+        {
+          "key": "taskfinder.recursive-search",
+          "title": "Recursive Search",
+          "description": "Whether to search for tasks in project subdirectories.",
+          "type": "boolean",
+          "default": false
+        }
+      ]
     },
     {
-      "key": "taskfinder.recursive-search",
-      "title": "Recursive Search",
-      "description": "Whether to search for tasks in project subdirectories.",
-      "type": "boolean",
-      "default": false
+      "title": "Auto Populate Tasks",
+      "type": "section",
+      "children": [
+        {
+          "key": "taskfinder.auto-composer",
+          "title": "Auto-populate Composer Tasks",
+          "description": "Requires restart",
+          "type": "boolean",
+          "default": true
+        },
+        {
+          "key": "taskfinder.auto-node",
+          "title": "Auto-populate Node Tasks",
+          "description": "Requires restart",
+          "type": "boolean",
+          "default": true
+        },
+        {
+          "key": "taskfinder.use-sidebar",
+          "title": "Whether to use the sidebar function",
+          "description": "Requires restart. The sidebar will remain available, but disabled and not consume resources.",
+          "type": "boolean",
+          "default": true
+        }
+      ]
     }
   ]
 }

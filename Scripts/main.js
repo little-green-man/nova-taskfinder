@@ -1,3 +1,5 @@
+const { NodeTaskAssistant } = require("./NodeTaskAssistant.js");
+const { ComposerTaskAssistant } = require("./ComposerTaskAssistant.js");
 const { CommandDataProvider } = require("./CommandDataProvider.js");
 
 var treeView = null;
@@ -5,38 +7,62 @@ var treeView = null;
 exports.activate = function () {
   // Do work when the extension is activated
 
-  // Create the TreeView
-  treeView = new TreeView("taskfinder", {
-    dataProvider: new CommandDataProvider(),
-  });
+  if (nova.workspace.config.get("taskfinder.use-sidebar", "boolean")) {
+    // Create the TreeView
+    treeView = new TreeView("taskfinder", {
+      dataProvider: new CommandDataProvider(),
+    });
+    nova.subscriptions.add(treeView);
+    let recursiveConfigWatcher = nova.workspace.config.observe(
+      "taskfinder.recursive-search",
+      () => {
+        if (treeView != null) treeView.reload();
+      }
+    );
 
-  treeView.onDidChangeSelection((selection) => {
-    // console.log("New selection: " + selection.map((e) => e.name));
-  });
+    nova.subscriptions.add(recursiveConfigWatcher);
+  }
 
-  treeView.onDidExpandElement((element) => {
-    //
-  });
+  if (nova.workspace.config.get("taskfinder.auto-node", "boolean")) {
+    console.info("Initialising NodeTaskAssistant");
+    nodeTaskAssistantDisposable = nova.assistants.registerTaskAssistant(
+      new NodeTaskAssistant(),
+      {
+        name: "Node Tasks",
+        identifier: "taskfinder-tasks-node",
+      }
+    );
+    let nodeFileWatcher = nova.fs.watch("*package.json", (e) => {
+      nova.workspace.reloadTasks();
+    });
+    nova.subscriptions.add(nodeFileWatcher);
+    nova.subscriptions.add(nodeTaskAssistantDisposable);
+  }
 
-  treeView.onDidCollapseElement((element) => {
-    //
-  });
-
-  treeView.onDidChangeVisibility(() => {
-    // console.log("Visibility Changed");
-  });
-
-  // TreeView implements the Disposable interface
-  nova.subscriptions.add(treeView);
+  if (nova.workspace.config.get("taskfinder.auto-composer", "boolean")) {
+    console.info("Initialising ComposerTaskAssistant");
+    composerTaskDisposable = nova.assistants.registerTaskAssistant(
+      new ComposerTaskAssistant(),
+      {
+        name: "Composer Tasks",
+        identifier: "taskfinder-tasks-composer",
+      }
+    );
+    let composerFileWatcher = nova.fs.watch("*composer.json", (e) => {
+      nova.workspace.reloadTasks();
+    });
+    nova.subscriptions.add(composerFileWatcher);
+    nova.subscriptions.add(composerTaskDisposable);
+  }
 };
 
 exports.deactivate = function () {
-  treeView = null;
-  //TODO: stop any running processes?
+  console.info("Deactivating Task Finder");
 };
 
 nova.commands.register("taskfinder.refresh", () => {
   if (treeView != null) treeView.reload();
+  nova.workspace.reloadTasks();
 });
 
 nova.commands.register("taskfinder.reload-element", (element) => {
@@ -63,6 +89,24 @@ nova.commands.register("taskfinder.run", () => {
   selection.map((e) => {
     console.log(`Run script "${e.script}" at "${e.path}"`);
     e.startProcess(e);
+  });
+});
+
+nova.commands.register("taskfinder.terminate", () => {
+  let selection = treeView.selection;
+  // console.log("DoubleClick: " + selection.map((e) => `${e.name}: ${e.path}`));
+  selection.map((e) => {
+    console.log(`Run script "${e.script}" at "${e.path}"`);
+    e.process.terminate();
+  });
+});
+
+nova.commands.register("taskfinder.kill", () => {
+  let selection = treeView.selection;
+  // console.log("DoubleClick: " + selection.map((e) => `${e.name}: ${e.path}`));
+  selection.map((e) => {
+    console.log(`Run script "${e.script}" at "${e.path}"`);
+    e.process.kill();
   });
 });
 
