@@ -19,11 +19,13 @@ module.exports.NodeTaskAssistant = class NodeTaskAssistant {
     this.statusUpdate();
 
     let tasks = [];
+    
+    let nodeFile = nova.fs.stat(this.packageJsonPath);
 
     /*
      * package.json
      */
-    if (nova.fs.stat(this.packageJsonPath).isFile()) {
+    if (nodeFile && nodeFile.isFile()) {
       try {
         let pack = JSON.parse(nova.fs.open(this.packageJsonPath).read());
 

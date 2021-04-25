@@ -6,11 +6,13 @@ module.exports.ComposerTaskAssistant = class ComposerTaskAssistant {
 
   provideTasks() {
     let tasks = [];
+    
+    let composerFile = nova.fs.stat(this.packageJsonPath);
 
     /*
      * composer.json
      */
-    if (nova.fs.stat(this.packageJsonPath).isFile()) {
+    if (composerFile && composerFile.isFile()) {
       try {
         let pack = JSON.parse(nova.fs.open(this.packageJsonPath).read());
 
