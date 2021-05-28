@@ -1,3 +1,7 @@
+## Version 2.2
+
+- Added funding link to extension definition.
+
 ## Version 2.1
 
 - Fixed Bug #6: `TypeError: undefined is not an object (evaluating 'nova.fs.stat(this.packageJsonPath).isFile')`
