@@ -1,6 +1,6 @@
 # This extension automatically populates Nova Tasks from project `package.json` and `composer.json` files.
 
-![Screenshot of TaskFinder!](screenshot.png "Screenshot of TaskFinder")
+![Screenshot](https://raw.githubusercontent.com/little-green-man/nova-taskfinder/master/Images/docs/screenshot.png)
 
 ## Features
 
