@@ -1,15 +1,15 @@
-[![Buy us a tree](https://img.shields.io/badge/Treeware-%F0%9F%8C%B3-lightgreen?style=for-the-badge)](https://offset.earth/treeware?gift-trees)
+# This extension automatically populates Nova Tasks from project `package.json` and `composer.json` files.
 
-This extension automatically populates Nova Tasks from project Node (package.json) and Composer (composer.json) scripts.
+![Screenshot of TaskFinder!](screenshot.png "Screenshot of TaskFinder")
 
 ## Features
 
-- _Nova Tasks_ automatically populated from top-level package.json and composer.json files
+- _Nova Tasks_ automatically populated from top-level `package.json` and `composer.json` files
 - _Sidebar Tasks_ that allows inspection of subfolder files, too
 - Per-workspace setting to allow
   - Specific directories to be ignored (Sidebar only)
   - Choice between NPM/Yarn package managers for task execution
-  - To choose whether to recursively search for package.json in subfolders (Sidebar only)
+  - To choose whether to recursively search for `package.json` in subfolders (Sidebar only)
 - Reveal the file in which the task was found in Finder (Sidebar only)
 
 ## Usage
@@ -28,6 +28,8 @@ Issues and planned features can be seen (and added to) in the [issues log](https
 This software is open source - pull requests are welcome.
 
 ## Treeware
+
+[![Buy us a tree](https://img.shields.io/badge/Treeware-%F0%9F%8C%B3-lightgreen?style=for-the-badge)](https://offset.earth/treeware?gift-trees)
 
 You're free to use this package, but if it makes it to your production environment you are requested to buy the world a tree.
 
