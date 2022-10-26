@@ -4,7 +4,7 @@
   "imageName": "icon",
   "organization": "Little Green Man Ltd",
   "description": "Automatically offers Composer & Node actions as Nova Tasks.",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "categories": ["tasks"],
 
   "homepage": "https://github.com/little-green-man/nova-taskfinder",
