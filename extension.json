@@ -1,11 +1,11 @@
 {
   "identifier": "littlegreenman.TaskFinder",
-  "name": "Task Finder",
+  "name": "Automatic Tasks",
   "imageName": "icon",
   "organization": "Little Green Man Ltd",
-  "description": "Automatically offers Node and Composer actions as Nova Tasks.",
-  "version": "2.3.1",
-  "categories": ["sidebars", "tasks"],
+  "description": "Automatically offers Composer & Node actions as Nova Tasks.",
+  "version": "3.0.0",
+  "categories": ["tasks"],
 
   "homepage": "https://github.com/little-green-man/nova-taskfinder",
   "repository": "https://github.com/little-green-man/nova-taskfinder",
@@ -26,64 +26,9 @@
     "process": true
   },
 
-  "sidebars": [
-    {
-      "id": "taskfinder",
-      "name": "Task Finder",
-      "smallImage": "taskfinder",
-      "smallSelectedImage": "mtaskfinder",
-      "largeImage": "taskfinder",
-      "largeSelectedImage": "taskfinder",
-      "sections": [
-        {
-          "id": "taskfinder",
-          "name": "Package Tasks",
-          "placeholderText": "No tasks were found.",
-          "placeholderImage": "taskfinder",
-          "headerCommands": [
-            {
-              "title": "Refresh",
-              "image": "__builtin.refresh",
-              "tooltip": "Refresh Commands",
-              "command": "taskfinder.refresh"
-            },
-            {
-              "title": "Options",
-              "image": "__builtin.action",
-              "tooltip": "Extension Options",
-              "command": "taskfinder.loadOptions"
-            }
-          ],
-          "contextCommands": [
-            {
-              "title": "Run",
-              "command": "taskfinder.run",
-              "when": "viewItem == 'false'"
-            },
-            {
-              "title": "Terminate",
-              "command": "taskfinder.terminate",
-              "when": "viewItem.process != null"
-            },
-            {
-              "title": "Kill",
-              "command": "taskfinder.kill",
-              "when": "viewItem.process != null"
-            },
-            {
-              "title": "Show in Finder",
-              "command": "taskfinder.showInFinder",
-              "when": "viewItem == 'fileable'"
-            }
-          ]
-        }
-      ]
-    }
-  ],
-
   "config-workspace": [
     {
-      "title": "Package Manager Options",
+      "title": "Node Options",
       "type": "section",
       "children": [
         {
@@ -110,47 +55,20 @@
       ]
     },
     {
-      "title": "Sidebar Options",
-      "type": "section",
-      "children": [
-        {
-          "key": "taskfinder.ignored-files",
-          "title": "Files to ignore",
-          "description": "A list of files/folders not to traverse.",
-          "type": "text",
-          "default": "node_modules\nvendor"
-        },
-        {
-          "key": "taskfinder.recursive-search",
-          "title": "Recursive Search",
-          "description": "Whether to search for tasks in project subdirectories.",
-          "type": "boolean",
-          "default": false
-        }
-      ]
-    },
-    {
-      "title": "Auto Populate Tasks",
+      "title": "Autopopulation",
       "type": "section",
       "children": [
         {
           "key": "taskfinder.auto-composer",
-          "title": "Auto-populate Composer Tasks",
-          "description": "Requires restart",
+          "title": "Include Composer Tasks",
+          "description": "Requires extension restart",
           "type": "boolean",
           "default": true
         },
         {
           "key": "taskfinder.auto-node",
-          "title": "Auto-populate Node Tasks",
-          "description": "Requires restart",
-          "type": "boolean",
-          "default": true
-        },
-        {
-          "key": "taskfinder.use-sidebar",
-          "title": "Whether to use the sidebar function",
-          "description": "Requires restart. The sidebar will remain available, but disabled and not consume resources.",
+          "title": "Include Node Tasks",
+          "description": "Requires extension restart",
           "type": "boolean",
           "default": true
         }

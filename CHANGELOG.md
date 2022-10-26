@@ -1,3 +1,9 @@
+## Version 3.0
+
+- Removed the side bar
+- Refined the UI
+- Renamed the extension
+
 ## Version 2.2
 
 - Added funding link to extension definition.
