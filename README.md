@@ -2,6 +2,8 @@
 
 ![Screenshot](https://raw.githubusercontent.com/little-green-man/nova-taskfinder/master/Images/docs/screenshot.png)
 
+> **Sponsor me via [Github](https://github.com/sponsors/kurucu) or [Kofi](https://ko-fi.com/kurucu). Depending on your tier you could replace this message, or be mentioned in the Change Log.**
+
 ## Features
 
 - _Nova Tasks_ automatically populated from top-level
