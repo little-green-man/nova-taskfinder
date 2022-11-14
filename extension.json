@@ -3,8 +3,8 @@
   "name": "Automatic Tasks",
   "imageName": "icon",
   "organization": "Little Green Man Ltd",
-  "description": "Automatically offers Composer & Node actions as Nova Tasks.",
-  "version": "3.0.1",
+  "description": "Automatically offers Composer, Node & Taskfile actions as Nova Tasks.",
+  "version": "3.1.0",
   "categories": ["tasks"],
 
   "homepage": "https://github.com/little-green-man/nova-taskfinder",
@@ -18,7 +18,8 @@
 
   "activationEvents": [
     "onWorkspaceContains:*package.json",
-    "onWorkspaceContains:*composer.json"
+    "onWorkspaceContains:*composer.json",
+    "onWorkspaceContains:*Taskfile.*"
   ],
 
   "entitlements": {
@@ -37,20 +38,6 @@
           "type": "enum",
           "values": ["npm", "yarn"],
           "default": "npm"
-        },
-        {
-          "key": "taskfinder.npm.path",
-          "title": "The path for npm",
-          "type": "path",
-          "placeholder": "/usr/local/bin/npm",
-          "default": "/usr/local/bin/npm"
-        },
-        {
-          "key": "taskfinder.yarn.path",
-          "title": "The path for yarn",
-          "type": "path",
-          "placeholder": "/usr/local/bin/yarn",
-          "default": "/usr/local/bin/yarn"
         }
       ]
     },
@@ -61,14 +48,21 @@
         {
           "key": "taskfinder.auto-composer",
           "title": "Include Composer Tasks",
-          "description": "Requires extension restart",
+          "description": "Requires workspace restart",
           "type": "boolean",
           "default": true
         },
         {
           "key": "taskfinder.auto-node",
           "title": "Include Node Tasks",
-          "description": "Requires extension restart",
+          "description": "Requires workspace restart",
+          "type": "boolean",
+          "default": true
+        },
+        {
+          "key": "taskfinder.auto-taskfile",
+          "title": "Include Taskfile Tasks",
+          "description": "Requires workspace restart",
           "type": "boolean",
           "default": true
         }

@@ -5,11 +5,6 @@ module.exports.NodeTaskAssistant = class NodeTaskAssistant {
       "String"
     );
 
-    this.packageProcessName =
-      this.packageManager == "yarn"
-        ? nova.workspace.config.get("taskfinder.yarn.path", "String")
-        : nova.workspace.config.get("taskfinder.npm.path", "String");
-
     this.packageJsonPath = nova.workspace.path + "/package.json";
 
     this.statusUpdate();
@@ -46,9 +41,9 @@ module.exports.NodeTaskAssistant = class NodeTaskAssistant {
 
               task.setAction(
                 Task.Run,
-                new TaskProcessAction(this.packageProcessName, {
+                new TaskProcessAction(this.packageManager, {
                   args: args,
-                  // shell: true,
+                  shell: true,
                 })
               );
 

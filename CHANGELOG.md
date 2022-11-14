@@ -1,3 +1,8 @@
+## Version 3.1
+
+- Added Taskfile.dev (taskfile.dev) support
+- Enabled shell for npm/yarn, so should use your PATH automatically
+
 ## Version 3.0
 
 - Removed the side bar

@@ -1,16 +1,19 @@
-# Automatically populate Tasks from `package.json` and `composer.json`
+# Automatically populate Tasks from package.json, composer.json and Taskfile
 
 ![Screenshot](https://raw.githubusercontent.com/little-green-man/nova-taskfinder/master/Images/docs/screenshot.png)
 
 ## Features
 
-- _Nova Tasks_ automatically populated from top-level `package.json` and `composer.json` files
+- _Nova Tasks_ automatically populated from top-level
+  - `package.json`,
+  - `composer.json`, and
+  - `Taskfile.yaml` files
 - Per-workspace setting to choose NPM/Yarn for task execution
 
 ## Usage
 
 - Install and activate the extension
-- Check the global settings for your package manager and their path(s)
+- Check the global settings for your node package manager
 - Check the project settings for which package manager to use
   - Project settings will override global ones, if you wish to customise package manager paths on a per-project basis.
 
