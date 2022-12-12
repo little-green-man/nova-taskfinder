@@ -9,17 +9,18 @@
 - _Nova Tasks_ automatically populated from top-level
   - `package.json`,
   - `composer.json`, and
-  - `Taskfile.yaml` files
+  - Taskfile files
 - Per-workspace setting to choose NPM/Yarn for task execution
 
 ## Usage
 
 - Install and activate the extension
-- Check the global settings for your node package manager
-- Check the project settings for which package manager to use
-  - Project settings will override global ones, if you wish to customise package manager paths on a per-project basis.
+- Optional: set the global settings for your node package manager
+- Optional: set the project settings for your node package manager
 
-The rest is pretty much automatic. Tasks will refresh on appropriate file or settings changes.
+_Project settings will override global ones, if you wish to customise package manager execution on a per-project basis._
+
+The rest is automatic! Tasks will refresh when files and settings change.
 
 ## To Do
 
