@@ -23,20 +23,19 @@ module.exports.VSCodeTaskAssistant = class VSCodeTaskAssistant {
 			
 			let task = new Task(vsTask.label)
 			
-			let words = vsTask.command.split(' ');
-			let command = words.shift();
-			let args = words.join(' ');
-			let action = new TaskProcessAction(command, {
-				args: [args],
-				shell: true,
-				cwd: nova.workspace.path
-			});
+			let args = vsTask.command.split(' ');
+			let command = args.shift();
 			
-			if (vsTask.group == "build" || vsTask.group.kind == "build") {
-				task.setAction(Task.Build, action)				
-			} else {
-				task.setAction(Task.Run, action)
-			}
+			let cwd = nova.workspace.path
+			
+			task.setAction(
+				vsTask.group == "build" || vsTask.group.kind == "build" ? Task.Build : Task.Run, 
+				new TaskProcessAction(command, {
+					args: args,
+					shell: true,
+					cwd: cwd
+				})
+			);
 		
 			tasks.push(task)
 		})
