@@ -1,4 +1,4 @@
-module.exports.ComposerTaskAssistant = class VSCodeTaskAssistant {
+module.exports.VSCodeTaskAssistant = class VSCodeTaskAssistant {
   constructor() {
 	this.packageProcessName = "code";
 	this.packageJsonPath = nova.workspace.path + "/.vscode/tasks.json";
@@ -6,36 +6,42 @@ module.exports.ComposerTaskAssistant = class VSCodeTaskAssistant {
 
   provideTasks() {
 	let tasks = [];
-	
-	let composerFile = nova.fs.stat(this.packageJsonPath);
+	let tasksFile = nova.fs.stat(this.packageJsonPath);
 
 	/*
-	 * composer.json
+	 * tasks.json
 	 */
-	if (composerFile && composerFile.isFile()) {
+	if (tasksFile && tasksFile.isFile()) {
 	  try {
-		let pack = JSON.parse(nova.fs.open(this.packageJsonPath).read());
-		console.log(pack);
-// 		if (pack.hasOwnProperty("tasks")) {
-// 		  for (var vsTask in pack.tasks) {
-// 			if (pack.scripts.hasOwnProperty(vsTask)) {
-// 			  // Add Task
-// 			  let task = new Task(vsTask);
-// 
-// 			  task.setAction(
-// 				Task.Run,
-// 				new TaskProcessAction(this.packageProcessName, {
-// 				  args: [],
-// 				  shell: true,
-// 				  cwd: nova.workspace.path,
-// 				})
-// 			  );
-// 			  tasks.push(task);
-// 			  task = null;
-// 			}
-// 		  }
-// 		}
+		const commentRegex = /^( *\/\/.*\n)/gm;
+		const trailingCommaRegex = /\,(?!\s*?[\{\[\"\'\w])/gm;
+		let fileContents = nova.fs.open(this.packageJsonPath).read().replace(commentRegex, "").replace(trailingCommaRegex, "");
+		let pack = JSON.parse(fileContents);
+		
+		pack.tasks.forEach((vsTask) => {
+			if (vsTask.command === undefined) { return }
+			
+			let task = new Task(vsTask.label)
+			
+			let words = vsTask.command.split(' ');
+			let command = words.shift();
+			let args = words.join(' ');
+			let action = new TaskProcessAction(command, {
+				args: [args],
+				shell: true,
+				cwd: nova.workspace.path
+			});
+			
+			if (vsTask.group == "build" || vsTask.group.kind == "build") {
+				task.setAction(Task.Build, action)				
+			} else {
+				task.setAction(Task.Run, action)
+			}
+		
+			tasks.push(task)
+		})
 	  } catch (e) {
+		console.info("error");
 		console.log(e);
 	  }
 	}

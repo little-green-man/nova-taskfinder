@@ -1,7 +1,7 @@
 const { NodeTaskAssistant } = require("./NodeTaskAssistant.js");
 const { ComposerTaskAssistant } = require("./ComposerTaskAssistant.js");
 const { TaskfileTaskAssistant } = require("./TaskfileTaskAssistant.js");
-const { VSCodeTaskAssistant } = require("./TaskfileTaskAssistant.js");
+const { VSCodeTaskAssistant } = require("./VSCodeTaskAssistant.js");
 
 exports.activate = function () {
   // Do work when the extension is activated
@@ -62,7 +62,7 @@ exports.activate = function () {
   // VSCode Tasks
   if(nova.workspace.config.get("taskfinder.auto-vscode", "boolean")) {
     console.info("Initialising VSCodeTaskAssistant");
-    taskfileTaskDisposable = nova.assistants.registerTaskAssistant(
+    vsCodeTaskDisposable = nova.assistants.registerTaskAssistant(
       new VSCodeTaskAssistant(),
       {
         name: "VSCode",
@@ -73,7 +73,7 @@ exports.activate = function () {
       nova.workspace.reloadTasks();
     });
     nova.subscriptions.add(vsCodeFileWatcher);
-    nova.subscriptions.add(taskfileTaskDisposable);
+    nova.subscriptions.add(vsCodeTaskDisposable);
   }
 };
 
