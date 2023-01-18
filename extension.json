@@ -51,21 +51,21 @@
           "title": "Include Composer Tasks",
           "description": "Requires workspace restart",
           "type": "boolean",
-          "default": true
+          "default": false
         },
         {
           "key": "taskfinder.auto-node",
           "title": "Include Node Tasks",
           "description": "Requires workspace restart",
           "type": "boolean",
-          "default": true
+          "default": false
         },
         {
           "key": "taskfinder.auto-taskfile",
           "title": "Include Taskfile Tasks",
           "description": "Requires workspace restart",
           "type": "boolean",
-          "default": true
+          "default": false
         },
         {
           "key": "taskfinder.auto-vscode",

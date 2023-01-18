@@ -27,9 +27,14 @@ module.exports.VSCodeTaskAssistant = class VSCodeTaskAssistant {
 			let command = args.shift();
 			
 			let cwd = nova.workspace.path
+			// Creating error: ReferenceError: Can't find variable: options
+			// if (typeof vsTask.options != 'undefined' && typeof vsTask.options.cwd != 'undefined') {
+			// 	cwd = options.cwd.replace("workspaceFolder", "WorkspaceFolder").replace("fileDirname", "FileDirname")
+			// }
 			
 			task.setAction(
-				vsTask.group == "build" || vsTask.group.kind == "build" ? Task.Build : Task.Run, 
+				// Creating error TypeError: undefined is not an object (evaluating 'vsTask.group.kind')
+				vsTask.group == "build" || (typeof vsTask.group.kind != 'undefined' && vsTask.group.kind == "build") ? Task.Build : Task.Run, 
 				new TaskProcessAction(command, {
 					args: args,
 					shell: true,
