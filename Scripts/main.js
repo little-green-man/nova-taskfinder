@@ -1,6 +1,7 @@
-const { NodeTaskAssistant } = require("./NodeTaskAssistant.js");
-const { ComposerTaskAssistant } = require("./ComposerTaskAssistant.js");
-const { TaskfileTaskAssistant } = require("./TaskfileTaskAssistant.js");
+const { NodeTaskAssistant } = require("./TaskAssistants/Node.js");
+const { ComposerTaskAssistant } = require("./TaskAssistants/Composer.js");
+const { TaskfileTaskAssistant } = require("./TaskAssistants/Taskfile.js");
+const { MaidFileTaskAssistant } = require('./TaskAssistants/Maidfile.js');
 
 exports.activate = function () {
   // Do work when the extension is activated
@@ -56,6 +57,20 @@ exports.activate = function () {
     });
     nova.subscriptions.add(taskfileFileWatcher);
     nova.subscriptions.add(taskfileTaskDisposable);
+  }
+  
+  // Maidfile
+  if (nova.workspace.config.get('taskfinder.auto-maidfile', 'boolean')) {
+    console.info('Initialising MaidfileTaskAssistant');
+    nodeTaskAssistantDisposable = nova.assistants.registerTaskAssistant(new MaidFileTaskAssistant(), {
+      name: 'Maid',
+      identifier: 'taskfinder-tasks-maidfile',
+    });
+    let nodeFileWatcher = nova.fs.watch('*maidfile', (e) => {
+      nova.workspace.reloadTasks();
+    });
+    nova.subscriptions.add(nodeFileWatcher);
+    nova.subscriptions.add(nodeTaskAssistantDisposable);
   }
 };
 

@@ -65,6 +65,13 @@
           "description": "Requires workspace restart",
           "type": "boolean",
           "default": true
+        },
+        {
+          "key": "taskfinder.auto-maidfile",
+          "title": "Include Maidfile Tasks",
+          "description": "Requires workspace restart",
+          "type": "boolean",
+          "default": true
         }
       ]
     }

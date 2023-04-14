@@ -1,4 +1,4 @@
-# Automatically populate Tasks from package.json, composer.json and Taskfile
+# Automatically populate Tasks from package.json, composer.json, Taskfile and Maidfiles
 
 ![Screenshot](https://raw.githubusercontent.com/little-green-man/nova-taskfinder/master/Images/docs/screenshot.png)
 
@@ -8,8 +8,9 @@
 
 - _Nova Tasks_ automatically populated from top-level
   - `package.json`,
-  - `composer.json`, and
-  - Taskfile files
+  - `composer.json`,
+  - Taskfile files, and
+  - Maidfile files
 - Per-workspace setting to choose NPM/Yarn for task execution
 
 ## Usage
