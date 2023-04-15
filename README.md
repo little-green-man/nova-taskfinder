@@ -2,8 +2,6 @@
 
 ![Screenshot](https://raw.githubusercontent.com/little-green-man/nova-taskfinder/master/Images/docs/screenshot.png)
 
-> **Sponsor me via [Github](https://github.com/sponsors/kurucu) or [Kofi](https://ko-fi.com/kurucu). Depending on your tier you could replace this message, or be mentioned in the Change Log.**
-
 ## Features
 
 - _Nova Tasks_ automatically populated from top-level
@@ -28,6 +26,10 @@ The rest is automatic! Tasks will refresh when files and settings change.
 Issues and planned features can be seen (and added to) in the [issues log](https://github.com/little-green-man/nova-taskfinder/issues).
 
 This software is open source - pull requests are welcome.
+
+## Contributions
+
+Automatic Tasks was developed with the help of [Sajjaad Farzad](https://github.com/theMackabu) and [Reüel van der Steege](https://github.com/rvdsteege). Many thanks to both of them!
 
 ## Treeware
 

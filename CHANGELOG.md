@@ -1,3 +1,7 @@
+## Version 4.0
+
+- Added [Maidfile](https://github.com/exact-labs/maid) support, thanks to [Sajjaad Farzad](https://github.com/theMackabu)
+
 ## Version 3.1
 
 - Added Taskfile (taskfile.dev) support
