@@ -3,8 +3,8 @@
   "name": "Automatic Tasks",
   "imageName": "icon",
   "organization": "Little Green Man Ltd",
-  "description": "Automatically offers Composer, Node & Taskfile actions as Nova Tasks.",
-  "version": "3.1.3",
+  "description": "Automatically offers Composer, Node, Maidfile & Taskfile actions as Nova Tasks.",
+  "version": "4.0.0",
   "categories": ["tasks"],
 
   "homepage": "https://github.com/little-green-man/nova-taskfinder",
@@ -17,9 +17,10 @@
   "min_runtime": "2.0",
 
   "activationEvents": [
-    "onWorkspaceContains:*package.json",
-    "onWorkspaceContains:*composer.json",
-    "onWorkspaceContains:*Taskfile.*"
+    "onWorkspaceContains:package.json",
+    "onWorkspaceContains:composer.json",
+    "onWorkspaceContains:*Taskfile.*",
+    "onWorkspaceContains:maidfile"
   ],
 
   "entitlements": {
@@ -62,6 +63,13 @@
         {
           "key": "taskfinder.auto-taskfile",
           "title": "Include Taskfile Tasks",
+          "description": "Requires workspace restart",
+          "type": "boolean",
+          "default": true
+        },
+        {
+          "key": "taskfinder.auto-maidfile",
+          "title": "Include Maidfile Tasks",
           "description": "Requires workspace restart",
           "type": "boolean",
           "default": true
