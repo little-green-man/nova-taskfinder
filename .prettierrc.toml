@@ -1,0 +1,7 @@
+trailingComma = "es5"
+printWidth = 150
+tabWidth = 2
+useTabs = true
+semi = true
+singleQuote = true
+bracketSameLine = true

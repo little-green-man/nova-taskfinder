@@ -1,0 +1,19 @@
+{
+	"name": "task_finder",
+	"version": "4.1.0",
+	"description": "Automatically offers Composer, Node, Maidfile & Taskfile actions as Nova Tasks.",
+	"main": "index.js",
+	"license": "MIT",
+	"scripts": {
+		"dev": "rollup -c rollup.config.main.js --watch",
+		"clean": "rm -rf build/taskfinder.novaextension/Scripts/*",
+		"build": "yarn clean && esbuild $(esbuild-config)",
+		"lint": "npx tsc --noEmit --pretty"
+	},
+	"devDependencies": {
+		"@types/nova-editor-node": "^4.1.10",
+		"esbuild": "^0.17.18",
+		"esbuild-config": "^1.0.1",
+		"typescript": "^5.0.4"
+	}
+}
