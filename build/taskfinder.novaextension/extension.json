@@ -70,5 +70,54 @@
 				}
 			]
 		}
+	],
+	"config": [
+		{
+			"title": "Node Options",
+			"type": "section",
+			"children": [
+				{
+					"key": "taskfinder.package-manager",
+					"title": "Package Manager",
+					"type": "enum",
+					"values": ["npm", "yarn"],
+					"default": "npm"
+				}
+			]
+		},
+		{
+			"title": "Autopopulation",
+			"type": "section",
+			"children": [
+				{
+					"key": "taskfinder.auto-composer",
+					"title": "Include Composer Tasks",
+					"description": "Requires workspace restart",
+					"type": "boolean",
+					"default": true
+				},
+				{
+					"key": "taskfinder.auto-node",
+					"title": "Include Node Tasks",
+					"description": "Requires workspace restart",
+					"type": "boolean",
+					"default": true
+				},
+				{
+					"key": "taskfinder.auto-taskfile",
+					"title": "Include Taskfile Tasks",
+					"description": "Requires workspace restart",
+					"type": "boolean",
+					"default": true
+				},
+				{
+					"key": "taskfinder.auto-maidfile",
+					"title": "Include Maidfile Tasks",
+					"description": "Requires workspace restart",
+					"type": "boolean",
+					"default": true
+				}
+			]
+		}
 	]
 }
