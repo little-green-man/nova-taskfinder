@@ -5,7 +5,6 @@
 	"main": "index.js",
 	"license": "MIT",
 	"scripts": {
-		"dev": "rollup -c rollup.config.main.js --watch",
 		"clean": "rm -rf build/taskfinder.novaextension/Scripts",
 		"build": "yarn clean && esbuild $(esbuild-config)",
 		"lint": "npx tsc --noEmit --pretty"
