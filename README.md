@@ -1,6 +1,6 @@
 # Automatically populate Tasks from package.json, composer.json, Taskfile and Maidfiles
 
-![Screenshot](https://raw.githubusercontent.com/little-green-man/nova-taskfinder/master/Images/docs/screenshot.png)
+![Screenshot](https://raw.githubusercontent.com/little-green-man/nova-taskfinder/master/.github/images/screenshot.png)
 
 ## Features
 
