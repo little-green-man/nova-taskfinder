@@ -8,8 +8,8 @@ class Maidfile {
 	};
 
 	constructor() {
-		this.packageProcessName = 'maid';
 		this.tasks = [];
+		this.packageProcessName = 'maid';
 		this.options = {
 			cwd: nova.workspace.path as string,
 			args: ['butler', 'json'],
@@ -21,6 +21,8 @@ class Maidfile {
 		try {
 			const maid = new Process('maid', this.options);
 			maid.onStdout((line) => {
+				this.tasks = [];
+
 				const tasks = JSON.parse(line).tasks;
 				const keys = Object.keys(JSON.parse(line).tasks);
 				keys.forEach((key) => {
@@ -68,7 +70,6 @@ class Maidfile {
 	}
 
 	async provideTasks() {
-		this.tasks = [];
 		await this.findTasks();
 		console.info(`maidfile has ${this.tasks.length} task(s)`);
 		return this.tasks;
