@@ -68,6 +68,7 @@ class Maidfile {
 	}
 
 	async provideTasks() {
+		this.tasks = [];
 		await this.findTasks();
 		console.info(`maidfile has ${this.tasks.length} task(s)`);
 		return this.tasks;

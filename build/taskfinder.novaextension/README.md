@@ -5,11 +5,8 @@
 ## Features
 
 - _Nova Tasks_ automatically populated from top-level
-  - `package.json`,
-  - `composer.json`,
-  - Taskfile files, and
-  - Maidfile files
-- Per-workspace setting to choose NPM/Yarn for task execution
+  - `package.json`, `composer.json`, `Taskfile.yml`, and `maidfile.toml`.
+- Per-workspace setting to choose Yarn/NPM for task execution
 
 ## Usage
 
@@ -17,7 +14,7 @@
 - Optional: set the global settings for your node package manager
 - Optional: set the project settings for your node package manager
 
-_Project settings will override global ones, if you wish to customise package manager execution on a per-project basis._
+_Project settings will override global ones, if you wish to customize package manager execution on a per-project basis._
 
 The rest is automatic! Tasks will refresh when files and settings change.
 
@@ -27,18 +24,23 @@ Issues and planned features can be seen (and added to) in the [issues log](https
 
 This software is open source - pull requests are welcome.
 
-## Contributions
+## License
 
-Automatic Tasks was developed with the help of [Sajjaad Farzad](https://github.com/theMackabu) and [Reüel van der Steege](https://github.com/rvdsteege). Many thanks to both of them!
+Distributed under the MIT License. See [LICENSE.txt](https://github.com/little-green-man/nova-taskfinder/blob/master/LICENSE.txt) for more information.
 
-## Treeware
 
-[![Buy us a tree](https://img.shields.io/badge/Treeware-%F0%9F%8C%B3-lightgreen?style=for-the-badge)](https://offset.earth/treeware?gift-trees)
+## Contact
 
-You're free to use this package, but if it makes it to your production environment you are asked to buy the world a tree.
+Elliot - [@elliot](https://social.lgm.ltd/@elliot), or hello [at] lgm.ltd
 
-It’s now common knowledge that one of the best tools to tackle the climate crisis and keep our temperatures from rising above 1.5C is to <a href="https://www.bbc.co.uk/news/science-environment-48870920">plant trees</a>. If you support this package and contribute to the Treeware forest you’ll be creating employment for local families and restoring wildlife habitats.
+Project Link: [https://github.com/little-green-man/nova-taskfinder](https://github.com/little-green-man/nova-taskfinder)
 
-You can buy trees here [offset.earth/treeware](https://offset.earth/treeware?gift-trees)
 
-Read more about Treeware at [treeware.earth](http://treeware.earth)
+## Acknowledgments
+
+So many thanks go to:
+
+- [Sajjaad Farzad](https://github.com/theMackabu)
+- [Reüel van der Steege](https://github.com/rvdsteege)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>

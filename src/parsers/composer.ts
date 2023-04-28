@@ -16,7 +16,7 @@ class Composer {
 				const contents = nova.fs.open(this.packageJsonPath).read() as string;
 				const json = JSON.parse(contents);
 				if (json.hasOwnProperty('scripts')) {
-					json.scripts.forEach((key: string) => {
+					for (var key in json.scripts) {
 						if (json.scripts.hasOwnProperty(key)) {
 							const task = new Task(key);
 							task.setAction(
@@ -29,7 +29,7 @@ class Composer {
 							);
 							this.tasks.push(task);
 						}
-					});
+					}
 				}
 			} catch (e) {
 				console.log(e);
@@ -38,6 +38,7 @@ class Composer {
 	}
 
 	provideTasks() {
+		this.tasks = [];
 		this.findTasks();
 		console.info(`${this.packageJsonPath} has ${this.tasks.length} task(s)`);
 		return this.tasks;

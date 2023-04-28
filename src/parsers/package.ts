@@ -46,6 +46,7 @@ class NodeTaskAssistant {
 	}
 
 	provideTasks() {
+		this.tasks = [];
 		this.statusUpdate();
 		this.findTasks();
 		console.info(`${this.packageJsonPath} has ${this.tasks.length} task(s)`);

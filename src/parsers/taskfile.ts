@@ -55,6 +55,7 @@ class Taskfile {
 	}
 
 	async provideTasks() {
+		this.tasks = [];
 		await this.findTasks();
 		console.info(`taskfile has ${this.tasks.length} task(s)`);
 		return this.tasks;
