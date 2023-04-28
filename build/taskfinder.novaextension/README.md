@@ -42,5 +42,3 @@ So many thanks go to:
 
 - [Sajjaad Farzad](https://github.com/theMackabu)
 - [Reüel van der Steege](https://github.com/rvdsteege)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
