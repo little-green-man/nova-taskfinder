@@ -49,6 +49,7 @@ class Taskfile {
 					if (this.iter == 0) {
 						this.tasks = [];
 					}
+					this.iter++;
 
 					console.log(`exited: finder (taskfile) with code ${status}`);
 					const action = status == 0 ? resolve : reject;
