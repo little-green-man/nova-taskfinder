@@ -4,12 +4,11 @@
 	"imageName": "icon",
 	"organization": "Little Green Man Ltd",
 	"description": "Automatically offers Composer, Node, Maidfile & Taskfile actions as Nova Tasks.",
-	"version": "4.0.0",
+	"version": "5.0.0",
 	"categories": ["tasks"],
 	"homepage": "https://github.com/little-green-man/nova-taskfinder",
 	"repository": "https://github.com/little-green-man/nova-taskfinder",
 	"bugs": "https://github.com/little-green-man/nova-taskfinder/issues",
-	"funding": "https://github.com/sponsors/kurucu",
 	"main": "main.dist.js",
 	"min_runtime": "2.0",
 	"activationEvents": [
