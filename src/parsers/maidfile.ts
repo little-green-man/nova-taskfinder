@@ -1,15 +1,12 @@
 class Maidfile {
-	tasks: any[];
-	packageProcessName: string;
+	packageProcessName: string = 'maid';
 	options: {
 		args: string[];
 		cwd: string;
-		shell: true|string;
+		shell: true | string;
 	};
 
 	constructor() {
-		this.tasks = [];
-		this.packageProcessName = 'maid';
 		this.options = {
 			cwd: nova.workspace.path as string,
 			args: ['butler', 'json'],
@@ -17,16 +14,17 @@ class Maidfile {
 		};
 	}
 
-	async findTasks() {
+	async provideTasks() {
+		let tasks: Array<TaskProcessAction>;
+		tasks = [];
+
 		try {
 			const maid = new Process('maid', this.options);
 			maid.onStdout((line) => {
-				this.tasks = [];
-
-				const tasks = JSON.parse(line).tasks;
+				const json = JSON.parse(line).tasks;
 				const keys = Object.keys(JSON.parse(line).tasks);
 				keys.forEach((key) => {
-					if (tasks[key].hide != true && !key.startsWith('_')) {
+					if (json[key].hide != true && !key.startsWith('_')) {
 						let task = new Task(key);
 						if (key.includes('build') || key.includes('compile')) {
 							task.setAction(
@@ -37,7 +35,7 @@ class Maidfile {
 									shell: true,
 								})
 							);
-							this.tasks.push(task);
+							tasks.push(task);
 						} else {
 							task.setAction(
 								Task.Run,
@@ -47,7 +45,7 @@ class Maidfile {
 									shell: true,
 								})
 							);
-							this.tasks.push(task);
+							tasks.push(task);
 						}
 					}
 				});
@@ -63,16 +61,13 @@ class Maidfile {
 			});
 
 			maid.start();
-			return onExit;
+			await onExit;
+			console.info(`maidfile has ${tasks.length} task(s)`);
+
+			return tasks;
 		} catch (e) {
 			console.log(e);
 		}
-	}
-
-	async provideTasks() {
-		await this.findTasks();
-		console.info(`maidfile has ${this.tasks.length} task(s)`);
-		return this.tasks;
 	}
 }
 

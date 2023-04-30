@@ -1,10 +1,9 @@
 class Taskfile {
-
 	packageProcessName: string = 'task';
 	options: {
 		args: string[];
 		cwd: string;
-		shell: true|string;
+		shell: true | string;
 	};
 
 	constructor() {

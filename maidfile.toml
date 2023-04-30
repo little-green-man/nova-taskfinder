@@ -1,0 +1,3 @@
+[tasks.hello]
+info = "It waits file seconds and then says hello"
+script = ["sleep 5", "echo 'Hello world from Maidfile!'"]
