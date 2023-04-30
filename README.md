@@ -73,7 +73,7 @@ Otherwise, to hack on it, develop it and/or load a local copy in Nova, carry on 
 - yarn
 - Nova
 
-### Installation
+### Developing the Extension
 
 1. Clone the repo
    ```sh
@@ -87,10 +87,12 @@ Otherwise, to hack on it, develop it and/or load a local copy in Nova, carry on 
    ```sh
    yarn build
    ```
-4. Activate the extension (Notes: First, disable the extension from Panic by unchecking it in the Extension Library. Second, minimise the window that opens for `./build/taskfinder.novaextension`, as you don't want to edit these files)
+4. Activate the extension
+   Disable the formal extension from Panic, by unchecking it in the Extension Library.
    ```sh
-   nova extension activate ./build/taskfinder.novaextension
+   yarn activate
    ```
+   Finally, minimise the window that opens for `./build/taskfinder.novaextension`, as you don't want to edit these files.
 5. Edit the files in the `src`, run `yarn build`, and Nova will automatically reload the extension (from your minimised window)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

@@ -1,6 +1,7 @@
 import { ComposerParser, PackageJsonParser, TaskfileParser, MaidfileParser } from './parsers';
 
 const deactivate = () => console.info('Deactivating TaskFinder');
+
 const activate = async () => {
 	console.log(`Starting TaskFinder (nova v${nova.extension.version})`);
 

@@ -6,8 +6,10 @@
 	"license": "MIT",
 	"scripts": {
 		"clean": "rm -rf build/taskfinder.novaextension/Scripts",
-		"build": "yarn clean && esbuild $(esbuild-config) && cp CHANGELOG.md ./build/taskfinder.novaextension/CHANGELOG.md",
-		"lint": "npx tsc --noEmit --pretty"
+		"watch": "yarn clean && esbuild $(esbuild-config) --watch",
+		"build": "yarn clean && esbuild $(esbuild-config) && cp ./CHANGELOG.md ./build/taskfinder.novaextension/CHANGELOG.md",
+		"lint": "npx tsc --noEmit --pretty",
+		"activate": "nova extension activate build/taskfinder.novaextension"
 	},
 	"devDependencies": {
 		"@types/nova-editor-node": "^4.1.10",

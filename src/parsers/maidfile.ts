@@ -4,7 +4,7 @@ class Maidfile {
 	options: {
 		args: string[];
 		cwd: string;
-		shell: boolean;
+		shell: true|string;
 	};
 
 	constructor() {
@@ -32,7 +32,7 @@ class Maidfile {
 							task.setAction(
 								Task.Build,
 								new TaskProcessAction(this.packageProcessName, {
-									cwd: nova.workspace.path,
+									cwd: nova.workspace.path ?? undefined,
 									args: [key],
 									shell: true,
 								})
@@ -42,7 +42,7 @@ class Maidfile {
 							task.setAction(
 								Task.Run,
 								new TaskProcessAction(this.packageProcessName, {
-									cwd: nova.workspace.path,
+									cwd: nova.workspace.path ?? undefined,
 									args: [key],
 									shell: true,
 								})

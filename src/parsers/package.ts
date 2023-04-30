@@ -5,7 +5,7 @@ class NodeTaskAssistant {
 
 	constructor() {
 		this.tasks = [];
-		this.packageManager = nova.workspace.config.get('taskfinder.package-manager', 'String') as string;
+		this.packageManager = nova.workspace.config.get('taskfinder.package-manager', 'string'); // default in extension.json is "npm", so its impossible that null is returned
 		this.packageJsonPath = `${nova.workspace.path}/package.json`;
 	}
 
