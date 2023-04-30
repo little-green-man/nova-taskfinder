@@ -85,7 +85,7 @@ Otherwise, to hack on it, develop it and/or load a local copy in Nova, carry on 
    ```
 3. Build the extension
    ```sh
-   yarn build
+   yarn watch # or yarn build
    ```
 4. Activate the extension
    Disable the formal extension from Panic, by unchecking it in the Extension Library.
