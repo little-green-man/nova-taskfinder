@@ -3,7 +3,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/little-green-man/nova-taskfinder">
-    <img src=".github/images/screenshot.png" alt="Screenshot" width="1408" height="705">
+    <img src=".github/images/screenshot.png" alt="Screenshot">
   </a>
 
   <h3 align="center">Automatic Tasks - The ~~missing feature~~ best extension for Panic's Nova editor</h3>
