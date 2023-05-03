@@ -1,0 +1,7 @@
+{
+	"entry": "src/index.ts",
+	"format": "cjs",
+	"outfile": "build/taskfinder.novaextension/Scripts/main.dist.js",
+	"minify": true,
+	"bundle": true
+}
