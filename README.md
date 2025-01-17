@@ -65,6 +65,8 @@ This project was built with the following libraries and helpers.
 
 If you just want to install the extension in Nova, then load Nova, load the Extension Library (shift-cmd-2), search for "Automatic Tasks" and press install.
 
+The extension depends on any tools in your toolchain that you want to use - so you'll need node for npm, php for composer, go-task for Taskfile and so on.
+
 Otherwise, to hack on it, develop it and/or load a local copy in Nova, carry on reading.
 
 ### Prerequisites
