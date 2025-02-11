@@ -13,7 +13,7 @@
 	},
 	"devDependencies": {
 		"@types/nova-editor-node": "^4.1.10",
-		"esbuild": "^0.17.18",
+		"esbuild": "^0.25.0",
 		"esbuild-config": "^1.0.1",
 		"typescript": "^5.0.4"
 	}
