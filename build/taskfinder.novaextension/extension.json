@@ -3,14 +3,14 @@
 	"name": "Automatic Tasks",
 	"imageName": "icon",
 	"organization": "Little Green Man Ltd",
-	"description": "Automatically offers Node (npm, yarn, pnpm, bun), Composer, Taskfile, Maidfile, just, Deno, Make and Laravel artisan tasks as Nova Tasks.",
-	"version": "7.4.1",
+	"description": "Automatically offers Node (npm, yarn, pnpm, bun), Composer, Taskfile, Maidfile, just, Deno, Make, Laravel artisan and VS Code tasks as Nova Tasks.",
+	"version": "7.5.0",
 	"categories": ["tasks"],
 	"homepage": "https://github.com/little-green-man/nova-taskfinder",
 	"repository": "https://github.com/little-green-man/nova-taskfinder",
 	"bugs": "https://github.com/little-green-man/nova-taskfinder/issues",
 	"main": "main.dist.js",
-	"min_runtime": "2.0",
+	"min_runtime": "12.0",
 	"activationEvents": [
 		"onWorkspaceContains:package.json",
 		"onWorkspaceContains:composer.json",
@@ -38,10 +38,11 @@
 		"onWorkspaceContains:GNUmakefile",
 		"onWorkspaceContains:makefile",
 		"onWorkspaceContains:Makefile",
-		"onWorkspaceContains:artisan"
+		"onWorkspaceContains:artisan",
+		"onWorkspaceContains:.vscode/tasks.json"
 	],
 	"entitlements": {
-		"filesystem": "readonly",
+		"filesystem": "readwrite",
 		"process": true
 	},
 	"commands": {
@@ -104,6 +105,12 @@
 				{
 					"key": "taskfinder.auto-artisan",
 					"title": "Laravel (artisan)",
+					"type": "boolean",
+					"default": true
+				},
+				{
+					"key": "taskfinder.auto-vscode",
+					"title": "VS Code (.vscode/tasks.json)",
 					"type": "boolean",
 					"default": true
 				},
@@ -340,6 +347,19 @@
 					"default": null
 				},
 				{
+					"key": "taskfinder.auto-vscode",
+					"title": "VS Code (.vscode/tasks.json)",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						[null, "Use Global Setting"],
+						[true, "On"],
+						[false, "Off"]
+					],
+					"resolve": "taskfinder.auto-vscode.choices",
+					"default": null
+				},
+				{
 					"title": "Refresh Tasks",
 					"description": "Re-reads every source, e.g. after installing a tool.",
 					"type": "command",
@@ -476,6 +496,53 @@
 					],
 					"resolve": "taskfinder.artisan-commands.choices",
 					"default": null
+				}
+			]
+		}
+	],
+	"sidebars": [
+		{
+			"id": "taskfinder.sidebar",
+			"name": "Tasks",
+			"smallImage": "sidebar-small",
+			"largeImage": "sidebar-large",
+			"sections": [
+				{
+					"id": "taskfinder.tasks",
+					"name": "Tasks",
+					"allowMultiple": false,
+					"placeholderText": "No tasks found in this project.",
+					"headerCommands": [
+						{
+							"title": "Refresh",
+							"image": "__builtin.refresh",
+							"tooltip": "Re-read every source",
+							"command": "taskfinder.refresh"
+						},
+						{
+							"title": "Stop All",
+							"image": "stop",
+							"tooltip": "Stop every task started from this sidebar",
+							"command": "taskfinder.sidebar.stop-all"
+						}
+					],
+					"contextCommands": [
+						{
+							"title": "Run",
+							"command": "taskfinder.sidebar.run",
+							"when": "viewItem == 'task' || viewItem == 'finished'"
+						},
+						{
+							"title": "Stop",
+							"command": "taskfinder.sidebar.stop",
+							"when": "viewItem == 'running'"
+						},
+						{
+							"title": "Show Output",
+							"command": "taskfinder.sidebar.output",
+							"when": "viewItem == 'running' || viewItem == 'finished'"
+						}
+					]
 				}
 			]
 		}

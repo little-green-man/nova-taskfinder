@@ -71,10 +71,9 @@ test('file changes: root files reload once after the debounce; other paths are i
 	}
 });
 
-test('settings that change a listing reload only that source', async () => {
+test('settings that change a listing reload only the sources that read them', async () => {
 	await started();
 	for (const [key, id] of [
-		['taskfinder.package-manager', 'taskfinder-tasks-node'],
 		['taskfinder.make-listing', 'taskfinder-tasks-make'],
 		['taskfinder.artisan-commands', 'taskfinder-tasks-artisan'],
 		['taskfinder.just-confirm-recipes', 'taskfinder-tasks-just'],
@@ -83,6 +82,9 @@ test('settings that change a listing reload only that source', async () => {
 		setConfig('global', key, 'x');
 		assert.deepEqual(state.reloads, [id], key);
 	}
+	state.reloads.length = 0;
+	setConfig('global', 'taskfinder.package-manager', 'x');
+	assert.deepEqual(state.reloads, ['taskfinder-tasks-node', 'taskfinder-tasks-vscode']);
 	state.reloads.length = 0;
 	setConfig('global', 'taskfinder.show-lifecycle-scripts', true);
 	assert.deepEqual(state.reloads, ['taskfinder-tasks-node', 'taskfinder-tasks-composer']);

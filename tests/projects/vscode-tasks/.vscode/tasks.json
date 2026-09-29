@@ -1,0 +1,77 @@
+{
+	// VS Code tasks, based on the example in GitHub issue #10
+	"version": "2.0.0",
+	"options": { "env": { "GREETING": "hello" } },
+	"tasks": [
+		{
+			"label": "Build workspace",
+			"type": "shell",
+			"command": "echo 'vscode: build workspace (⌘B)'",
+			"problemMatcher": [],
+			"group": { "kind": "build", "isDefault": true },
+		},
+		{
+			"label": "Build from current open file",
+			"type": "shell",
+			"command": "echo \"vscode: running in the open file's folder:\" && pwd",
+			"options": { "cwd": "${fileDirname}" },
+			"group": "build",
+		},
+		{
+			"label": "Test workspace",
+			"type": "shell",
+			"command": "echo",
+			"args": ["vscode: test", "${workspaceFolderBasename}"],
+			"group": { "kind": "test", "isDefault": true },
+		},
+		{
+			"label": "Process task",
+			"type": "process",
+			"command": "echo",
+			"args": ["vscode: a process task, env", "${env:HOME}"],
+		},
+		{
+			"label": "Greet",
+			"type": "shell",
+			"command": "echo \"vscode: $GREETING from the top-level env\"",
+		},
+		{
+			"type": "npm",
+			"script": "dev",
+			"path": "web",
+		},
+		{
+			"label": "macOS override",
+			"type": "shell",
+			"command": "echo 'vscode: not macOS'",
+			"osx": { "command": "echo 'vscode: macOS override used'" },
+		},
+		{
+			"label": "Everything (in sequence)",
+			"dependsOn": ["Build workspace", "Test workspace"],
+			"dependsOrder": "sequence",
+		},
+		{
+			"label": "Both at once, then report",
+			"type": "shell",
+			"command": "echo 'vscode: both finished'",
+			"dependsOn": ["Build workspace", "Greet"],
+		},
+		{
+			"label": "Hidden helper",
+			"type": "shell",
+			"command": "echo 'hidden - should NOT appear'",
+			"hide": true,
+		},
+		{
+			// uses VS Code itself - should NOT appear
+			"label": "launch:stop",
+			"command": "${command:workbench.action.terminal.kill}",
+		},
+		{
+			"label": "Gulp task",
+			"type": "gulp",
+			"task": "default",
+		},
+	],
+}

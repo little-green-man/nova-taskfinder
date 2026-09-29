@@ -36,9 +36,11 @@ src/                         TypeScript source (the only code you edit)
   watch.ts                   isWatchedFile() and the debounced reloader — unit-tested
   settings.ts                each setting's choice labels; Project Settings choices ("Use Global Setting (On)") — unit-tested
   notify.ts                  user notifications and their actions
-  tasks.ts                   createTask() and the lifecycle setting
+  tasks.ts                   createTask(), RunSpec (a command as tasks and the sidebar run it) and the lifecycle setting
   formats.ts                 types for the JSON the sources read (package.json, tool output…); all fields optional
   workspaces.ts              pure monorepo rules: workspace patterns per format, glob expansion, member task names — unit-tested
+  vscode.ts                  pure .vscode/tasks.json rules: types, defaults, variables, dependsOn → one command line — unit-tested
+  sidebar.ts                 the Tasks sidebar: tree view of the latest listings, runs with Process, output documents
   parsers/                   one source definition per file (run by source.ts)
   images/                    source artwork (Acorn)
 build/taskfinder.novaextension/
@@ -102,7 +104,7 @@ Each source is registered as a `Feature`: `{ key, Parser, name, globs, files, id
 - Entries are built with `feature(source, Parser, details)`, which takes `key` from the source definition's `settingKey`, so it isn't repeated. Task Assistant `id`s (`taskfinder-tasks-<x>`) stay explicit and must not change: Nova may remember state per assistant (Maid's is `taskfinder-tasks-maidfile`).
 - `settings` — the listing settings it reads (e.g. `taskfinder.make-listing`); changing one reloads only the sources that list it.
 - `globs` — patterns for `nova.fs.watch`, one watcher each. Deliberately broad (`*askfile*`, `*aidfile*`, `*ustfile` cover both cases); the callback reloads only when `isWatchedFile()` (`src/watch.ts`) finds the changed path in `files`, relative to the workspace root, which also ignores `node_modules`/`vendor`. Node watches lockfiles and package-manager config as well as `package.json`.
-- `files` — paths relative to the root that trigger a reload (Node: `package.json` plus `packageManagerFiles` from `src/scripts.ts`). Entries may be nested (artisan watches `routes/console.php`). Parsers export theirs (`taskfileFiles`, `maidfileFiles`, `justFiles`, `denoFiles`, `makeFiles`, `artisanFiles`). `makeFiles` is updated in place with the Makefile's literal includes on each read (only `*.mk` includes match a watch glob). Keep `activationEvents` in `extension.json` in sync (root files only).
+- `files` — paths relative to the root that trigger a reload (Node: `package.json` plus `packageManagerFiles` from `src/scripts.ts`). Entries may be nested (artisan watches `routes/console.php`). Parsers export theirs (`taskfileFiles`, `maidfileFiles`, `justFiles`, `denoFiles`, `makeFiles`, `artisanFiles`). `makeFiles` is updated in place with the Makefile's literal includes on each read (only `*.mk` includes match a watch glob). Keep `activationEvents` in `extension.json` in sync (root files, plus the nested `.vscode/tasks.json`).
 - `id` — Task Assistant identifier.
 
 Lifecycle:
@@ -164,6 +166,28 @@ Off by default (`taskfinder.workspace-packages`). When on, the Node and Deno sou
 - **Composer** has no workspace standard, so it's not included.
 - **pnpm** checks the whole workspace's dependencies before `pnpm run`, even in a member folder, so running a member's task creates `node_modules/` at the workspace root. That's pnpm, not the task's `cwd` (the script itself runs in the member folder).
 
+### VS Code tasks (7.5.0, `src/vscode.ts`, `src/parsers/vscode.ts`)
+
+A file source for `.vscode/tasks.json` (nested, which `firstRootFile()` handles; a missing subfolder is simply no match, not a listing failure), parsed as JSONC. Listing runs nothing.
+
+- **Types:** `shell` (command as a command line, args quoted), `process` (command and args quoted) and `npm` (`<pm> run <script>` with `projectPackageManager()`, in `path`). Anything else comes from a VS Code extension and is skipped. Skipped tasks and reasons are logged, not notified: a project written for VS Code may have many.
+- **Layers:** top-level `type`/`command`/`args`/`options`, then the task, then its `osx`, later winning; `options` and `options.env` merge.
+- **Variables:** project and environment ones are filled in _before_ quoting. VS Code-only ones (`${command:}`, `${config:}`, `${input:}`, `${execPath}`, `${defaultBuildTask}`) skip the task. Open-file ones (`${file}`, `${fileDirname}`…) make the task a `TaskResolvableAction` carrying the task as JSON; Nova calls `resolveTaskAction()` when it runs, and `resolveAction()` fills them in from `nova.workspace.activeTextEditor` (line and column counted from the text before the cursor). This needs Nova 4; `min_runtime` is 12.0 (see Nova platform notes).
+- **`dependsOn`:** composed into one shell line. Each part is wrapped as `(cd 'dir' && export K='v' && line)`; `sequence` (or one dependency) joins with `&&`; `parallel` (VS Code's default) backgrounds each part and `wait`s on each PID, so a failure fails the whole. Loops, missing dependencies and empty tasks are skipped with a reason. `hide: true` tasks aren't listed but still work as dependencies.
+- **Build group** binds Run and Build (`ListedTask.actions`), whatever the name.
+- Not supported: `problemMatcher` (Nova's issue matchers are per extension, not per task; see #32), `isBackground`, `presentation`, `inputs`, `windows`/`linux` overrides.
+
+### Tasks sidebar (7.5.0, `src/sidebar.ts`)
+
+**Nova has no API to start its own tasks** (no `runTask`; `nova.commands.invoke` only reaches extension commands), so the sidebar runs tasks itself with `Process`. Consequences, stated in the READMEs: no task console, no toolbar Stop, no Issues for those runs. It's named "Tasks": "Automatic Tasks" wrapped under its icon in the Sidebar Dock.
+
+- **Data:** `finish()` in `source.ts` keeps each source's latest `ListedTask`s by setting key (`latestTasks()`), cleared when the source has no root file or is turned off (`forgetLatest()` from `disable()`). A change calls the sidebar's redraw. So the sidebar shows exactly what the Tasks menu shows, with no second parse. Each entry's `spec()` returns a `RunSpec`; for resolvable tasks it calls the source's `resolveAction()` at that moment, so open-file variables work here too.
+- **`RunSpec`** (`tasks.ts`) is the one description of a command: `processAction()` makes the Nova task action from it, and the sidebar passes the same fields to `Process`, so both run the same thing.
+- **Tree:** groups (feature names, in feature order, only those with tasks) and rows. Elements are cached by id so Nova keeps selection and expansion across `reload()`. `contextValue` is `task`, `running` or `finished`, which the manifest's `contextCommands` `when` clauses use. `TreeItem.command` (double-click) runs the task, or shows its output if it's running.
+- **Runs:** the latest per row. Status in `descriptiveText` (left unset before a run: Nova shows `undefined` as text) and the row's `image`; while anything runs, a 1 s interval redraws just the running rows, so the time counts up without the whole list flickering. It stops when nothing runs. Stop is `terminate()`, then `kill()` after `KILL_DELAY`; deactivate kills everything.
+- **Output:** a log file per task, `<workspaceStoragePath>/Output/<task> — <source>.log`, restarted on each run and opened when it starts. The folder is emptied when the sidebar starts (not on exit, which doesn't run after a crash or force-quit), and a log past 5 MB (`LOG_LIMIT`) is rewritten with its latest 2.5 MB after an "(earlier output removed)" line. The first line is `$ <command>`. Output is stripped of ANSI codes and appended every 200 ms (open, write, close: open handles pile up in Nova). Show Output opens the file. An unsaved document (`openNewTextDocument`, tried first) asked to be saved when closed and couldn't be reopened once closed.
+- **Icons:** Nova's built-in images (`__builtin.refresh`, used for Refresh) have no status or stop glyphs and aren't documented for a sidebar's own icon, and `TreeItem.color` replaces the icon with a swatch. So the Stop All and row status icons (`task-idle`, `-running`, `-succeeded`, `-failed`, `-stopped`) are Lucide glyphs as template PNGs, rendered from SVG with AppKit. The sidebar's own icon (`sidebar-small`, `sidebar-large`) is the extension icon's play triangle, cut out by colour as a template image. Licence in `Images/LUCIDE-LICENSE.txt` (ISC).
+
 ### Node package manager
 
 `taskfinder.package-manager` is `auto` (default), `npm`, `yarn`, `pnpm` or `bun`. A concrete value overrides detection. `detectPackageManager()` (`src/scripts.ts`) checks, in order:
@@ -213,7 +237,7 @@ Every setting exists at two scopes with the same key:
 - **Global** (`config` in `extension.json`, Extensions → Automatic Tasks → Settings): concrete defaults (`true`, `"auto"`).
 - **Workspace** (`configWorkspace`, Project Settings): enum whose first value is `null` labelled "Use Global Setting", default `null`. (Until 7.2.0 the manifest used the undocumented `config-workspace`, which also worked; stored values are keyed by setting, so the rename kept them — confirmed in Nova.)
 
-**Layout (7.2.0, extended in 7.4.0):** both panes share one layout — a **Task Sources** section of the eight `auto-<source>` settings titled "Tool (file)", with a **Refresh Tasks** `command` button as its last item, then one section per tool or topic with options (Node and Composer, Monorepos, Maid, just, Make, Laravel). Non-enum fields (maid Path is a `path` field) have no `resolve` and aren't in `src/settings.ts`. (A top-level item after the last section renders as if it belonged to that section, so the button lives inside Task Sources.) Each section's `link` (the (?) button) points to the matching subsection of the GitHub README's Settings section, which holds the detail kept out of descriptions. Two-choice options use `radio: true`; the eight sources and Package Manager stay pop-ups (`radio: false`). Titles are Title Case, descriptions one line.
+**Layout (7.2.0, extended in 7.4.0):** both panes share one layout — a **Task Sources** section of the `auto-<source>` settings (nine since 7.5.0) titled "Tool (file)", with a **Refresh Tasks** `command` button as its last item, then one section per tool or topic with options (Node and Composer, Monorepos, Maid, just, Make, Laravel). Non-enum fields (maid Path is a `path` field) have no `resolve` and aren't in `src/settings.ts`. (A top-level item after the last section renders as if it belonged to that section, so the button lives inside Task Sources.) Each section's `link` (the (?) button) points to the matching subsection of the GitHub README's Settings section, which holds the detail kept out of descriptions. Two-choice options use `radio: true`; the sources and Package Manager stay pop-ups (`radio: false`). Titles are Title Case, descriptions one line.
 
 **Project Settings labels:** every Project Settings enum has `resolve: "<key>.choices"`. `index.ts` registers one command per setting that returns `projectChoices(key, nova.config.get(key))` from `src/settings.ts`, so the first choice reads "Use Global Setting (On)" (confirmed working in Project Settings, 7.2.0). The static `values` (plain "Use Global Setting") are the fallback. `src/settings.ts` is the source of truth for choice labels; `tests/unit/settings.test.ts` checks the manifest against it (same keys and order in both panes, matching values, `resolve` names, no "Include …" titles, Refresh present).
 
@@ -259,8 +283,8 @@ Things learnt the hard way or not obvious from the docs.
 - **artisan:** `php artisan list --format=json` → `{ application, commands: [{ name, description, definition: { arguments }, hidden }], namespaces }`; `arguments` is `[]` when empty (PHP) or `{ name: { is_required } }`. A fresh app has ~126 commands, ~87 runnable without arguments. Errors print to **stdout** as `ExceptionName` then the message and `at <file>:<line>`. `tinker` and `dev` need a real terminal. Sail users' `php` runs on the host.
 - **Task `--json`** needs Task v3.19.1+. Output: `{ tasks: [{ name, task, desc, summary, aliases, up_to_date, location }], location }`, flat unless `--nested`. Use `name` (full namespaced name, e.g. `db:migrate` from `includes:`); the `task` field only exists from v3.44. `--list-all` omits `internal: true` tasks. Wildcard tasks (`start:*`, v3.35+) need an argument, so they're skipped.
 - **Composer events** (full list: https://getcomposer.org/doc/articles/scripts.md#event-names). Command, installer and package events are hidden as lifecycle scripts; plugin events aren't. Custom Composer scripts get no automatic pre/post hooks. `scripts-descriptions` exists but Nova's `Task` can't show it.
-- **Entitlements:** `filesystem: readonly` and `process: true` (to spawn `task`/`maid`). Adding write access or network would need new entitlements in `extension.json` and would show to users.
-- **`min_runtime`** is `2.0`. The docs mark some APIs as added in later Nova versions (e.g. `Task.buildBeforeRunning`, Nova 5); check the version notes and consider raising `min_runtime` when using them.
+- **Entitlements:** `filesystem: readwrite` (since 7.5.0, only to write the sidebar's output logs in `workspaceStoragePath`; without it `nova.fs.open(…, 'w')` throws "does not declare a read-write entitlement") and `process: true` (to run tools and tasks). Network would need a new entitlement, which users would see.
+- **`min_runtime`** is `12.0` (7.5.0: `TaskResolvableAction` needs 4, `when` comparisons such as `viewItem == 'running'` need 5; raised to 12, November 2024, to simplify testing). The docs mark some APIs as added in later Nova versions (e.g. `Task.buildBeforeRunning`, Nova 5); check the version notes and consider raising `min_runtime` when using them.
 
 ## TypeScript quirks
 
