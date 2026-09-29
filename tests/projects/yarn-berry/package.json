@@ -1,0 +1,10 @@
+{
+	"name": "taskfinder-test-yarn-berry",
+	"private": true,
+	"packageManager": "yarn@4.5.0",
+	"scripts": {
+		"build": "echo 'yarn berry: build'",
+		"prebuild": "echo 'yarn berry: prebuild (not run automatically by Yarn 2+, so listed)'",
+		"postinstall": "echo 'yarn berry: postinstall (lifecycle, hidden by default)'"
+	}
+}

@@ -1,4 +1,6 @@
 import { getConfigWithWorkspaceOverride } from '../config';
+import { isNpmHook, isYarnBerry } from '../scripts';
+import { createTask, showLifecycleScripts } from '../tasks';
 
 class NodeTaskAssistant {
 	tasks: any[];
@@ -11,6 +13,13 @@ class NodeTaskAssistant {
 		this.packageJsonPath = `${nova.workspace.path}/package.json`;
 	}
 
+	/* npm and Yarn 1 run pre<x>/post<x> automatically; Yarn 2+ doesn't */
+	runsPrePostHooks(json: any): boolean {
+		if (this.packageManager !== 'yarn') return true;
+		const yarnrc = nova.fs.stat(`${nova.workspace.path}/.yarnrc.yml`);
+		return !isYarnBerry(json.packageManager, Boolean(yarnrc?.isFile()));
+	}
+
 	findTasks() {
 		const nodeFile = nova.fs.stat(this.packageJsonPath);
 		if (nodeFile && nodeFile.isFile()) {
@@ -18,28 +27,16 @@ class NodeTaskAssistant {
 				const contents = nova.fs.open(this.packageJsonPath).read() as string;
 				const json = JSON.parse(contents);
 				if (json.hasOwnProperty('scripts')) {
-					for (var key in json.scripts) {
-						if (json.scripts.hasOwnProperty(key)) {
-							let args = [];
-							const task = new Task(key);
-							switch (this.packageManager) {
-								case 'yarn':
-									args = [key];
-									break;
-								default:
-									args = ['run', key];
-							}
-							task.setAction(
-								Task.Run,
-								new TaskProcessAction(this.packageManager, {
-									shell: true,
-									args: args,
-								})
-							);
-							this.tasks.push(task);
-							args = [];
-						}
-					}
+					const scripts = Object.keys(json.scripts);
+					const showHooks = showLifecycleScripts();
+					const prePostHooks = this.runsPrePostHooks(json);
+
+					scripts.forEach((key) => {
+						if (!showHooks && isNpmHook(key, scripts, prePostHooks)) return;
+
+						const args = this.packageManager === 'yarn' ? [key] : ['run', key];
+						this.tasks.push(createTask(key, this.packageManager, args));
+					});
 				}
 			} catch (e) {
 				console.log(e);

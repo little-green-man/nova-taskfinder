@@ -1,3 +1,11 @@
+## Version 6.1.0
+
+- Build and Clean: scripts named `build`, `compile` (or `build:*`, `compile:*`) now also run with Nova's Build (⌘B), and `clean` (or `clean:*`) with Clean (⇧⌘K), for every task type. Every task still runs with Run (⌘R), which also fixes Maidfile `build` tasks that couldn't be run with Run
+- Lifecycle scripts are now hidden by default: npm hooks (e.g. `postinstall`, `prepare`, and `pre`/`post` scripts for other scripts) and Composer event scripts (e.g. `post-install-cmd`). They run automatically, so rarely need running by hand. Turn on "Show Lifecycle Scripts" in the extension's preferences or Project Settings to list them again
+- With Yarn 2+ (detected from `.yarnrc.yml` or `packageManager`), `pre`/`post` scripts stay listed, as Yarn 2+ doesn't run them automatically
+- Several quick file changes (e.g. switching branches) now cause a single task reload
+- Added unit tests (`yarn test`)
+
 ## Version 6.0.1
 
 - Taskfile tasks from included Taskfiles (e.g. `db:migrate`) and names containing `.` now appear and run correctly

@@ -1,4 +1,5 @@
 import { parseJson, rootHasFile, run, warnOnce } from '../process';
+import { createTask } from '../tasks';
 
 /* Filenames Task looks for, in priority order (https://taskfile.dev/usage/) */
 export const taskfileFiles = [
@@ -32,16 +33,7 @@ class Taskfile {
 			/* wildcard tasks (e.g. start:*) need an argument, so can't be run as-is */
 			if (typeof name !== 'string' || name.includes('*')) return;
 
-			const task = new Task(name);
-			task.setAction(
-				Task.Run,
-				new TaskProcessAction(this.packageProcessName, {
-					cwd: nova.workspace.path ?? undefined,
-					args: [name],
-					shell: true,
-				})
-			);
-			tasks.push(task);
+			tasks.push(createTask(name, this.packageProcessName, [name]));
 		});
 
 		console.info(`taskfile has ${tasks.length} task(s)`);
