@@ -4,7 +4,7 @@
 	"imageName": "icon",
 	"organization": "Little Green Man Ltd",
 	"description": "Automatically offers Composer, Node, Maidfile & Taskfile actions as Nova Tasks.",
-	"version": "6.1.0",
+	"version": "7.0.0",
 	"categories": ["tasks"],
 	"homepage": "https://github.com/little-green-man/nova-taskfinder",
 	"repository": "https://github.com/little-green-man/nova-taskfinder",
@@ -43,12 +43,16 @@
 				{
 					"key": "taskfinder.package-manager",
 					"title": "Package Manager",
+					"description": "Automatic uses the packageManager field, then devEngines.packageManager, then the lockfile (bun, pnpm, yarn, then npm), falling back to npm.",
 					"type": "enum",
 					"radio": false,
 					"values": [
 						[null, "Global Setting"],
+						["auto", "Automatic"],
 						["npm", "npm"],
-						["yarn", "yarn"]
+						["yarn", "yarn"],
+						["pnpm", "pnpm"],
+						["bun", "bun"]
 					],
 					"default": null
 				}
@@ -131,13 +135,17 @@
 				{
 					"key": "taskfinder.package-manager",
 					"title": "Package Manager",
+					"description": "Automatic uses the packageManager field, then devEngines.packageManager, then the lockfile (bun, pnpm, yarn, then npm), falling back to npm.",
 					"type": "enum",
 					"radio": false,
 					"values": [
+						["auto", "Automatic"],
 						["npm", "npm"],
-						["yarn", "yarn"]
+						["yarn", "yarn"],
+						["pnpm", "pnpm"],
+						["bun", "bun"]
 					],
-					"default": "npm"
+					"default": "auto"
 				}
 			]
 		},

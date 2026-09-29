@@ -1,0 +1,6 @@
+{
+	"name": "taskfinder-test-broken-json",
+	"scripts": {
+		"build": "echo build",
+	}
+}

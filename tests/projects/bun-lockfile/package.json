@@ -1,0 +1,8 @@
+{
+	"name": "taskfinder-test-bun",
+	"private": true,
+	"scripts": {
+		"build": "echo 'bun: build (a bun built-in name, so needs bun run)'",
+		"dev": "echo 'bun: dev'"
+	}
+}

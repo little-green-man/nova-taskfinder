@@ -1,3 +1,13 @@
+## Version 7.0
+
+- **The Node package manager is now detected automatically.** The Package Manager setting defaults to "Automatic", which uses the `packageManager` field in `package.json`, then `devEngines.packageManager`, then the lockfile (`bun.lock`/`bun.lockb`, `pnpm-lock.yaml`, `yarn.lock`, `package-lock.json`), falling back to npm. To keep the previous behaviour, set Package Manager to npm in the extension's preferences
+- Added pnpm and bun support
+- Scripts now always run with `<package manager> run <script>`. Previously yarn ran `yarn <script>`, so scripts named like a yarn built-in command (e.g. `info`, `init`, `pack`) ran yarn's command instead of the script
+- Lifecycle scripts: `pre`/`post` scripts are hidden for pnpm 9+ and bun (which run them automatically) and listed for pnpm 7–8 and Yarn 2+ (which don't); pnpm's `enable-pre-post-scripts` / `enablePrePostScripts` setting is respected
+- Problems are now shown as notifications, with buttons to fix them, instead of only in the Extension Console: a package manager, Composer, Task or maid that isn't installed (Composer is newly checked); npm's unrelated `maid` or a Task older than 3.19.1; errors in `package.json`, `composer.json`, a Taskfile or maidfile; lockfiles for several package managers. Each shows once per window and clears itself once fixed
+- A missing `task` or `maid` is no longer reported as an outdated or wrong tool
+- Adding or removing a lockfile updates the package manager used, without reopening the project
+
 ## Version 6.1.0
 
 - Build and Clean: scripts named `build`, `compile` (or `build:*`, `compile:*`) now also run with Nova's Build (⌘B), and `clean` (or `clean:*`) with Clean (⇧⌘K), for every task type. Every task still runs with Run (⌘R), which also fixes Maidfile `build` tasks that couldn't be run with Run

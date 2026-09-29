@@ -1,5 +1,5 @@
 /**
- * Process helpers shared by the CLI-based parsers (Taskfile, Maid).
+ * Process and file helpers shared by the parsers.
  */
 
 interface RunResult {
@@ -36,30 +36,20 @@ function run(command: string, args: string[]): Promise<RunResult> {
 	});
 }
 
-/** Parses JSON, returning null instead of throwing. */
-function parseJson(text: string): any {
-	try {
-		return JSON.parse(text);
-	} catch {
-		return null;
-	}
-}
-
-/** Whether any of the given filenames exists at the workspace root. */
-function rootHasFile(files: string[]): boolean {
+/** The first of the given filenames that exists at the workspace root. */
+function firstRootFile(files: string[]): string | undefined {
 	const root = nova.workspace.path;
-	if (!root) return false;
+	if (!root) return undefined;
 
-	return files.some((file) => nova.fs.stat(nova.path.join(root, file))?.isFile());
+	return files.find((file) => nova.fs.stat(nova.path.join(root, file))?.isFile());
 }
 
-const logged = new Set<string>();
+const installed = new Map<string, Promise<boolean>>();
 
-/** Logs a warning once per session, so repeated task reloads don't flood the console. */
-function warnOnce(message: string) {
-	if (logged.has(message)) return;
-	logged.add(message);
-	console.warn(message);
+/** Whether a command is on the user's PATH. Checked once per window (`command -v`), then cached. */
+function isInstalled(command: string): Promise<boolean> {
+	if (!installed.has(command)) installed.set(command, run('command', ['-v', command]).then(({ status }) => status === 0));
+	return installed.get(command) as Promise<boolean>;
 }
 
-export { run, parseJson, rootHasFile, warnOnce };
+export { run, firstRootFile, isInstalled };

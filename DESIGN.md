@@ -8,7 +8,7 @@ Reads task definitions from project files and offers them in Nova's Tasks menu w
 
 | Source   | Root files (`Feature.files`)                                  | How tasks are read                                              | Command run                |
 | -------- | ------------------------------------------------------------- | --------------------------------------------------------------- | -------------------------- |
-| Node     | `package.json`                                                | Parse `scripts` in `package.json`                               | `npm run <s>` / `yarn <s>` |
+| Node     | `package.json`                                                | Parse `scripts` in `package.json`                               | `<pm> run <s>` (npm, yarn, pnpm, bun) |
 | Composer | `composer.json`                                               | Parse `scripts` in `composer.json`                              | `composer run <s>`         |
 | Taskfile | `[Tt]askfile[.dist].{yml,yaml}` (8 names)                     | Spawn `task --list-all --json`, parse JSON                      | `task <name>`              |
 | Maidfile | `maidfile`, `maidfile.{toml,yaml,yml,json}`, `Maidfile[.toml]` | Spawn `maid --system json` (fallback `maid butler json`), parse JSON | `maid <name>`              |
@@ -22,7 +22,9 @@ src/                         TypeScript source (the only code you edit)
   index.ts                   activation, feature registry, enable/disable/toggle
   config.ts                  workspace-over-global config helpers
   process.ts                 run/parse helpers for CLI-based parsers
-  scripts.ts                 pure naming rules (Build/Clean, npm hooks, Composer events) — unit-tested
+  scripts.ts                 pure naming rules (Build/Clean, npm hooks, Composer events, package manager) — unit-tested
+  diagnose.ts                pure rules interpreting task/maid output (errors, old/wrong tool) — unit-tested
+  notify.ts                  user notifications and their actions
   tasks.ts                   createTask() and the lifecycle setting, shared by all parsers
   globals.d.ts               FileSystem type fix (see "TypeScript quirks")
   parsers/                   one Task Assistant class per source
@@ -47,22 +49,21 @@ The bundle is a Nova extension folder, so `build/taskfinder.novaextension` *is* 
 
 ### Feature registry (`src/index.ts`)
 
-Each source is a `Feature`: `{ key, Parser, name, glob, files, id }`.
+Each source is a `Feature`: `{ key, Parser, name, globs, files, id }`.
 
 - `key` — config key that turns the source on/off (`taskfinder.auto-<source>`).
 - `Parser` — class implementing Nova's `TaskAssistant` (`provideTasks()`).
-- `glob` — pattern for `nova.fs.watch`. Deliberately broad (`*askfile*`, `*aidfile*` cover both cases); the callback only reloads (`nova.workspace.reloadTasks(id)`) when the changed path is one of `files` at the workspace root, which also ignores `node_modules`/`vendor`.
-- `files` — exact root filenames for the source. Taskfile/Maid export theirs from the parser (`taskfileFiles`, `maidfileFiles`) and use them for the existence check. Keep `activationEvents` in `extension.json` in sync.
+- `globs` — patterns for `nova.fs.watch`, one watcher each. Deliberately broad (`*askfile*`, `*aidfile*` cover both cases); the callback only reloads when the changed path is one of `files` at the workspace root, which also ignores `node_modules`/`vendor`. Node watches lockfiles and package-manager config as well as `package.json`.
+- `files` — exact root filenames for the source (Node: `package.json` plus `packageManagerFiles` from `src/scripts.ts`). Taskfile/Maid export theirs from the parser (`taskfileFiles`, `maidfileFiles`) and use them for the existence check. Keep `activationEvents` in `extension.json` in sync.
 - `id` — Task Assistant identifier.
 
 Lifecycle:
 
-- `activate()` — for each feature, observe its config key (workspace and global) and call `toggle()`; also observe `taskfinder.package-manager`.
+- `activate()` — for each feature, observe its config key (workspace and global) and call `toggle()`; also observe `taskfinder.package-manager` and `taskfinder.show-lifecycle-scripts`.
 - `toggle()` — `enable()` or `disable()` based on the resolved config value.
 - `enable()` — registers the Task Assistant and file watcher, stores both disposables in the module-level `active` map, and reloads tasks. No-op if already enabled.
 - `disable()` — disposes that feature's assistant and watcher, removes it from `active`, reloads tasks.
-- Package manager change — disable + enable the Node feature so a new `NodeTaskAssistant` reads the new value (the parser reads the setting once, in its constructor).
-- Lifecycle setting change — reload the Node and Composer tasks; parsers read `taskfinder.show-lifecycle-scripts` on every `provideTasks()`.
+- Package manager or lifecycle setting change — reload the affected tasks (Node; Node and Composer). Parsers read both settings, and detect the package manager, on every `provideTasks()`, because lockfiles change.
 - File changes — `scheduleReload()` debounces per feature (300 ms), so bursts (saves, branch switches) cause one reload. `disable()` and `deactivate()` clear pending timers.
 - `deactivate()` — disposes everything in `active`.
 
@@ -83,22 +84,59 @@ Lifecycle:
 ### Parser conventions
 
 - File-based parsers (Node, Composer) read with `nova.fs.open(path).read()` and `JSON.parse`, inside `try/catch` that logs and returns what it has.
-- CLI-based parsers (Taskfile, Maid) use `run()` from `src/process.ts`: spawns with `shell: true` (so the user's `PATH` is used) in the workspace root, collects all output and resolves on exit, never rejecting. Parse the whole output with `parseJson()`. On failure return `[]` — never `undefined`, never throw — and report with `warnOnce()` so reloads don't flood the console.
+- CLI-based parsers (Taskfile, Maid) use `run()` from `src/process.ts`: spawns with `shell: true` (so the user's `PATH` is used) in the workspace root, collects all output and resolves on exit, never rejecting. Check the tool with `isInstalled()` first, then interpret the result with the pure `diagnoseTaskfile()`/`diagnoseMaid()` (`src/diagnose.ts`). On failure return `[]` — never `undefined`, never throw — and tell the user with `notify()` (see Notifications).
 - Check the output, not just the exit status: an unrelated `maid` exits 0 on errors.
 - Build tasks with `createTask(name, command, args)` (`src/tasks.ts`): a `TaskProcessAction` with `shell: true` and `cwd: nova.workspace.path`, always bound to Run, plus Build for `build`/`compile`/`build:*`/`compile:*` and Clean for `clean`/`clean:*` (`actionsFor()` in `src/scripts.ts`). Never bind Build/Clean *instead of* Run: Nova disables any action a task doesn't set.
 - Keep naming decisions in `src/scripts.ts` (no imports, no Nova globals) so they can be unit-tested.
-- Lifecycle scripts are hidden unless `taskfinder.show-lifecycle-scripts` is on: npm's fixed lifecycle names always; `pre<x>`/`post<x>` only when `<x>` exists and the package manager runs them (npm, Yarn 1 — not Yarn 2+ or pnpm); Composer command/installer/package events, but not plugin events (`init`, `command`), which are likely real scripts.
+- Lifecycle scripts are hidden unless `taskfinder.show-lifecycle-scripts` is on: npm's fixed lifecycle names always; `pre<x>`/`post<x>` only when `<x>` exists and the package manager runs them (`runsPrePostHooks()`, see below); Composer command/installer/package events, but not plugin events (`init`, `command`), which are likely real scripts.
+
+### Node package manager
+
+`taskfinder.package-manager` is `auto` (default), `npm`, `yarn`, `pnpm` or `bun`. A concrete value overrides detection. `detectPackageManager()` (`src/scripts.ts`) checks, in order:
+
+1. `packageManager` field (Corepack, `name@version[+hash]`).
+2. `devEngines.packageManager` (object, or the first entry of an array).
+3. Root lockfile: `bun.lock`, `bun.lockb`, `pnpm-lock.yaml`, `yarn.lock`, `package-lock.json`, `npm-shrinkwrap.json`. npm last: a stray `package-lock.json` is the usual accident. Lockfiles for different managers log one warning.
+4. npm.
+
+Unknown names fall through to the next signal. Scripts always run as `<pm> run <script>`: yarn, pnpm and bun all let built-in commands win over same-named scripts (`yarn info`, `pnpm test`, `bun build`). `isInstalled()` checks the chosen manager with `command -v` (cached per window) and notifies if it's missing.
+
+Who runs `pre<x>`/`post<x>` automatically (`runsPrePostHooks()`): npm, Yarn 1, bun — yes; Yarn 2+ (`.yarnrc.yml` or `packageManager` yarn@2+) — no; pnpm — yes from v9 (pnpm PR #7634), no in 7–8 (from the `packageManager` version), and an explicit `enablePrePostScripts` in `pnpm-workspace.yaml` or `enable-pre-post-scripts` in `.npmrc` wins (workspace file first).
+
+### Notifications (`src/notify.ts`)
+
+Problems that stop tasks being listed or run are shown as Nova notifications, because most users never open the Extension Console. `notify(id, title, body, actions)`:
+
+- Shows each situation (`id`) at most once per window; the request identifier (`taskfinder.<id>`) means a repeat replaces rather than stacks. Also logs to the console.
+- Always adds Dismiss. Nova's buttons are small, so titles are one or two words (Install, Update, Open File, Settings, Use npm, Turn Off); the body explains what Turn Off does (sets that source to Disabled in Project Settings). Actions: `howToInstall()` / `openUrl()` (`nova.openURL`), `openRootFile()` (`nova.workspace.openFile`), `setProjectSetting()` (`nova.workspace.config.set`), `openProjectSettings` (`nova.workspace.openConfig`).
+- `clearNotification(id)` cancels it when a later reload finds the problem gone (file fixed, lockfile removed, different package manager chosen).
+- No "don't show again": once per window is quiet enough.
+
+| id | Situation | Actions |
+| -- | --------- | ------- |
+| `node-pm-missing` | Chosen package manager not on `PATH` | Install · Use npm (detected; sets this project to npm) or Settings (set in settings) |
+| `node-lockfiles` | Lockfiles for different managers | Settings |
+| `node-invalid-json` / `composer-invalid-json` | `package.json` / `composer.json` isn't valid JSON | Open File |
+| `composer-missing` | `composer` not on `PATH` (tasks still listed) | Install · Turn Off |
+| `taskfile-missing` / `maid-missing` | `task` / `maid` not on `PATH` | Install · Turn Off |
+| `taskfile-old` | Task < 3.19.1 (`unknown flag: --json`) | Update |
+| `taskfile-error` / `maidfile-error` | The tool failed; body has the first line of its error | Open File |
+| `maid-wrong` | `maid` exits 0 without JSON (npm's unrelated maid) | Install · Turn Off |
+
+Diagnosis rules live in `src/diagnose.ts` (pure, unit-tested with captured tool output). Test projects: `broken-json`, `broken-taskfile`, `broken-maidfile`, `bun-lockfile` (bun missing on the dev machine), `package-manager-field` (lockfiles).
 
 ## Configuration design
 
 Every setting exists at two scopes with the same key:
 
-- **Global** (`config` in `extension.json`, Extensions → Automatic Tasks → Settings): concrete defaults (`true`, `"npm"`).
+- **Global** (`config` in `extension.json`, Extensions → Automatic Tasks → Settings): concrete defaults (`true`, `"auto"`).
 - **Workspace** (`config-workspace`, Project Settings): enum whose first value is `null` labelled "Global Setting", default `null`.
 
 `getConfigWithWorkspaceOverride()` (`src/config.ts`) returns the workspace value unless it's `null`, in which case the global value. `observeConfigWithWorkspaceOverride()` subscribes to both scopes, so either changing re-runs `toggle()`. Changes apply immediately — no workspace restart (introduced in 6.0.0; earlier versions said "Requires workspace restart").
 
 **Decision:** workspace settings default to "Global Setting" rather than a concrete value, so users set preferences once globally and only override per project when needed. This changed behaviour for existing users in 6.0.0 (hence the major version).
+
+**Decision (7.0.0):** the package manager defaults to `auto` (was `npm`); a major version because existing users' behaviour changes.
 
 ## Nova platform notes
 
@@ -128,8 +166,8 @@ Things learnt the hard way or not obvious from the docs.
 ## Testing
 
 - **Manual:** `tests/projects/` has one small project per case (each source, filename variants, wildcard/hidden tasks, root-only, the `maidfile.md` collision, all sources for settings toggles). Open each as its own project with the dev build; expected results are in `tests/README.md`. Every task only echoes.
-- **Unit:** `yarn test` bundles `tests/unit/*.test.ts` with esbuild (`--platform=node`, output in gitignored `tests/.build`) and runs them with `node --test`. Bundling (rather than Node's own TypeScript support) keeps extensionless imports working and matches how the extension is built. Tests type-check via `tests/unit/tsconfig.json` (part of `yarn lint`). They cover `src/scripts.ts` and read inputs from `tests/projects/`. `yarn release` runs them first.
-- **Parsers (not automated yet, IMPROVEMENTS #12):** parsers only touch Nova through a few globals (`nova.workspace.path`, `nova.workspace.config`, `nova.config`, `nova.fs.stat/open`, `nova.path`, `Process`, `Task`, `TaskProcessAction`), so stubbing those in Node and bundling a parser with `esbuild --platform=node` runs it against real files and binaries. This was used to verify 6.0.1 and 6.1.0.
+- **Unit:** `yarn test` bundles `tests/unit/*.test.ts` with esbuild (`--platform=node`, output in gitignored `tests/.build`) and runs them with `node --test`. Bundling (rather than Node's own TypeScript support) keeps extensionless imports working and matches how the extension is built. Tests type-check via `tests/unit/tsconfig.json` (part of `yarn lint`). They cover `src/scripts.ts` (naming rules, package-manager detection, hook rules) and `src/diagnose.ts` (captured tool output) and read inputs from `tests/projects/`. `yarn release` runs them first.
+- **Parsers (not automated yet, IMPROVEMENTS #12):** parsers only touch Nova through a few globals (`nova.workspace.path`, `nova.workspace.config`, `nova.config`, `nova.fs.stat/open`, `nova.path`, `Process`, `Task`, `TaskProcessAction`), so stubbing those in Node and bundling a parser with `esbuild --platform=node` runs it against real files and binaries. This was used to verify 6.0.1, 6.1.0 and 7.0.0.
 
 ## Build and tooling
 

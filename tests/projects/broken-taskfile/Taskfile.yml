@@ -1,0 +1,4 @@
+version: '3'
+
+tasks:
+  broken: { cmds: [echo {{.MISSING_QUOTES}}] }

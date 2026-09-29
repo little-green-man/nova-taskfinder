@@ -1,4 +1,7 @@
-import { parseJson, rootHasFile, run, warnOnce } from '../process';
+import { diagnoseMaid } from '../diagnose';
+import type { CommandResult } from '../diagnose';
+import { clearNotification, howToInstall, notify, openRootFile, setProjectSetting } from '../notify';
+import { firstRootFile, isInstalled, run } from '../process';
 import { createTask } from '../tasks';
 
 /* maid looks for "maidfile" with these extensions (https://github.com/theMackabu/maid) */
@@ -10,29 +13,56 @@ const listCommands = [
 	['butler', 'json'],
 ];
 
+const turnOffMaid = setProjectSetting('Turn Off', 'taskfinder.auto-maidfile', false);
+
 class Maidfile {
 	packageProcessName: string = 'maid';
 
-	/* The first command whose output is a Maidfile, or null. Another tool called `maid` exits 0 on errors, so check the output rather than the status. */
+	/* Tries each list command until one returns a Maidfile, keeping every result for diagnosis */
 	async readMaidfile() {
+		const results: CommandResult[] = [];
 		for (const args of listCommands) {
-			const result = await run(this.packageProcessName, args);
-			const json = parseJson(result.stdout);
-			if (json && typeof json.tasks === 'object' && json.tasks !== null) return json;
+			results.push(await run(this.packageProcessName, args));
+			const diagnosis = diagnoseMaid(results);
+			if (diagnosis.kind === 'ok') return diagnosis;
 		}
-		return null;
+		return diagnoseMaid(results);
 	}
 
 	async provideTasks() {
 		/* maid walks up parent folders, so only run it when the project root has a maidfile */
-		if (!rootHasFile(maidfileFiles)) return [];
+		const maidfile = firstRootFile(maidfileFiles);
+		if (!maidfile) return [];
 
-		const json = await this.readMaidfile();
-		if (!json) {
-			warnOnce("Maidfile: couldn't list tasks. Check `maid` is theMackabu/maid (cargo install maid), not the unrelated markdown task runner.");
+		if (!(await isInstalled(this.packageProcessName))) {
+			notify('maid-missing', "maid isn't installed", "This project has a maidfile, but the maid command isn't on your PATH, so its tasks can't be listed. Turn Off stops reading the maidfile in this project.", [
+				howToInstall('maid'),
+				turnOffMaid,
+			]);
 			return [];
 		}
 
+		const diagnosis = await this.readMaidfile();
+
+		if (diagnosis.kind === 'wrong-tool') {
+			notify(
+				'maid-wrong',
+				'A different maid is installed',
+				"The maid command on your PATH isn't theMackabu/maid, the Maidfile task runner (npm's maid package is an unrelated tool), so Maidfile tasks can't be listed. Turn Off stops reading the maidfile in this project.",
+				[howToInstall('maid'), turnOffMaid]
+			);
+			return [];
+		}
+		if (diagnosis.kind === 'error') {
+			notify('maidfile-error', `${maidfile} has an error`, `Maidfile tasks can't be listed: ${diagnosis.detail}`, [openRootFile(maidfile)]);
+			return [];
+		}
+		if (diagnosis.kind !== 'ok') return [];
+
+		clearNotification('maid-wrong');
+		clearNotification('maidfile-error');
+
+		const json = diagnosis.value;
 		const tasks: Array<Task> = [];
 		Object.keys(json.tasks).forEach((key) => {
 			if (json.tasks[key]?.hide === true || key.startsWith('_')) return;

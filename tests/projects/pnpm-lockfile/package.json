@@ -1,0 +1,9 @@
+{
+	"name": "taskfinder-test-pnpm",
+	"private": true,
+	"scripts": {
+		"build": "echo 'pnpm: build'",
+		"prebuild": "echo 'pnpm: prebuild (pnpm 9+ runs hooks, so hidden by default)'",
+		"test": "echo 'pnpm: test (a pnpm built-in name, so needs pnpm run)'"
+	}
+}

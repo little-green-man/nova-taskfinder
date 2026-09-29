@@ -1,0 +1,2 @@
+[tasks.broken
+script = "echo broken"
