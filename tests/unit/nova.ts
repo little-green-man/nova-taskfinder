@@ -10,8 +10,8 @@
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
-import { resetForTests as resetProcess } from '../../src/process';
-import { resetForTests as resetNotify } from '../../src/notify';
+import { resetState as resetProcess } from '../../src/process';
+import { resetState as resetNotify } from '../../src/notify';
 
 interface Result {
 	status: number;
@@ -169,6 +169,9 @@ g.Process = class {
 
 /** Resets everything, including the extension's own caches, and points the workspace at a project. */
 function useProject(name: string, root = 'tests/projects') {
+	/* reset the extension's own state first: it cancels showing notifications, which is recorded below */
+	resetProcess();
+	resetNotify();
 	state.root = resolve(root, name);
 	state.listdirFails = false;
 	state.statThrowsIfMissing = false;
@@ -182,8 +185,6 @@ function useProject(name: string, root = 'tests/projects') {
 	state.ran.length = 0;
 	state.openFiles = 0;
 	state.chunkSize = 0;
-	resetProcess();
-	resetNotify();
 }
 
 const install = (...tools: string[]) => tools.forEach((tool) => state.installed.add(tool));

@@ -42,6 +42,7 @@ Also check, in any project:
 
 - **Watcher:** add a task to the root file and save; the Tasks menu updates without reopening.
 - **No reload storms:** `npm install` in `node-only` logs at most one `package.json has N task(s)` in the Extension Console.
+- **Refresh Tasks:** with bun missing, open `bun-lockfile` (notification), install bun, run Extensions → Refresh Tasks: the notification goes and nothing reappears.
 - **Debounce:** save the root `package.json` several times quickly; one reload is logged.
 - **maid collision:** with npm's `maid` first on `PATH`, `maidfile-only` shows no tasks and one "A different maid is installed" notification, not one per reload.
 - **Missing tools:** temporarily hide `task`, `maid` or `composer` from `PATH` (then restart Nova) to see their "isn't installed" notifications; Turn Off … sets that source to Disabled in Project Settings.
