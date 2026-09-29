@@ -4,7 +4,7 @@
 	"imageName": "icon",
 	"organization": "Little Green Man Ltd",
 	"description": "Automatically offers Composer, Node, Maidfile & Taskfile actions as Nova Tasks.",
-	"version": "5.0.0",
+	"version": "6.0.0",
 	"categories": ["tasks"],
 	"homepage": "https://github.com/little-green-man/nova-taskfinder",
 	"repository": "https://github.com/little-green-man/nova-taskfinder",
@@ -24,6 +24,7 @@
 	"config-workspace": [
 		{
 			"title": "Node Options",
+			"description": "\"Global Setting\" uses the value from the extension's preferences.",
 			"type": "section",
 			"children": [
 				{
@@ -42,6 +43,7 @@
 		},
 		{
 			"title": "Autopopulation",
+			"description": "\"Global Setting\" uses the value from the extension's preferences. Changes apply immediately.",
 			"type": "section",
 			"children": [
 				{

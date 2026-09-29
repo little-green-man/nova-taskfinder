@@ -81,7 +81,12 @@ const toggle = (feature: Feature) => {
 	}
 };
 
-const deactivate = () => console.info('Deactivating TaskFinder');
+const deactivate = () => {
+	console.info('Deactivating TaskFinder');
+
+	active.forEach((disposables) => disposables.forEach((d) => d.dispose()));
+	active.clear();
+};
 
 const activate = async () => {
 	console.log(`Starting TaskFinder (nova v${nova.extension.version})`);

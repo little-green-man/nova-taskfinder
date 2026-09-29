@@ -46,6 +46,7 @@ What does it do? In short, **auto-populate the editors tasklist with tasks from 
 
 - Allows you to modify use of npm/yarn on a per-project basis
 - Allows you to choose which features to enable (per-project also)
+- Applies setting changes immediately, without restarting the workspace
 - Watches files to automatically update the task list on file changes
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -164,5 +165,6 @@ So many thanks go to:
 
 - [Sajjaad Farzad](https://github.com/theMackabu)
 - [Reüel van der Steege](https://github.com/rvdsteege)
+- [Toni Förster](https://github.com/stonerl)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

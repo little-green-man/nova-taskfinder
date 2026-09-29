@@ -6,15 +6,17 @@
 
 - _Nova Tasks_ automatically populated from top-level
   - `package.json`, `composer.json`, `Taskfile.yml`, and `maidfile.toml`.
-- Per-workspace setting to choose Yarn/NPM for task execution
+- Choose Yarn/NPM for task execution, globally or per project
+- Choose which task types to include, globally or per project
+- Settings apply immediately, without restarting the workspace
 
 ## Usage
 
 - Install and activate the extension
-- Optional: set the global settings for your node package manager
-- Optional: set the project settings for your node package manager
+- Optional: in the extension's preferences, set your node package manager and which task types to include
+- Optional: in Project Settings, override any of these for the current project
 
-_Project settings will override global ones, if you wish to customize package manager execution on a per-project basis._
+_Project settings default to "Global Setting", which follows the extension's preferences. Choose another value to override them for that project._
 
 The rest is automatic! Tasks will refresh when files and settings change.
 
@@ -42,3 +44,4 @@ So many thanks go to:
 
 - [Sajjaad Farzad](https://github.com/theMackabu)
 - [Reüel van der Steege](https://github.com/rvdsteege)
+- [Toni Förster](https://github.com/stonerl)

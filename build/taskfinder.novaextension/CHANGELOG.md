@@ -1,3 +1,11 @@
+## Version 6.0
+
+- Task type and package manager settings now apply immediately, without restarting the workspace - [Toni Förster](https://github.com/stonerl)
+- Project settings now default to "Global Setting", following the extension's preferences unless overridden - [Toni Förster](https://github.com/stonerl)
+- Maidfile parsing errors no longer break the task list - [Toni Förster](https://github.com/stonerl)
+- Task providers and file watchers are now cleaned up when the extension is deactivated
+- Updated Nova type definitions to 5.1.7
+
 ## Version 5.0
 
 - Rebuilt Automatic Tasks in TypeScript - [Sajjaad Farzad](https://github.com/theMackabu)
