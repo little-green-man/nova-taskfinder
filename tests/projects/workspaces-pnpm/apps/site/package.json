@@ -1,4 +1,4 @@
 {
 	"name": "site",
-	"scripts": { "dev": "echo 'site: dev'" }
+	"scripts": { "dev": "echo 'site: dev, running in:' && pwd" }
 }

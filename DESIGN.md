@@ -151,6 +151,7 @@ Off by default (`taskfinder.workspace-packages`). When on, the Node and Deno sou
 - **Tasks:** each is named `memberTaskName()`, i.e. `<manifest name>: <script>` or `<folder>: <script>`. It runs in the member folder (`ListedTask.cwd`, joined to the root in `createTask`) with the root's package manager. Build and Clean bind by the script's own name (`ListedTask.script`). The same lifecycle-hook rules apply.
 - **Watching:** `nodeFiles` and `denoFiles` are updated in place with each member's manifest, as `makeFiles` is with includes. `firstRootFile()` accepts nested paths and lists each file's own folder for the exact-name match. Root detection uses separate constant lists, so a member's file never counts as the project's.
 - **Composer** has no workspace standard, so it's not included.
+- **pnpm** checks the whole workspace's dependencies before `pnpm run`, even in a member folder, so running a member's task creates `node_modules/` at the workspace root. That's pnpm, not the task's `cwd` (the script itself runs in the member folder).
 
 ### Node package manager
 
