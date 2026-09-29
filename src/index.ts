@@ -18,7 +18,7 @@ import {
 import { packageManagerFiles } from './scripts';
 import { createReloader, isWatchedFile } from './watch';
 import { choices, projectChoices, resolveCommand } from './settings';
-import { resetState as resetProcessState } from './process';
+import { resetState as resetProcessState, stopAll } from './process';
 import { resetState as resetNotifyState } from './notify';
 
 interface Feature {
@@ -162,6 +162,7 @@ const deactivate = () => {
 	active.forEach((disposables) => disposables.forEach((d) => d.dispose()));
 	active.clear();
 	reloader.cancelAll();
+	stopAll();
 };
 
 const activate = async () => {

@@ -17,6 +17,10 @@ interface Result {
 	status: number;
 	stdout: string;
 	stderr: string;
+	/* never exits on its own (a hung tool) */
+	hang?: boolean;
+	/* ignores terminate(), so only kill() stops it */
+	ignoresTerminate?: boolean;
 }
 
 interface RecordedNotification {
@@ -39,6 +43,8 @@ const state = {
 	cancelled: [] as string[],
 	urls: [] as string[],
 	ran: [] as string[],
+	/* terminate()/kill() calls, as '<signal> <command line>' */
+	signals: [] as string[],
 	/* files opened and not yet closed */
 	openFiles: 0,
 	/* deliver stdout in pieces of this many characters without newlines, as Nova may do for very long lines (0 = whole lines) */
@@ -151,18 +157,37 @@ g.Process = class {
 	onDidExit(fn: (status: number) => void) {
 		this.handlers.exit = fn;
 	}
+	private exited = false;
+	private exit(status: number) {
+		if (this.exited) return;
+		this.exited = true;
+		this.handlers.exit?.(status);
+	}
+	get command() {
+		return this.line;
+	}
+	terminate() {
+		state.signals.push(`terminate ${this.line}`);
+		if (!this.result?.ignoresTerminate) queueMicrotask(() => this.exit(143));
+	}
+	kill() {
+		state.signals.push(`kill ${this.line}`);
+		queueMicrotask(() => this.exit(137));
+	}
+	private result: Result | undefined;
 	start() {
 		state.ran.push(this.line);
 		const check = this.line.match(/^command -v (\S+)$/);
-		const result = check
-			? { status: state.installed.has(check[1]) ? 0 : 1, stdout: '', stderr: '' }
+		const result: Result = check
+			? (state.scripts.get(this.line) ?? { status: state.installed.has(check[1]) ? 0 : 1, stdout: '', stderr: '' })
 			: (state.scripts.get(this.line) ?? { status: 127, stdout: '', stderr: `not scripted: ${this.line}` });
+		this.result = result;
 		queueMicrotask(() => {
 			/* Nova delivers output line by line */
 			const pieces = state.chunkSize > 0 ? (result.stdout.match(new RegExp(`[^]{1,${state.chunkSize}}`, 'g')) ?? []) : result.stdout.split(/(?<=\n)/).filter(Boolean);
 			pieces.forEach((piece) => this.handlers.stdout?.(piece));
 			result.stderr.split(/(?<=\n)/).filter(Boolean).forEach((line) => this.handlers.stderr?.(line));
-			this.handlers.exit?.(result.status);
+			if (!result.hang) this.exit(result.status);
 		});
 	}
 };
@@ -183,6 +208,7 @@ function useProject(name: string, root = 'tests/projects') {
 	state.cancelled.length = 0;
 	state.urls.length = 0;
 	state.ran.length = 0;
+	state.signals.length = 0;
 	state.openFiles = 0;
 	state.chunkSize = 0;
 }
