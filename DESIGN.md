@@ -37,6 +37,7 @@ src/                         TypeScript source (the only code you edit)
   settings.ts                each setting's choice labels; Project Settings choices ("Use Global Setting (On)") — unit-tested
   notify.ts                  user notifications and their actions
   tasks.ts                   createTask() and the lifecycle setting
+  formats.ts                 types for the JSON the sources read (package.json, tool output…); all fields optional
   parsers/                   one source definition per file (run by source.ts)
   images/                    source artwork (Acorn)
 build/taskfinder.novaextension/
@@ -88,6 +89,7 @@ Each source is registered as a `Feature`: `{ key, Parser, name, globs, files, id
 
 - `key` — config key that turns the source on/off (`taskfinder.auto-<source>`).
 - `Parser` — the source's Task Assistant class (`new () => { provideTasks() }`).
+- Entries are built with `feature(source, Parser, details)`, which takes `key` from the source definition's `settingKey`, so it isn't repeated. Task Assistant `id`s (`taskfinder-tasks-<x>`) stay explicit and must not change: Nova may remember state per assistant (Maid's is `taskfinder-tasks-maidfile`).
 - `settings` — the listing settings it reads (e.g. `taskfinder.make-listing`); changing one reloads only the sources that list it.
 - `globs` — patterns for `nova.fs.watch`, one watcher each. Deliberately broad (`*askfile*`, `*aidfile*`, `*ustfile` cover both cases); the callback reloads only when `isWatchedFile()` (`src/watch.ts`) finds the changed path in `files`, relative to the workspace root, which also ignores `node_modules`/`vendor`. Node watches lockfiles and package-manager config as well as `package.json`.
 - `files` — paths relative to the root that trigger a reload (Node: `package.json` plus `packageManagerFiles` from `src/scripts.ts`). Entries may be nested (artisan watches `routes/console.php`). Parsers export theirs (`taskfileFiles`, `maidfileFiles`, `justFiles`, `denoFiles`, `makeFiles`, `artisanFiles`). `makeFiles` is updated in place with the Makefile's literal includes on each read (only `*.mk` includes match a watch glob). Keep `activationEvents` in `extension.json` in sync (root files only).
@@ -127,6 +129,7 @@ Lifecycle:
   - `isInstalled()` uses a 5 s limit, and a timeout counts as installed.
   - Interpret the output with the pure `diagnose…()` functions; each returns `timeout` for a timed-out result.
 - **Check the output, not just the exit status:** an unrelated `maid` exits 0 on errors.
+- **Types:** parsed JSON and tool output use the interfaces in `src/formats.ts` (every field optional), never `any`; values are still checked before use.
 - **Return a `Listing`, never throw:** the pipeline turns problems into notifications and returns `[]`.
 - **Build/Clean:** `createTask(name, command, args)` (`src/tasks.ts`) makes a `TaskProcessAction` with `shell: true` and `cwd: nova.workspace.path`. It's always bound to Run, plus Build for `build`/`compile`/`build:*`/`compile:*` and Clean for `clean`/`clean:*` (`actionsFor()` in `src/scripts.ts`). Never bind Build/Clean _instead of_ Run: Nova disables any action a task doesn't set.
 - Keep naming decisions in `src/scripts.ts` (no imports, no Nova globals) so they can be unit-tested.
@@ -233,6 +236,7 @@ Things learnt the hard way or not obvious from the docs.
 
 ## TypeScript quirks
 
+- **TypeScript 7** (the native compiler, since 7.3.0). It dropped `moduleResolution: "node"`, so `tsconfig.json` uses `"bundler"`, which suits esbuild bundling. A full type check takes about 0.3 s.
 - `tsconfig.json` sets `"lib": ["es2020"]` (no DOM) and `"types": ["nova-editor-node"]`. Without DOM, TypeScript's own `FileSystem` interface no longer hides Nova's, so the old `src/globals.d.ts` workaround was removed in 7.2.1. Node's types are only in `tests/unit/tsconfig.json`.
 - `tsc` is only used for type checking (`yarn lint`); esbuild does the build and ignores type errors, so run `yarn lint` before releasing.
 

@@ -1,3 +1,4 @@
+import type { ComposerJson } from '../formats';
 import { readRootFile } from '../process';
 import { isComposerEvent } from '../scripts';
 import { fileAssistant } from '../source';
@@ -15,7 +16,7 @@ export const composerSource: FileSource = {
 	ids: { error: 'composer-invalid-json' },
 
 	list(file) {
-		let json: any;
+		let json: ComposerJson | null;
 		try {
 			json = JSON.parse(readRootFile(file) ?? '{}');
 		} catch (e) {

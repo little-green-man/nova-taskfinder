@@ -1,3 +1,5 @@
+import type { ArtisanCommand, ArtisanList, DenoJson, JustDump } from './formats';
+
 /**
  * Pure rules for reading just, Deno, Make and artisan task lists. No Nova globals or imports, so they can be unit-tested in Node.
  */
@@ -12,22 +14,23 @@ interface ListedTask {
 type JustConfirmMode = 'exclude' | 'yes';
 
 /** Runnable recipes from `just --dump --dump-format json`, including modules (run as `just mod::recipe`). */
-function justRecipes(dump: any, confirm: JustConfirmMode): ListedTask[] {
+function justRecipes(dump: JustDump | undefined, confirm: JustConfirmMode): ListedTask[] {
 	const tasks: ListedTask[] = [];
 
-	const walk = (module: any) => {
-		Object.values<any>(module?.recipes ?? {}).forEach((recipe) => {
+	const walk = (module: JustDump | undefined) => {
+		Object.values(module?.recipes ?? {}).forEach((recipe) => {
 			if (recipe.private) return;
 			/* a parameter without a default needs an argument, unless it's `*` variadic (zero or more) */
-			if ((recipe.parameters ?? []).some((p: any) => p.default === null && p.kind !== 'star')) return;
+			if ((recipe.parameters ?? []).some((p) => p.default === null && p.kind !== 'star')) return;
 
-			const needsConfirm = (recipe.attributes ?? []).some((a: any) => a === 'confirm' || (typeof a === 'object' && a !== null && 'confirm' in a));
+			const needsConfirm = (recipe.attributes ?? []).some((a) => a === 'confirm' || (typeof a === 'object' && a !== null && 'confirm' in a));
 			if (needsConfirm && confirm === 'exclude') return;
 
 			const name = recipe.namepath ?? recipe.name;
+			if (!name) return;
 			tasks.push({ name, args: needsConfirm ? ['--yes', name] : [name] });
 		});
-		Object.values<any>(module?.modules ?? {}).forEach(walk);
+		Object.values(module?.modules ?? {}).forEach(walk);
 	};
 
 	walk(dump);
@@ -40,7 +43,7 @@ function justRecipes(dump: any, confirm: JustConfirmMode): ListedTask[] {
  * Parses JSONC (as used by deno.json/deno.jsonc): `//` and `/* *\/` comments and trailing commas are allowed.
  * Comment markers inside strings are left alone. Throws like JSON.parse on invalid input.
  */
-function parseJsonc(text: string): any {
+function parseJsonc(text: string): unknown {
 	let out = '';
 	let i = 0;
 	while (i < text.length) {
@@ -63,8 +66,8 @@ function parseJsonc(text: string): any {
 }
 
 /** Task names from deno.json: a task is a command string, or an object with `command` and/or `dependencies`. */
-function denoTasks(json: any): string[] {
-	const tasks = json?.tasks;
+function denoTasks(json: unknown): string[] {
+	const tasks = typeof json === 'object' && json !== null ? (json as DenoJson).tasks : undefined;
 	if (typeof tasks !== 'object' || tasks === null) return [];
 	return Object.entries(tasks)
 		.filter(([, task]) => typeof task === 'string' || (typeof task === 'object' && task !== null))
@@ -185,14 +188,14 @@ const artisanCommon = new Set([
 ]);
 
 /** Runnable commands from `php artisan list --format=json`: not hidden, no required arguments, filtered by mode. */
-function artisanCommands(json: any, mode: ArtisanMode): string[] {
-	const commands: any[] = Array.isArray(json?.commands) ? json.commands : [];
+function artisanCommands(json: ArtisanList | undefined, mode: ArtisanMode): string[] {
+	const commands: ArtisanCommand[] = Array.isArray(json?.commands) ? json.commands : [];
 	return commands
 		.filter((command) => typeof command?.name === 'string' && !command.hidden && !artisanExcluded.has(command.name))
 		.filter((command) => {
 			/* PHP encodes "no arguments" as [] and arguments as { name: { is_required } } */
 			const args = command.definition?.arguments;
-			return !(args && !Array.isArray(args) && Object.values<any>(args).some((arg) => arg?.is_required));
+			return !(args && !Array.isArray(args) && Object.values(args).some((arg) => arg?.is_required));
 		})
 		.map((command) => command.name as string)
 		.filter((name) => mode === 'all' || artisanCommon.has(name) || name.startsWith('app:'));

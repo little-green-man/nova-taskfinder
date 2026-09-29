@@ -17,7 +17,7 @@ export const denoSource: FileSource = {
 	ids: { error: 'deno-invalid-json' },
 
 	list(file) {
-		let json: any;
+		let json: unknown;
 		try {
 			json = parseJsonc(readRootFile(file) ?? '{}');
 		} catch (e) {

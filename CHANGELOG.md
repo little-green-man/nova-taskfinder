@@ -1,3 +1,8 @@
+## Version 7.3
+
+- Internal: moved to TypeScript 7, and tightened types for the files and tool output each source reads (a just recipe without a name is now skipped rather than listed as "undefined")
+- No changes to how the extension behaves
+
 ## Version 7.2.1
 
 - Fixed: a tool that hangs while listing tasks (for example `make` asking to install Apple's command-line tools, or a Laravel app waiting on its database) is now stopped after 15 seconds, with a notification offering Refresh, instead of that source's tasks never appearing

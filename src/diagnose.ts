@@ -1,3 +1,5 @@
+import type { ArtisanList, JustDump, MaidList, TaskList } from './formats';
+
 /**
  * Pure rules for interpreting CLI results (Taskfile, Maid). No Nova globals or imports, so it can be unit-tested in Node.
  */
@@ -17,7 +19,7 @@ type Diagnosis<T> =
  * on one line) can arrive in pieces that run() rejoins with newlines. Valid JSON never has a raw line break inside a string,
  * so removing them all is safe whichever way the output was split.
  */
-const parse = (text: string): any => {
+const parse = (text: string): unknown => {
 	try {
 		return JSON.parse(text.replace(/\r?\n/g, ''));
 	} catch {
@@ -42,8 +44,8 @@ function errorDetail(stderr: string, fallback: string): string {
 /** Interprets `task --list-all --json`. Task before v3.19.1 doesn't know `--json`. */
 function diagnoseTaskfile(result: CommandResult): Diagnosis<Array<{ name?: unknown }>> {
 	if (result.timedOut) return { kind: 'timeout' };
-	const json = result.status === 0 ? parse(result.stdout) : null;
-	if (Array.isArray(json?.tasks)) return { kind: 'ok', value: json.tasks };
+	const json = (result.status === 0 ? parse(result.stdout) : null) as TaskList | null;
+	if (json && Array.isArray(json.tasks)) return { kind: 'ok', value: json.tasks };
 
 	if (/unknown flag: --json|flag provided but not defined: -json/.test(result.stderr)) return { kind: 'old-version' };
 	return { kind: 'error', detail: errorDetail(result.stderr, `task exited with status ${result.status}`) };
@@ -53,10 +55,10 @@ function diagnoseTaskfile(result: CommandResult): Diagnosis<Array<{ name?: unkno
  * Interprets the attempts to list a Maidfile (`maid --system json`, then `maid butler json`).
  * npm's unrelated `maid` exits 0 with non-JSON output; theMackabu/maid exits non-zero with a message for a broken maidfile.
  */
-function diagnoseMaid(results: CommandResult[]): Diagnosis<{ tasks: Record<string, any> }> {
+function diagnoseMaid(results: CommandResult[]): Diagnosis<MaidList> {
 	if (results.some((result) => result.timedOut)) return { kind: 'timeout' };
 	for (const result of results) {
-		const json = parse(result.stdout);
+		const json = parse(result.stdout) as MaidList | null;
 		if (json && typeof json.tasks === 'object' && json.tasks !== null) return { kind: 'ok', value: json };
 	}
 
@@ -65,9 +67,9 @@ function diagnoseMaid(results: CommandResult[]): Diagnosis<{ tasks: Record<strin
 }
 
 /** Interprets `just --dump --dump-format json`. just before 1.15 didn't have a stable JSON dump. */
-function diagnoseJust(result: CommandResult): Diagnosis<any> {
+function diagnoseJust(result: CommandResult): Diagnosis<JustDump> {
 	if (result.timedOut) return { kind: 'timeout' };
-	const json = result.status === 0 ? parse(result.stdout) : null;
+	const json = (result.status === 0 ? parse(result.stdout) : null) as JustDump | null;
 	if (json && typeof json.recipes === 'object' && json.recipes !== null) return { kind: 'ok', value: json };
 
 	if (/dump-format|--unstable|unstable/i.test(result.stderr)) return { kind: 'old-version' };
@@ -86,10 +88,10 @@ function diagnoseMake(result: CommandResult): Diagnosis<string> {
 }
 
 /** Interprets `php artisan list --format=json`. Laravel prints errors to stdout, so fall back to it. */
-function diagnoseArtisan(result: CommandResult): Diagnosis<any> {
+function diagnoseArtisan(result: CommandResult): Diagnosis<ArtisanList> {
 	if (result.timedOut) return { kind: 'timeout' };
-	const json = result.status === 0 ? parse(result.stdout) : null;
-	if (Array.isArray(json?.commands)) return { kind: 'ok', value: json };
+	const json = (result.status === 0 ? parse(result.stdout) : null) as ArtisanList | null;
+	if (json && Array.isArray(json.commands)) return { kind: 'ok', value: json };
 	return { kind: 'error', detail: errorDetail(result.stderr.trim() ? result.stderr : result.stdout, `artisan exited with status ${result.status}`) };
 }
 
