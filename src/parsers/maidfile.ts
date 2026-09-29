@@ -67,6 +67,7 @@ class Maidfile {
 			return tasks;
 		} catch (e) {
 			console.log(e);
+			return [];
 		}
 	}
 }

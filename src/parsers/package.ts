@@ -1,3 +1,5 @@
+import { getConfigWithWorkspaceOverride } from '../config';
+
 class NodeTaskAssistant {
 	tasks: any[];
 	packageManager: string;
@@ -5,7 +7,7 @@ class NodeTaskAssistant {
 
 	constructor() {
 		this.tasks = [];
-		this.packageManager = nova.workspace.config.get('taskfinder.package-manager', 'string'); // default in extension.json is "npm", so its impossible that null is returned
+		this.packageManager = String(getConfigWithWorkspaceOverride('taskfinder.package-manager') ?? 'npm');
 		this.packageJsonPath = `${nova.workspace.path}/package.json`;
 	}
 
