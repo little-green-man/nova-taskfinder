@@ -1,0 +1,18 @@
+
+   ParseError 
+
+  syntax error, unexpected identifier "oops", expecting ")"
+
+  at routes/console.php:9
+      5▕ 
+      6▕ Artisan::command('inspire', function () {
+      7▕     $this->comment(Inspiring::quote());
+      8▕ })->purpose('Display an inspiring quote');
+  ➜   9▕ Artisan::command("app:hello" oops, fn () => $this->info("hi"))->purpose("Say hi");
+     10▕
+
+      [2m+3 vendor frames [22m
+
+  4   artisan:16
+      Illuminate\Foundation\Application::handleCommand(Object(Symfony\Component\Console\Input\ArgvInput))
+

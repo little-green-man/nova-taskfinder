@@ -1,0 +1,6 @@
+error: Invalid TOML document: incomplete key-value: cannot find end of key
+
+1:  [tasks.broken
+     ^
+2:  script = "echo broken"
+

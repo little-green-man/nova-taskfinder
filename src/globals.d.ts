@@ -10,4 +10,5 @@ interface FileSystem {
 	stat(path: string): FileStats | null;
 	open(path: string, mode?: string, encoding?: Encoding): FileBinaryMode | FileTextMode;
 	watch(pattern: string | null, callable: (path: string) => void): FileSystemWatcher;
+	listdir(path: string): string[];
 }

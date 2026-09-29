@@ -2,12 +2,13 @@
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
 		"types": [
-			"node"
+			"node",
+			"nova-editor-node"
 		],
 		"noEmit": true
 	},
 	"include": [
 		"./**/*.ts",
-		"../../src/scripts.ts"
+		"../../src/globals.d.ts"
 	]
 }

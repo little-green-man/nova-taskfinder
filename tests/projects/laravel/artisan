@@ -1,0 +1,17 @@
+#!/usr/bin/env php
+<?php
+
+/*
+ * A stand-in for Laravel's artisan, so the extension can be tested without a full app (vendor/ is ~50 MB).
+ * `list --format=json` prints output captured from a fresh Laravel app (trimmed to a few commands);
+ * any other command just echoes what would have run.
+ */
+
+$args = array_slice($argv, 1);
+
+if ($args === ['list', '--format=json']) {
+    readfile(__DIR__ . '/artisan-list.json');
+    exit(0);
+}
+
+echo 'artisan: ' . implode(' ', $args) . PHP_EOL;

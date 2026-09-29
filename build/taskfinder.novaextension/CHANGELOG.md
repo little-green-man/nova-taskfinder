@@ -1,3 +1,15 @@
+## Version 7.1
+
+- New sources:
+  - [just](https://just.systems) recipes from a `justfile` (any case) or `.justfile`, including module recipes (`just sub::lint`). Private recipes and recipes that need arguments are skipped; `[confirm]` recipes are excluded unless "[confirm] Recipes" is set to "Run with --yes"
+  - [Deno](https://deno.com) tasks from `deno.json` or `deno.jsonc` (comments and trailing commas allowed), run with `deno task`
+  - Make targets from `GNUmakefile`, `makefile` or `Makefile`: the `.PHONY` targets, or name-like targets if none are declared. "List Targets From" chooses between make's database (default; complete, including included files, but runs the Makefile's `$(shell …)`) and reading the Makefile (runs nothing)
+  - Laravel artisan commands, when a project has `artisan`. "Artisan Commands" lists a common set (serve, test, migrate, queue, pail and `app:*` commands) or all commands that need no arguments. Listing starts the Laravel app
+- Each new source can be turned off in the extension's preferences or Project Settings, and shows a notification when its tool is missing or its file has an error
+- Fixed: the root file is now matched by exact name, so a `Makefile` or `taskfile.yml` is no longer reported under another case (e.g. `makefile`)
+- Fixed: files are now closed after reading. Previously each read left a file open; over many reloads and windows this could stop the extension reading any files, so no tasks were listed until Nova restarted
+- Parsers are now covered by automated tests
+
 ## Version 7.0
 
 - **The Node package manager is now detected automatically.** The Package Manager setting defaults to "Automatic", which uses the `packageManager` field in `package.json`, then `devEngines.packageManager`, then the lockfile (`bun.lock`/`bun.lockb`, `pnpm-lock.yaml`, `yarn.lock`, `package-lock.json`), falling back to npm. To keep the previous behaviour, set Package Manager to npm in the extension's preferences

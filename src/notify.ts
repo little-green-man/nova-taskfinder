@@ -34,7 +34,7 @@ function notify(id: string, title: string, body: string, actions: NotificationAc
 		},
 		(error) => {
 			visible.delete(id);
-			console.error(error);
+			console.error(`Notification "${title}" failed: ${error}`);
 		}
 	);
 }
@@ -50,10 +50,10 @@ function clearNotification(id: string) {
 
 const openUrl = (title: string, url: string): NotificationAction => ({ title, run: () => nova.openURL(url) });
 
-const openRootFile = (file: string): NotificationAction => ({
+const openRootFile = (file: string, line?: number): NotificationAction => ({
 	title: 'Open File',
 	run: () => {
-		if (nova.workspace.path) nova.workspace.openFile(`${nova.workspace.path}/${file}`);
+		if (nova.workspace.path) nova.workspace.openFile(`${nova.workspace.path}/${file}`, line ? { line } : undefined);
 	},
 });
 
@@ -72,9 +72,22 @@ const installUrls: Record<string, string> = {
 	composer: 'https://getcomposer.org/download/',
 	task: 'https://taskfile.dev/installation/',
 	maid: 'https://github.com/theMackabu/maid',
+	just: 'https://just.systems/man/en/packages.html',
+	deno: 'https://docs.deno.com/runtime/getting_started/installation/',
+	make: 'https://developer.apple.com/xcode/resources/',
+	php: 'https://php.new',
 };
 
 const howToInstall = (tool: string): NotificationAction => openUrl('Install', installUrls[tool]);
 
-export { notify, clearNotification, openUrl, openRootFile, setProjectSetting, openProjectSettings, howToInstall, installUrls };
+/** Turns a source off in Project Settings (`taskfinder.auto-<source>`); explain it in the notification body. */
+const turnOff = (settingKey: string): NotificationAction => setProjectSetting('Turn Off', settingKey, false);
+
+/** Clears which notifications have been shown, between unit tests. */
+function resetForTests() {
+	shown.clear();
+	visible.clear();
+}
+
+export { resetForTests, notify, clearNotification, openUrl, openRootFile, setProjectSetting, openProjectSettings, howToInstall, turnOff, installUrls };
 export type { NotificationAction };

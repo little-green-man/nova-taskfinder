@@ -42,7 +42,7 @@
 This project is the source code for Little Green Man's [Automatic Tasks](https://extensions.panic.com/extensions/littlegreenman/littlegreenman.TaskFinder/) extension for Panic's Nova editor (phew). It was first established to plug holes that we had in our workflow, but addresses a key feature offered by most editors, and a great extension for Nova.
 As the feature set grows, it becomes more obvious why Panic may leave this functionality out of Nova itself, but we'd sure appreciate support, review and PRs from them to make it the best it can be.
 
-What does it do? In short, **auto-populate the editors tasklist with tasks from your project files** (Node, Composer, Maidfile and Taskfile at the moment). But also:
+What does it do? In short, **auto-populate the editors tasklist with tasks from your project files** (Node, Composer, Taskfile, Maidfile, just, Deno, Make and Laravel artisan at the moment). But also:
 
 - Binds `build`/`compile` scripts to Build (⌘B) and `clean` to Clean (⇧⌘K)
 - Hides lifecycle scripts that run automatically (npm hooks, Composer events), with a setting to show them

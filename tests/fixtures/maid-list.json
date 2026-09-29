@@ -1,0 +1,20 @@
+{
+  "env": {},
+  "project": {},
+  "tasks": {
+    "hello": {
+      "script": "echo 'hello from maidfile'"
+    },
+    "build": {
+      "script": "echo 'building'",
+      "info": "Should bind to Build (⌘B)"
+    },
+    "hidden": {
+      "script": "echo 'hidden - should NOT appear'",
+      "hide": true
+    },
+    "_private": {
+      "script": "echo 'underscore - should NOT appear'"
+    }
+  }
+}

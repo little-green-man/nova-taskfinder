@@ -3,8 +3,8 @@
 	"name": "Automatic Tasks",
 	"imageName": "icon",
 	"organization": "Little Green Man Ltd",
-	"description": "Automatically offers Composer, Node, Maidfile & Taskfile actions as Nova Tasks.",
-	"version": "7.0.0",
+	"description": "Automatically offers Node (npm, yarn, pnpm, bun), Composer, Taskfile, Maidfile, just, Deno, Make and Laravel artisan tasks as Nova Tasks.",
+	"version": "7.1.0",
 	"categories": ["tasks"],
 	"homepage": "https://github.com/little-green-man/nova-taskfinder",
 	"repository": "https://github.com/little-green-man/nova-taskfinder",
@@ -28,7 +28,17 @@
 		"onWorkspaceContains:maidfile.yml",
 		"onWorkspaceContains:maidfile.json",
 		"onWorkspaceContains:Maidfile",
-		"onWorkspaceContains:Maidfile.toml"
+		"onWorkspaceContains:Maidfile.toml",
+		"onWorkspaceContains:justfile",
+		"onWorkspaceContains:Justfile",
+		"onWorkspaceContains:JUSTFILE",
+		"onWorkspaceContains:.justfile",
+		"onWorkspaceContains:deno.json",
+		"onWorkspaceContains:deno.jsonc",
+		"onWorkspaceContains:GNUmakefile",
+		"onWorkspaceContains:makefile",
+		"onWorkspaceContains:Makefile",
+		"onWorkspaceContains:artisan"
 	],
 	"entitlements": {
 		"filesystem": "readonly",
@@ -112,6 +122,54 @@
 					"default": null
 				},
 				{
+					"key": "taskfinder.auto-just",
+					"title": "Include just Recipes",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						[null, "Global Setting"],
+						[true, "Enabled"],
+						[false, "Disabled"]
+					],
+					"default": null
+				},
+				{
+					"key": "taskfinder.auto-deno",
+					"title": "Include Deno Tasks",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						[null, "Global Setting"],
+						[true, "Enabled"],
+						[false, "Disabled"]
+					],
+					"default": null
+				},
+				{
+					"key": "taskfinder.auto-make",
+					"title": "Include Make Targets",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						[null, "Global Setting"],
+						[true, "Enabled"],
+						[false, "Disabled"]
+					],
+					"default": null
+				},
+				{
+					"key": "taskfinder.auto-artisan",
+					"title": "Include Laravel artisan Commands",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						[null, "Global Setting"],
+						[true, "Enabled"],
+						[false, "Disabled"]
+					],
+					"default": null
+				},
+				{
 					"key": "taskfinder.show-lifecycle-scripts",
 					"title": "Show Lifecycle Scripts",
 					"description": "npm hooks (e.g. postinstall, prebuild) and Composer event scripts (e.g. post-install-cmd), which run automatically.",
@@ -125,6 +183,66 @@
 					"default": null
 				}
 			]
+		},
+		{
+			"title": "just Options",
+			"type": "section",
+			"children": [
+				{
+					"key": "taskfinder.just-confirm-recipes",
+					"title": "[confirm] Recipes",
+					"description": "Recipes marked [confirm] ask before running, which a Nova task can't answer. Run with --yes confirms them when you run the task.",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						[null, "Global Setting"],
+						["exclude", "Exclude"],
+						["yes", "Run with --yes"]
+					],
+					"default": null
+				}
+			],
+			"description": "\"Global Setting\" uses the value from the extension's preferences."
+		},
+		{
+			"title": "Make Options",
+			"type": "section",
+			"children": [
+				{
+					"key": "taskfinder.make-listing",
+					"title": "List Targets From",
+					"description": "Make database runs make -pRrq, which finds every target (including included files) but runs the Makefile's $(shell …) when tasks load. Read Makefile only reads the Makefile and its literal includes, running nothing.",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						[null, "Global Setting"],
+						["database", "Make database"],
+						["file", "Read Makefile"]
+					],
+					"default": null
+				}
+			],
+			"description": "\"Global Setting\" uses the value from the extension's preferences."
+		},
+		{
+			"title": "Laravel Options",
+			"type": "section",
+			"children": [
+				{
+					"key": "taskfinder.artisan-commands",
+					"title": "Artisan Commands",
+					"description": "Listing starts the Laravel app. Common lists serve, test, migrate, queue and other everyday commands plus app:* commands; All lists every command that needs no arguments.",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						[null, "Global Setting"],
+						["common", "Common"],
+						["all", "All"]
+					],
+					"default": null
+				}
+			],
+			"description": "\"Global Setting\" uses the value from the extension's preferences."
 		}
 	],
 	"config": [
@@ -178,11 +296,89 @@
 					"default": true
 				},
 				{
+					"key": "taskfinder.auto-just",
+					"title": "Include just Recipes",
+					"type": "boolean",
+					"default": true
+				},
+				{
+					"key": "taskfinder.auto-deno",
+					"title": "Include Deno Tasks",
+					"type": "boolean",
+					"default": true
+				},
+				{
+					"key": "taskfinder.auto-make",
+					"title": "Include Make Targets",
+					"type": "boolean",
+					"default": true
+				},
+				{
+					"key": "taskfinder.auto-artisan",
+					"title": "Include Laravel artisan Commands",
+					"type": "boolean",
+					"default": true
+				},
+				{
 					"key": "taskfinder.show-lifecycle-scripts",
 					"title": "Show Lifecycle Scripts",
 					"description": "npm hooks (e.g. postinstall, prebuild) and Composer event scripts (e.g. post-install-cmd), which run automatically.",
 					"type": "boolean",
 					"default": false
+				}
+			]
+		},
+		{
+			"title": "just Options",
+			"type": "section",
+			"children": [
+				{
+					"key": "taskfinder.just-confirm-recipes",
+					"title": "[confirm] Recipes",
+					"description": "Recipes marked [confirm] ask before running, which a Nova task can't answer. Run with --yes confirms them when you run the task.",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						["exclude", "Exclude"],
+						["yes", "Run with --yes"]
+					],
+					"default": "exclude"
+				}
+			]
+		},
+		{
+			"title": "Make Options",
+			"type": "section",
+			"children": [
+				{
+					"key": "taskfinder.make-listing",
+					"title": "List Targets From",
+					"description": "Make database runs make -pRrq, which finds every target (including included files) but runs the Makefile's $(shell …) when tasks load. Read Makefile only reads the Makefile and its literal includes, running nothing.",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						["database", "Make database"],
+						["file", "Read Makefile"]
+					],
+					"default": "database"
+				}
+			]
+		},
+		{
+			"title": "Laravel Options",
+			"type": "section",
+			"children": [
+				{
+					"key": "taskfinder.artisan-commands",
+					"title": "Artisan Commands",
+					"description": "Listing starts the Laravel app. Common lists serve, test, migrate, queue and other everyday commands plus app:* commands; All lists every command that needs no arguments.",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						["common", "Common"],
+						["all", "All"]
+					],
+					"default": "common"
 				}
 			]
 		}

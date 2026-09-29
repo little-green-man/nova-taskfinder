@@ -1,0 +1,10 @@
+{
+  // Comments and trailing commas are allowed in deno.jsonc
+  "tasks": {
+    "dev": "echo 'deno: dev'",
+    "build": { "command": "echo 'deno: build (⌘B)'", "description": "Build it", },
+    /* dependency-only tasks run their dependencies */
+    "all": { "dependencies": ["dev", "build"] },
+    "url": "echo 'deno: http://example.com//not-a-comment'",
+  },
+}

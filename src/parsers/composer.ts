@@ -1,5 +1,5 @@
 import { clearNotification, howToInstall, notify, openRootFile, setProjectSetting } from '../notify';
-import { isInstalled } from '../process';
+import { fileExists, isInstalled, readTextFile } from '../process';
 import { isComposerEvent } from '../scripts';
 import { createTask, showLifecycleScripts } from '../tasks';
 
@@ -26,10 +26,9 @@ class Composer {
 	}
 
 	findTasks() {
-		const composerFile = nova.fs.stat(this.packageJsonPath);
-		if (composerFile && composerFile.isFile()) {
+		if (fileExists(this.packageJsonPath)) {
 			try {
-				const contents = nova.fs.open(this.packageJsonPath).read() as string;
+				const contents = readTextFile(this.packageJsonPath);
 				let json: any;
 				try {
 					json = JSON.parse(contents);
@@ -51,7 +50,7 @@ class Composer {
 					});
 				}
 			} catch (e) {
-				console.log(e);
+				console.error(`Composer: couldn't list composer.json scripts: ${e}`);
 			}
 		}
 	}

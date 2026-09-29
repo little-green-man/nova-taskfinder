@@ -1,6 +1,6 @@
 import { getConfigWithWorkspaceOverride } from '../config';
 import { clearNotification, howToInstall, notify, openProjectSettings, openRootFile, setProjectSetting } from '../notify';
-import { isInstalled } from '../process';
+import { fileExists, isInstalled, readTextFile } from '../process';
 import { detectPackageManager, hasConflictingLockfiles, isNpmHook, isPackageManager, packageManagerFiles, runsPrePostHooks } from '../scripts';
 import type { Detection } from '../scripts';
 import { createTask, showLifecycleScripts } from '../tasks';
@@ -18,9 +18,9 @@ class NodeTaskAssistant {
 
 	readRootFile(file: string): string | undefined {
 		try {
-			if (nova.fs.stat(this.rootPath(file))?.isFile()) return nova.fs.open(this.rootPath(file)).read() as string;
+			if (fileExists(this.rootPath(file))) return readTextFile(this.rootPath(file));
 		} catch (e) {
-			console.log(e);
+			console.error(`Node: couldn't read ${file}: ${e}`);
 		}
 		return undefined;
 	}
@@ -55,10 +55,11 @@ class NodeTaskAssistant {
 	}
 
 	findTasks() {
-		const nodeFile = nova.fs.stat(this.packageJsonPath);
-		if (nodeFile && nodeFile.isFile()) {
+		if (fileExists(this.packageJsonPath)) {
+			/* names the step in the error log: some Nova file APIs throw unexpectedly in unusual folders */
+			let step = 'reading package.json';
 			try {
-				const contents = nova.fs.open(this.packageJsonPath).read() as string;
+				const contents = readTextFile(this.packageJsonPath);
 				let json: any;
 				try {
 					json = JSON.parse(contents);
@@ -68,8 +69,11 @@ class NodeTaskAssistant {
 				}
 				clearNotification('node-invalid-json');
 
-				const rootFiles = packageManagerFiles.filter((file) => nova.fs.stat(this.rootPath(file))?.isFile());
+				step = 'checking for lockfiles';
+				const rootFiles = packageManagerFiles.filter((file) => fileExists(this.rootPath(file)));
+				step = 'choosing the package manager';
 				const pm = this.resolvePackageManager(json, rootFiles);
+				step = 'listing scripts';
 
 				console.info(`Node: using ${pm.name} (from ${pm.source})`);
 				if (hasConflictingLockfiles(pm.lockfiles)) {
@@ -101,7 +105,7 @@ class NodeTaskAssistant {
 					});
 				}
 			} catch (e) {
-				console.log(e);
+				console.error(`Node: couldn't list package.json scripts (${step}): ${e}`);
 			}
 		}
 	}
