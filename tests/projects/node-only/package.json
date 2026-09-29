@@ -1,0 +1,11 @@
+{
+	"name": "taskfinder-test-node",
+	"private": true,
+	"scripts": {
+		"dev": "echo 'node: dev'",
+		"build": "echo 'node: build'",
+		"prebuild": "echo 'node: prebuild (lifecycle hook, runs before build)'",
+		"test": "echo 'node: test'",
+		"lint:fix": "echo 'node: lint:fix'"
+	}
+}

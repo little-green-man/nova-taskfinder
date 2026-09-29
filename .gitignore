@@ -3,3 +3,4 @@ node_modules
 .nova
 build/taskfinder.novaextension/Scripts
 IMPROVEMENTS.md
+SPRINT.md

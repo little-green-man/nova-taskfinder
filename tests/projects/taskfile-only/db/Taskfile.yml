@@ -1,0 +1,5 @@
+version: '3'
+
+tasks:
+  migrate:
+    cmds: [echo "namespaced db:migrate works"]

@@ -1,0 +1,7 @@
+{
+	"name": "taskfinder-test-all",
+	"private": true,
+	"scripts": {
+		"node-task": "echo 'node task'"
+	}
+}

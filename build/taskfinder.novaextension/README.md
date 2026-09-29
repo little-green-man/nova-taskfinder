@@ -5,7 +5,7 @@
 ## Features
 
 - _Nova Tasks_ automatically populated from top-level
-  - `package.json`, `composer.json`, `Taskfile.yml`, and `maidfile.toml`.
+  - `package.json`, `composer.json`, a [Taskfile](https://taskfile.dev) (`Taskfile.yml`, `taskfile.yaml`, `.dist` variants, …), and a [Maidfile](https://github.com/theMackabu/maid) (`maidfile`, `maidfile.toml`, `.yaml`, `.yml`, `.json`).
 - Choose Yarn/NPM for task execution, globally or per project
 - Choose which task types to include, globally or per project
 - Settings apply immediately, without restarting the workspace
@@ -19,6 +19,8 @@
 _Project settings default to "Global Setting", which follows the extension's preferences. Choose another value to override them for that project._
 
 The rest is automatic! Tasks will refresh when files and settings change.
+
+Taskfile and Maidfile tasks need the `task` (v3.19.1+) and `maid` commands on your `PATH`. For Maidfiles, install theMackabu's maid (`cargo install maid`); the npm package called `maid` is an unrelated tool.
 
 ## To Do
 

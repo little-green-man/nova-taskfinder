@@ -1,0 +1,2 @@
+[tasks.maid-task]
+script = "echo 'maid task'"

@@ -4,7 +4,7 @@
 	"imageName": "icon",
 	"organization": "Little Green Man Ltd",
 	"description": "Automatically offers Composer, Node, Maidfile & Taskfile actions as Nova Tasks.",
-	"version": "6.0.0",
+	"version": "6.0.1",
 	"categories": ["tasks"],
 	"homepage": "https://github.com/little-green-man/nova-taskfinder",
 	"repository": "https://github.com/little-green-man/nova-taskfinder",
@@ -14,8 +14,21 @@
 	"activationEvents": [
 		"onWorkspaceContains:package.json",
 		"onWorkspaceContains:composer.json",
-		"onWorkspaceContains:*Taskfile.*",
-		"onWorkspaceContains:maidfile"
+		"onWorkspaceContains:Taskfile.yml",
+		"onWorkspaceContains:taskfile.yml",
+		"onWorkspaceContains:Taskfile.yaml",
+		"onWorkspaceContains:taskfile.yaml",
+		"onWorkspaceContains:Taskfile.dist.yml",
+		"onWorkspaceContains:taskfile.dist.yml",
+		"onWorkspaceContains:Taskfile.dist.yaml",
+		"onWorkspaceContains:taskfile.dist.yaml",
+		"onWorkspaceContains:maidfile",
+		"onWorkspaceContains:maidfile.toml",
+		"onWorkspaceContains:maidfile.yaml",
+		"onWorkspaceContains:maidfile.yml",
+		"onWorkspaceContains:maidfile.json",
+		"onWorkspaceContains:Maidfile",
+		"onWorkspaceContains:Maidfile.toml"
 	],
 	"entitlements": {
 		"filesystem": "readonly",

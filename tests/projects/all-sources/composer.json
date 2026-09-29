@@ -1,0 +1,6 @@
+{
+	"name": "taskfinder/test-all",
+	"scripts": {
+		"composer-task": "echo 'composer task'"
+	}
+}

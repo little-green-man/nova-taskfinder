@@ -1,11 +1,12 @@
 import { getConfigWithWorkspaceOverride, observeConfigWithWorkspaceOverride } from './config';
-import { ComposerParser, PackageJsonParser, TaskfileParser, MaidfileParser } from './parsers';
+import { ComposerParser, PackageJsonParser, TaskfileParser, MaidfileParser, taskfileFiles, maidfileFiles } from './parsers';
 
 interface Feature {
 	key: string;
 	Parser: any;
 	name: string;
 	glob: string;
+	files: Array<string>;
 	id: string;
 }
 
@@ -15,6 +16,7 @@ const features: Array<Feature> = [
 		Parser: PackageJsonParser,
 		name: 'package.json',
 		glob: '*package.json',
+		files: ['package.json'],
 		id: 'taskfinder-tasks-node',
 	},
 	{
@@ -22,20 +24,23 @@ const features: Array<Feature> = [
 		Parser: ComposerParser,
 		name: 'composer.json',
 		glob: '*composer.json',
+		files: ['composer.json'],
 		id: 'taskfinder-tasks-composer',
 	},
 	{
 		key: 'taskfinder.auto-taskfile',
 		Parser: TaskfileParser,
 		name: 'Taskfile',
-		glob: '*Taskfile.*',
+		glob: '*askfile*',
+		files: taskfileFiles,
 		id: 'taskfinder-tasks-taskfile',
 	},
 	{
 		key: 'taskfinder.auto-maidfile',
 		Parser: MaidfileParser,
 		name: 'Maidfile',
-		glob: '*maidfile*',
+		glob: '*aidfile*',
+		files: maidfileFiles,
 		id: 'taskfinder-tasks-maidfile',
 	},
 ];
@@ -45,6 +50,14 @@ const active = new Map<string, Array<Disposable>>();
 const isAutoEnabled = (key: string): boolean => {
 	const value = getConfigWithWorkspaceOverride(key);
 	return value === null || value === undefined ? true : Boolean(value);
+};
+
+/* Only root-level project files are read, so ignore changes elsewhere (e.g. node_modules). The watcher may pass relative or absolute paths. */
+const isRootFile = (feature: Feature, path: string): boolean => {
+	const root = nova.workspace.path;
+	let relative = root && path.startsWith(`${root}/`) ? path.slice(root.length + 1) : path;
+	relative = relative.replace(/^\.\//, '');
+	return feature.files.includes(relative);
 };
 
 const enable = (feature: Feature) => {
@@ -58,7 +71,9 @@ const enable = (feature: Feature) => {
 	});
 	nova.workspace.reloadTasks(feature.id);
 
-	const watcher = nova.fs.watch(feature.glob, () => nova.workspace.reloadTasks(feature.id));
+	const watcher = nova.fs.watch(feature.glob, (path) => {
+		if (isRootFile(feature, path)) nova.workspace.reloadTasks(feature.id);
+	});
 
 	active.set(feature.key, [assistant, watcher]);
 };

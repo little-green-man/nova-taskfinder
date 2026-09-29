@@ -1,0 +1,20 @@
+version: '3'
+
+includes:
+  db: ./db
+
+tasks:
+  hello:
+    desc: Plain task
+    cmds: [echo "hello from taskfile"]
+  build:
+    cmds: [echo "building"]
+  docs.site:
+    cmds: [echo "dotted name works"]
+  start:*:
+    desc: Wildcard - should NOT appear
+    cmds:
+      - echo "start {{index .MATCH 0}}"
+  secret:
+    internal: true
+    cmds: [echo "internal - should NOT appear"]
