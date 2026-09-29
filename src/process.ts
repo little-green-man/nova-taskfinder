@@ -92,10 +92,10 @@ function isInstalled(command: string): Promise<boolean> {
 	return installed.get(command) as Promise<boolean>;
 }
 
-/** Clears the install-check cache between unit tests. */
-const resetForTests = () => {
+/** Forgets install checks (Refresh Tasks, and between unit tests). */
+const resetState = () => {
 	installed.clear();
 	listdirFailed = false;
 };
 
-export { run, fileExists, readTextFile, firstRootFile, isInstalled, resetForTests };
+export { run, fileExists, readTextFile, firstRootFile, isInstalled, resetState };

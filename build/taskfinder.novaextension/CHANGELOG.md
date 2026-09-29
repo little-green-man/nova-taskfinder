@@ -1,3 +1,10 @@
+## Version 7.2
+
+- Tidier settings: sources are listed once under **Task Sources** with short names (e.g. "Node (package.json)"), and each tool with options has its own short section (Node and Composer, just, Make, Laravel). Descriptions are shorter, with a (?) button linking to the new Settings section of the README. Two-choice options use radio buttons
+- Project Settings: **Use Global Setting** now shows your preference's current value, e.g. "Use Global Setting (On)", and sources are On/Off
+- New **Refresh Tasks** command, in the Extensions menu and in both settings panes, to re-read every source, e.g. after installing a missing tool
+- Your existing settings are kept
+
 ## Version 7.1
 
 - New sources:

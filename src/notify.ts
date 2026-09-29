@@ -83,11 +83,12 @@ const howToInstall = (tool: string): NotificationAction => openUrl('Install', in
 /** Turns a source off in Project Settings (`taskfinder.auto-<source>`); explain it in the notification body. */
 const turnOff = (settingKey: string): NotificationAction => setProjectSetting('Turn Off', settingKey, false);
 
-/** Clears which notifications have been shown, between unit tests. */
-function resetForTests() {
+/** Removes showing notifications and forgets which were shown, so current problems notify again (Refresh Tasks, unit tests). */
+function resetState() {
+	visible.forEach((id) => nova.notifications.cancel(requestId(id)));
 	shown.clear();
 	visible.clear();
 }
 
-export { resetForTests, notify, clearNotification, openUrl, openRootFile, setProjectSetting, openProjectSettings, howToInstall, turnOff, installUrls };
+export { resetState, notify, clearNotification, openUrl, openRootFile, setProjectSetting, openProjectSettings, howToInstall, turnOff, installUrls };
 export type { NotificationAction };

@@ -32,6 +32,7 @@ src/                         TypeScript source (the only code you edit)
   recipes.ts                 pure listing rules for just, Deno (JSONC), Make and artisan — unit-tested
   diagnose.ts                pure rules interpreting tool output (errors, old/wrong tool) — unit-tested
   watch.ts                   isWatchedFile() and the debounced reloader — unit-tested
+  settings.ts                each setting's choice labels; Project Settings choices ("Use Global Setting (On)") — unit-tested
   notify.ts                  user notifications and their actions
   tasks.ts                   createTask() and the lifecycle setting, shared by all parsers
   globals.d.ts               FileSystem type fix (see "TypeScript quirks")
@@ -149,7 +150,13 @@ Diagnosis rules live in `src/diagnose.ts` (pure, unit-tested with captured tool 
 Every setting exists at two scopes with the same key:
 
 - **Global** (`config` in `extension.json`, Extensions → Automatic Tasks → Settings): concrete defaults (`true`, `"auto"`).
-- **Workspace** (`config-workspace`, Project Settings): enum whose first value is `null` labelled "Global Setting", default `null`.
+- **Workspace** (`configWorkspace`, Project Settings): enum whose first value is `null` labelled "Use Global Setting", default `null`. (Until 7.2.0 the manifest used the undocumented `config-workspace`, which also worked; stored values are keyed by setting, so the rename kept them — confirmed in Nova.)
+
+**Layout (7.2.0):** both panes share one layout — a **Task Sources** section of the eight `auto-<source>` settings titled "Tool (file)", with a **Refresh Tasks** `command` button as its last item, then one section per tool with options (Node and Composer, just, Make, Laravel). (A top-level item after the last section renders as if it belonged to that section, so the button lives inside Task Sources.) Each section's `link` (the (?) button) points to the matching subsection of the GitHub README's Settings section, which holds the detail kept out of descriptions. Two-choice options use `radio: true`; the eight sources and Package Manager stay pop-ups (`radio: false`). Titles are Title Case, descriptions one line.
+
+**Project Settings labels:** every Project Settings enum has `resolve: "<key>.choices"`. `index.ts` registers one command per setting that returns `projectChoices(key, nova.config.get(key))` from `src/settings.ts`, so the first choice reads "Use Global Setting (On)" (confirmed working in Project Settings, 7.2.0). The static `values` (plain "Use Global Setting") are the fallback. `src/settings.ts` is the source of truth for choice labels; `tests/unit/settings.test.ts` checks the manifest against it (same keys and order in both panes, matching values, `resolve` names, no "Include …" titles, Refresh present).
+
+**Refresh Tasks** (`taskfinder.refresh`, Extensions menu, command palette and both panes) calls each module's `resetState()` — forgetting `isInstalled()` results and cancelling/forgetting notifications — then reloads every active source. Without it, a tool installed after the window opened isn't noticed until the window is reopened.
 
 `getConfigWithWorkspaceOverride()` (`src/config.ts`) returns the workspace value unless it's `null`, in which case the global value. `observeConfigWithWorkspaceOverride()` subscribes to both scopes, so either changing re-runs `toggle()`. Changes apply immediately — no workspace restart (introduced in 6.0.0; earlier versions said "Requires workspace restart").
 
@@ -159,6 +166,8 @@ Every setting exists at two scopes with the same key:
 
 Settings: `auto-<source>` for node, composer, taskfile, maidfile, just, deno, make, artisan (default on); `package-manager` (`auto`); `show-lifecycle-scripts` (off); `just-confirm-recipes` (`exclude` | `yes`); `make-listing` (`database` | `file`); `artisan-commands` (`common` | `all`).
 
+**Decision (7.2.0):** settings were reorganised for clarity (layout above) without changing keys or stored values.
+
 **Decisions (7.1.0):** new sources are on by default (minor version). Make lists from its database by default (complete) with "Read Makefile" as the no-execution alternative; `.PHONY` targets if declared, else name-like targets. Artisan lists a curated Common set plus `app:*` by default (custom commands with other names need All). just `[confirm]` recipes are excluded by default.
 
 ## Nova platform notes
@@ -167,6 +176,7 @@ Things learnt the hard way or not obvious from the docs.
 
 - **Docs:** https://docs.nova.app. Many URLs guessed from API names 404; start from https://docs.nova.app/extensions/ and follow links. Useful: `/api-reference/task/`, `/api-reference/task-process-action/`, `/api-reference/notification-request/`, `/extensions/preferences/`, `/extensions/run-configurations/` (task templates), `/extensions/issue-matchers/`, `/extensions/images/` (`Task.image` sizes/@2x), `/extensions/getting-started/` (activation events).
 - **Types:** `@types/nova-editor-node` (`node_modules/@types/nova-editor-node/index.d.ts`, one file) is the quickest API reference. Keep it current with `yarn install`.
+- **Preferences** (https://docs.nova.app/extensions/preferences/): types `boolean`, `enum`, `string`, `text`, `number`, `path`, `stringArray`, `pathArray`, `section`, `command` (a button running an extension command). Every item takes `title`, `description`, `default`, `required`, `placeholder` and `link` (a (?) help button). Enums take `values` (strings or `[value, label]`), `radio` (Nova uses radio buttons for ≤ 3 choices unless `radio: false`), `resolve` (a command returning the choices when the pane is shown) and `allowsCustom`. The documented workspace key is `configWorkspace`.
 - **Enum values needn't be strings.** The preferences docs say enum `values` are strings, but `null`, `true` and `false` work as stored values (tested in Nova, 6.0.0). The workspace settings rely on this.
 - **`onWorkspaceContains` takes a glob.** An exact name (e.g. `maidfile`) won't match variants like `maidfile.toml`. The docs don't say whether matching is case-sensitive, so activation events list exact filenames in each case (tested in Nova, 6.0.1: `taskfile.yml`, `Taskfile.dist.yml`, `maidfile`, `maidfile.toml` activate; `maidfile.md` doesn't).
 - **`nova.fs.watch`** docs don't say what path the callback receives (absolute or relative) or how the glob is matched. `isRootFile()` in `src/index.ts` handles both path forms; tested in Nova (6.0.1): root edits reload, `npm install` doesn't cause a burst of reloads.

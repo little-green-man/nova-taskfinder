@@ -17,6 +17,9 @@ import {
 } from './parsers';
 import { packageManagerFiles } from './scripts';
 import { createReloader, isWatchedFile } from './watch';
+import { choices, projectChoices, resolveCommand } from './settings';
+import { resetState as resetProcessState } from './process';
+import { resetState as resetNotifyState } from './notify';
 
 interface Feature {
 	key: string;
@@ -176,6 +179,22 @@ const activate = async () => {
 		observeConfigWithWorkspaceOverride(feature.key, safeToggle).forEach((d) => nova.subscriptions.add(d));
 		safeToggle();
 	});
+
+	/* Refresh Tasks: forget install checks and shown notifications, then re-read every source */
+	nova.subscriptions.add(
+		nova.commands.register('taskfinder.refresh', () => {
+			resetProcessState();
+			resetNotifyState();
+			features.forEach((feature) => {
+				if (active.has(feature.key)) nova.workspace.reloadTasks(feature.id);
+			});
+		})
+	);
+
+	/* Project Settings pop-ups name the current preference: "Use Global Setting (On)" */
+	Object.keys(choices).forEach((key) =>
+		nova.subscriptions.add(nova.commands.register(resolveCommand(key), () => projectChoices(key, nova.config.get(key))))
+	);
 
 	/* these settings are read on each provideTasks(), so a reload is enough */
 	const reloadIfActive = (ids: string[]) =>

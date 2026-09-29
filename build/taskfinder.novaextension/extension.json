@@ -4,7 +4,7 @@
 	"imageName": "icon",
 	"organization": "Little Green Man Ltd",
 	"description": "Automatically offers Node (npm, yarn, pnpm, bun), Composer, Taskfile, Maidfile, just, Deno, Make and Laravel artisan tasks as Nova Tasks.",
-	"version": "7.1.0",
+	"version": "7.2.0",
 	"categories": ["tasks"],
 	"homepage": "https://github.com/little-green-man/nova-taskfinder",
 	"repository": "https://github.com/little-green-man/nova-taskfinder",
@@ -44,216 +44,86 @@
 		"filesystem": "readonly",
 		"process": true
 	},
-	"config-workspace": [
+	"commands": {
+		"extensions": [
+			{
+				"title": "Refresh Tasks",
+				"command": "taskfinder.refresh"
+			}
+		]
+	},
+	"config": [
 		{
-			"title": "Node Options",
-			"description": "\"Global Setting\" uses the value from the extension's preferences.",
+			"title": "Task Sources",
+			"description": "Look for tasks in these files. Each is only read when a project has one.",
 			"type": "section",
+			"link": "https://github.com/little-green-man/nova-taskfinder#task-sources",
 			"children": [
-				{
-					"key": "taskfinder.package-manager",
-					"title": "Package Manager",
-					"description": "Automatic uses the packageManager field, then devEngines.packageManager, then the lockfile (bun, pnpm, yarn, then npm), falling back to npm.",
-					"type": "enum",
-					"radio": false,
-					"values": [
-						[null, "Global Setting"],
-						["auto", "Automatic"],
-						["npm", "npm"],
-						["yarn", "yarn"],
-						["pnpm", "pnpm"],
-						["bun", "bun"]
-					],
-					"default": null
-				}
-			]
-		},
-		{
-			"title": "Autopopulation",
-			"description": "\"Global Setting\" uses the value from the extension's preferences. Changes apply immediately.",
-			"type": "section",
-			"children": [
-				{
-					"key": "taskfinder.auto-composer",
-					"title": "Include Composer Tasks",
-					"type": "enum",
-					"radio": false,
-					"values": [
-						[null, "Global Setting"],
-						[true, "Enabled"],
-						[false, "Disabled"]
-					],
-					"default": null
-				},
 				{
 					"key": "taskfinder.auto-node",
-					"title": "Include Node Tasks",
-					"type": "enum",
-					"radio": false,
-					"values": [
-						[null, "Global Setting"],
-						[true, "Enabled"],
-						[false, "Disabled"]
-					],
-					"default": null
+					"title": "Node (package.json)",
+					"type": "boolean",
+					"default": true
+				},
+				{
+					"key": "taskfinder.auto-composer",
+					"title": "Composer (composer.json)",
+					"type": "boolean",
+					"default": true
 				},
 				{
 					"key": "taskfinder.auto-taskfile",
-					"title": "Include Taskfile Tasks",
-					"type": "enum",
-					"radio": false,
-					"values": [
-						[null, "Global Setting"],
-						[true, "Enabled"],
-						[false, "Disabled"]
-					],
-					"default": null
+					"title": "Taskfile",
+					"type": "boolean",
+					"default": true
 				},
 				{
 					"key": "taskfinder.auto-maidfile",
-					"title": "Include Maidfile Tasks",
-					"type": "enum",
-					"radio": false,
-					"values": [
-						[null, "Global Setting"],
-						[true, "Enabled"],
-						[false, "Disabled"]
-					],
-					"default": null
+					"title": "Maidfile",
+					"type": "boolean",
+					"default": true
 				},
 				{
 					"key": "taskfinder.auto-just",
-					"title": "Include just Recipes",
-					"type": "enum",
-					"radio": false,
-					"values": [
-						[null, "Global Setting"],
-						[true, "Enabled"],
-						[false, "Disabled"]
-					],
-					"default": null
+					"title": "just (justfile)",
+					"type": "boolean",
+					"default": true
 				},
 				{
 					"key": "taskfinder.auto-deno",
-					"title": "Include Deno Tasks",
-					"type": "enum",
-					"radio": false,
-					"values": [
-						[null, "Global Setting"],
-						[true, "Enabled"],
-						[false, "Disabled"]
-					],
-					"default": null
+					"title": "Deno (deno.json)",
+					"type": "boolean",
+					"default": true
 				},
 				{
 					"key": "taskfinder.auto-make",
-					"title": "Include Make Targets",
-					"type": "enum",
-					"radio": false,
-					"values": [
-						[null, "Global Setting"],
-						[true, "Enabled"],
-						[false, "Disabled"]
-					],
-					"default": null
+					"title": "Make (Makefile)",
+					"type": "boolean",
+					"default": true
 				},
 				{
 					"key": "taskfinder.auto-artisan",
-					"title": "Include Laravel artisan Commands",
-					"type": "enum",
-					"radio": false,
-					"values": [
-						[null, "Global Setting"],
-						[true, "Enabled"],
-						[false, "Disabled"]
-					],
-					"default": null
+					"title": "Laravel (artisan)",
+					"type": "boolean",
+					"default": true
 				},
 				{
-					"key": "taskfinder.show-lifecycle-scripts",
-					"title": "Show Lifecycle Scripts",
-					"description": "npm hooks (e.g. postinstall, prebuild) and Composer event scripts (e.g. post-install-cmd), which run automatically.",
-					"type": "enum",
-					"radio": false,
-					"values": [
-						[null, "Global Setting"],
-						[true, "Show"],
-						[false, "Hide"]
-					],
-					"default": null
+					"title": "Refresh Tasks",
+					"description": "Re-reads every source, e.g. after installing a tool.",
+					"type": "command",
+					"command": "taskfinder.refresh"
 				}
 			]
 		},
 		{
-			"title": "just Options",
+			"title": "Node and Composer",
 			"type": "section",
-			"children": [
-				{
-					"key": "taskfinder.just-confirm-recipes",
-					"title": "[confirm] Recipes",
-					"description": "Recipes marked [confirm] ask before running, which a Nova task can't answer. Run with --yes confirms them when you run the task.",
-					"type": "enum",
-					"radio": false,
-					"values": [
-						[null, "Global Setting"],
-						["exclude", "Exclude"],
-						["yes", "Run with --yes"]
-					],
-					"default": null
-				}
-			],
-			"description": "\"Global Setting\" uses the value from the extension's preferences."
-		},
-		{
-			"title": "Make Options",
-			"type": "section",
-			"children": [
-				{
-					"key": "taskfinder.make-listing",
-					"title": "List Targets From",
-					"description": "Make database runs make -pRrq, which finds every target (including included files) but runs the Makefile's $(shell …) when tasks load. Read Makefile only reads the Makefile and its literal includes, running nothing.",
-					"type": "enum",
-					"radio": false,
-					"values": [
-						[null, "Global Setting"],
-						["database", "Make database"],
-						["file", "Read Makefile"]
-					],
-					"default": null
-				}
-			],
-			"description": "\"Global Setting\" uses the value from the extension's preferences."
-		},
-		{
-			"title": "Laravel Options",
-			"type": "section",
-			"children": [
-				{
-					"key": "taskfinder.artisan-commands",
-					"title": "Artisan Commands",
-					"description": "Listing starts the Laravel app. Common lists serve, test, migrate, queue and other everyday commands plus app:* commands; All lists every command that needs no arguments.",
-					"type": "enum",
-					"radio": false,
-					"values": [
-						[null, "Global Setting"],
-						["common", "Common"],
-						["all", "All"]
-					],
-					"default": null
-				}
-			],
-			"description": "\"Global Setting\" uses the value from the extension's preferences."
-		}
-	],
-	"config": [
-		{
-			"title": "Node Options",
-			"type": "section",
+			"link": "https://github.com/little-green-man/nova-taskfinder#node-and-composer",
 			"children": [
 				{
 					"key": "taskfinder.package-manager",
 					"title": "Package Manager",
-					"description": "Automatic uses the packageManager field, then devEngines.packageManager, then the lockfile (bun, pnpm, yarn, then npm), falling back to npm.",
+					"description": "Automatic uses the project's packageManager setting or lockfile.",
 					"type": "enum",
 					"radio": false,
 					"values": [
@@ -264,121 +134,288 @@
 						["bun", "bun"]
 					],
 					"default": "auto"
-				}
-			]
-		},
-		{
-			"title": "Autopopulation",
-			"type": "section",
-			"children": [
-				{
-					"key": "taskfinder.auto-composer",
-					"title": "Include Composer Tasks",
-					"type": "boolean",
-					"default": true
-				},
-				{
-					"key": "taskfinder.auto-node",
-					"title": "Include Node Tasks",
-					"type": "boolean",
-					"default": true
-				},
-				{
-					"key": "taskfinder.auto-taskfile",
-					"title": "Include Taskfile Tasks",
-					"type": "boolean",
-					"default": true
-				},
-				{
-					"key": "taskfinder.auto-maidfile",
-					"title": "Include Maidfile Tasks",
-					"type": "boolean",
-					"default": true
-				},
-				{
-					"key": "taskfinder.auto-just",
-					"title": "Include just Recipes",
-					"type": "boolean",
-					"default": true
-				},
-				{
-					"key": "taskfinder.auto-deno",
-					"title": "Include Deno Tasks",
-					"type": "boolean",
-					"default": true
-				},
-				{
-					"key": "taskfinder.auto-make",
-					"title": "Include Make Targets",
-					"type": "boolean",
-					"default": true
-				},
-				{
-					"key": "taskfinder.auto-artisan",
-					"title": "Include Laravel artisan Commands",
-					"type": "boolean",
-					"default": true
 				},
 				{
 					"key": "taskfinder.show-lifecycle-scripts",
 					"title": "Show Lifecycle Scripts",
-					"description": "npm hooks (e.g. postinstall, prebuild) and Composer event scripts (e.g. post-install-cmd), which run automatically.",
+					"description": "Hooks such as postinstall and prebuild, and Composer events, which run automatically.",
 					"type": "boolean",
 					"default": false
 				}
 			]
 		},
 		{
-			"title": "just Options",
+			"title": "just",
 			"type": "section",
+			"link": "https://github.com/little-green-man/nova-taskfinder#just",
 			"children": [
 				{
 					"key": "taskfinder.just-confirm-recipes",
-					"title": "[confirm] Recipes",
-					"description": "Recipes marked [confirm] ask before running, which a Nova task can't answer. Run with --yes confirms them when you run the task.",
+					"title": "Recipes That Ask to Confirm",
 					"type": "enum",
-					"radio": false,
+					"radio": true,
 					"values": [
-						["exclude", "Exclude"],
-						["yes", "Run with --yes"]
+						["exclude", "Hide"],
+						["yes", "Show, and confirm when run"]
 					],
 					"default": "exclude"
 				}
 			]
 		},
 		{
-			"title": "Make Options",
+			"title": "Make",
 			"type": "section",
+			"link": "https://github.com/little-green-man/nova-taskfinder#make",
 			"children": [
 				{
 					"key": "taskfinder.make-listing",
-					"title": "List Targets From",
-					"description": "Make database runs make -pRrq, which finds every target (including included files) but runs the Makefile's $(shell …) when tasks load. Read Makefile only reads the Makefile and its literal includes, running nothing.",
+					"title": "Find Targets By",
 					"type": "enum",
-					"radio": false,
+					"radio": true,
 					"values": [
-						["database", "Make database"],
-						["file", "Read Makefile"]
+						[
+							"database",
+							"Asking make: finds every target, but runs the Makefile's shell commands"
+						],
+						["file", "Reading the Makefile: runs nothing"]
 					],
 					"default": "database"
 				}
 			]
 		},
 		{
-			"title": "Laravel Options",
+			"title": "Laravel",
 			"type": "section",
+			"link": "https://github.com/little-green-man/nova-taskfinder#laravel",
 			"children": [
 				{
 					"key": "taskfinder.artisan-commands",
 					"title": "Artisan Commands",
-					"description": "Listing starts the Laravel app. Common lists serve, test, migrate, queue and other everyday commands plus app:* commands; All lists every command that needs no arguments.",
+					"description": "Common lists everyday commands and app:* commands. Listing starts the Laravel app.",
 					"type": "enum",
-					"radio": false,
+					"radio": true,
 					"values": [
 						["common", "Common"],
 						["all", "All"]
 					],
 					"default": "common"
+				}
+			]
+		}
+	],
+	"configWorkspace": [
+		{
+			"title": "Task Sources",
+			"description": "Use Global Setting follows the extension's preferences; choose another value to set it for this project only.",
+			"type": "section",
+			"link": "https://github.com/little-green-man/nova-taskfinder#task-sources",
+			"children": [
+				{
+					"key": "taskfinder.auto-node",
+					"title": "Node (package.json)",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						[null, "Use Global Setting"],
+						[true, "On"],
+						[false, "Off"]
+					],
+					"resolve": "taskfinder.auto-node.choices",
+					"default": null
+				},
+				{
+					"key": "taskfinder.auto-composer",
+					"title": "Composer (composer.json)",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						[null, "Use Global Setting"],
+						[true, "On"],
+						[false, "Off"]
+					],
+					"resolve": "taskfinder.auto-composer.choices",
+					"default": null
+				},
+				{
+					"key": "taskfinder.auto-taskfile",
+					"title": "Taskfile",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						[null, "Use Global Setting"],
+						[true, "On"],
+						[false, "Off"]
+					],
+					"resolve": "taskfinder.auto-taskfile.choices",
+					"default": null
+				},
+				{
+					"key": "taskfinder.auto-maidfile",
+					"title": "Maidfile",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						[null, "Use Global Setting"],
+						[true, "On"],
+						[false, "Off"]
+					],
+					"resolve": "taskfinder.auto-maidfile.choices",
+					"default": null
+				},
+				{
+					"key": "taskfinder.auto-just",
+					"title": "just (justfile)",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						[null, "Use Global Setting"],
+						[true, "On"],
+						[false, "Off"]
+					],
+					"resolve": "taskfinder.auto-just.choices",
+					"default": null
+				},
+				{
+					"key": "taskfinder.auto-deno",
+					"title": "Deno (deno.json)",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						[null, "Use Global Setting"],
+						[true, "On"],
+						[false, "Off"]
+					],
+					"resolve": "taskfinder.auto-deno.choices",
+					"default": null
+				},
+				{
+					"key": "taskfinder.auto-make",
+					"title": "Make (Makefile)",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						[null, "Use Global Setting"],
+						[true, "On"],
+						[false, "Off"]
+					],
+					"resolve": "taskfinder.auto-make.choices",
+					"default": null
+				},
+				{
+					"key": "taskfinder.auto-artisan",
+					"title": "Laravel (artisan)",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						[null, "Use Global Setting"],
+						[true, "On"],
+						[false, "Off"]
+					],
+					"resolve": "taskfinder.auto-artisan.choices",
+					"default": null
+				},
+				{
+					"title": "Refresh Tasks",
+					"description": "Re-reads every source, e.g. after installing a tool.",
+					"type": "command",
+					"command": "taskfinder.refresh"
+				}
+			]
+		},
+		{
+			"title": "Node and Composer",
+			"type": "section",
+			"link": "https://github.com/little-green-man/nova-taskfinder#node-and-composer",
+			"children": [
+				{
+					"key": "taskfinder.package-manager",
+					"title": "Package Manager",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						[null, "Use Global Setting"],
+						["auto", "Automatic"],
+						["npm", "npm"],
+						["yarn", "yarn"],
+						["pnpm", "pnpm"],
+						["bun", "bun"]
+					],
+					"resolve": "taskfinder.package-manager.choices",
+					"default": null
+				},
+				{
+					"key": "taskfinder.show-lifecycle-scripts",
+					"title": "Lifecycle Scripts",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						[null, "Use Global Setting"],
+						[true, "Show"],
+						[false, "Hide"]
+					],
+					"resolve": "taskfinder.show-lifecycle-scripts.choices",
+					"default": null
+				}
+			]
+		},
+		{
+			"title": "just",
+			"type": "section",
+			"link": "https://github.com/little-green-man/nova-taskfinder#just",
+			"children": [
+				{
+					"key": "taskfinder.just-confirm-recipes",
+					"title": "Recipes That Ask to Confirm",
+					"type": "enum",
+					"radio": true,
+					"values": [
+						[null, "Use Global Setting"],
+						["exclude", "Hide"],
+						["yes", "Show, and confirm when run"]
+					],
+					"resolve": "taskfinder.just-confirm-recipes.choices",
+					"default": null
+				}
+			]
+		},
+		{
+			"title": "Make",
+			"type": "section",
+			"link": "https://github.com/little-green-man/nova-taskfinder#make",
+			"children": [
+				{
+					"key": "taskfinder.make-listing",
+					"title": "Find Targets By",
+					"description": "Asking make finds every target but runs the Makefile's shell commands; reading the Makefile runs nothing.",
+					"type": "enum",
+					"radio": true,
+					"values": [
+						[null, "Use Global Setting"],
+						["database", "Asking make"],
+						["file", "Reading the Makefile"]
+					],
+					"resolve": "taskfinder.make-listing.choices",
+					"default": null
+				}
+			]
+		},
+		{
+			"title": "Laravel",
+			"type": "section",
+			"link": "https://github.com/little-green-man/nova-taskfinder#laravel",
+			"children": [
+				{
+					"key": "taskfinder.artisan-commands",
+					"title": "Artisan Commands",
+					"type": "enum",
+					"radio": true,
+					"values": [
+						[null, "Use Global Setting"],
+						["common", "Common"],
+						["all", "All"]
+					],
+					"resolve": "taskfinder.artisan-commands.choices",
+					"default": null
 				}
 			]
 		}
