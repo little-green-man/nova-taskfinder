@@ -10,7 +10,12 @@
 		"skipLibCheck": true,
 		"noImplicitReturns": true,
 		"noFallthroughCasesInSwitch": true,
-		"forceConsistentCasingInFileNames": true
+		"forceConsistentCasingInFileNames": true,
+		"types": [
+			"nova-editor-node"
+		]
 	},
-	"include": ["src"]
+	"include": [
+		"src"
+	]
 }

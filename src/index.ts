@@ -47,6 +47,28 @@ const features: Array<Feature> = [
 
 const active = new Map<string, Array<Disposable>>();
 
+/* Pending debounced reloads, per feature id */
+const reloadTimers = new Map<string, number>();
+const RELOAD_DELAY = 300;
+
+/* Collapse bursts of file changes (saves, branch switches) into one reload */
+const scheduleReload = (id: string) => {
+	cancelReload(id);
+	reloadTimers.set(
+		id,
+		setTimeout(() => {
+			reloadTimers.delete(id);
+			nova.workspace.reloadTasks(id);
+		}, RELOAD_DELAY)
+	);
+};
+
+const cancelReload = (id: string) => {
+	const timer = reloadTimers.get(id);
+	if (timer !== undefined) clearTimeout(timer);
+	reloadTimers.delete(id);
+};
+
 const isAutoEnabled = (key: string): boolean => {
 	const value = getConfigWithWorkspaceOverride(key);
 	return value === null || value === undefined ? true : Boolean(value);
@@ -72,7 +94,7 @@ const enable = (feature: Feature) => {
 	nova.workspace.reloadTasks(feature.id);
 
 	const watcher = nova.fs.watch(feature.glob, (path) => {
-		if (isRootFile(feature, path)) nova.workspace.reloadTasks(feature.id);
+		if (isRootFile(feature, path)) scheduleReload(feature.id);
 	});
 
 	active.set(feature.key, [assistant, watcher]);
@@ -84,6 +106,7 @@ const disable = (feature: Feature) => {
 
 	disposables.forEach((d) => d.dispose());
 	active.delete(feature.key);
+	cancelReload(feature.id);
 
 	nova.workspace.reloadTasks(feature.id);
 };
@@ -101,6 +124,8 @@ const deactivate = () => {
 
 	active.forEach((disposables) => disposables.forEach((d) => d.dispose()));
 	active.clear();
+	reloadTimers.forEach((timer) => clearTimeout(timer));
+	reloadTimers.clear();
 };
 
 const activate = async () => {
@@ -120,6 +145,13 @@ const activate = async () => {
 
 		disable(feature);
 		enable(feature);
+	}).forEach((d) => nova.subscriptions.add(d));
+
+	/* the lifecycle setting is read on each provideTasks(), so a reload is enough */
+	observeConfigWithWorkspaceOverride('taskfinder.show-lifecycle-scripts', () => {
+		['taskfinder-tasks-node', 'taskfinder-tasks-composer'].forEach((id) => {
+			if (features.some((f) => f.id === id && active.has(f.key))) nova.workspace.reloadTasks(id);
+		});
 	}).forEach((d) => nova.subscriptions.add(d));
 };
 

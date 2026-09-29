@@ -22,6 +22,8 @@ src/                         TypeScript source (the only code you edit)
   index.ts                   activation, feature registry, enable/disable/toggle
   config.ts                  workspace-over-global config helpers
   process.ts                 run/parse helpers for CLI-based parsers
+  scripts.ts                 pure naming rules (Build/Clean, npm hooks, Composer events) — unit-tested
+  tasks.ts                   createTask() and the lifecycle setting, shared by all parsers
   globals.d.ts               FileSystem type fix (see "TypeScript quirks")
   parsers/                   one Task Assistant class per source
   images/                    source artwork (Acorn)
@@ -35,6 +37,7 @@ README.md                    GitHub README (developer-facing)
 CHANGELOG.md                 source of truth for the changelog
 taskfile.yml, maidfile.toml  sample files so Taskfile/Maid tasks appear while developing
 tests/projects/              manual test projects to open in Nova, one per case (expected results in tests/README.md)
+tests/unit/                  unit tests (node:test), own tsconfig with Node types
 IMPROVEMENTS.md              backlog (gitignored, local only)
 ```
 
@@ -59,6 +62,8 @@ Lifecycle:
 - `enable()` — registers the Task Assistant and file watcher, stores both disposables in the module-level `active` map, and reloads tasks. No-op if already enabled.
 - `disable()` — disposes that feature's assistant and watcher, removes it from `active`, reloads tasks.
 - Package manager change — disable + enable the Node feature so a new `NodeTaskAssistant` reads the new value (the parser reads the setting once, in its constructor).
+- Lifecycle setting change — reload the Node and Composer tasks; parsers read `taskfinder.show-lifecycle-scripts` on every `provideTasks()`.
+- File changes — `scheduleReload()` debounces per feature (300 ms), so bursts (saves, branch switches) cause one reload. `disable()` and `deactivate()` clear pending timers.
 - `deactivate()` — disposes everything in `active`.
 
 **Why an `active` map instead of `nova.subscriptions`:** features must be disposed and re-registered individually at runtime when settings change. `nova.subscriptions` has no per-item removal, so it only holds the config observers, which live for the whole session. Anything in `active` must be disposed in `deactivate()` or it leaks and can double-register on reload.
@@ -80,8 +85,9 @@ Lifecycle:
 - File-based parsers (Node, Composer) read with `nova.fs.open(path).read()` and `JSON.parse`, inside `try/catch` that logs and returns what it has.
 - CLI-based parsers (Taskfile, Maid) use `run()` from `src/process.ts`: spawns with `shell: true` (so the user's `PATH` is used) in the workspace root, collects all output and resolves on exit, never rejecting. Parse the whole output with `parseJson()`. On failure return `[]` — never `undefined`, never throw — and report with `warnOnce()` so reloads don't flood the console.
 - Check the output, not just the exit status: an unrelated `maid` exits 0 on errors.
-- Tasks use `TaskProcessAction` with `shell: true` and `cwd: nova.workspace.path`.
-- Only Maidfile currently binds `Task.Build`; others bind `Task.Run`.
+- Build tasks with `createTask(name, command, args)` (`src/tasks.ts`): a `TaskProcessAction` with `shell: true` and `cwd: nova.workspace.path`, always bound to Run, plus Build for `build`/`compile`/`build:*`/`compile:*` and Clean for `clean`/`clean:*` (`actionsFor()` in `src/scripts.ts`). Never bind Build/Clean *instead of* Run: Nova disables any action a task doesn't set.
+- Keep naming decisions in `src/scripts.ts` (no imports, no Nova globals) so they can be unit-tested.
+- Lifecycle scripts are hidden unless `taskfinder.show-lifecycle-scripts` is on: npm's fixed lifecycle names always; `pre<x>`/`post<x>` only when `<x>` exists and the package manager runs them (npm, Yarn 1 — not Yarn 2+ or pnpm); Composer command/installer/package events, but not plugin events (`init`, `command`), which are likely real scripts.
 
 ## Configuration design
 
@@ -104,7 +110,8 @@ Things learnt the hard way or not obvious from the docs.
 - **`onWorkspaceContains` takes a glob.** An exact name (e.g. `maidfile`) won't match variants like `maidfile.toml`. The docs don't say whether matching is case-sensitive, so activation events list exact filenames in each case (tested in Nova, 6.0.1: `taskfile.yml`, `Taskfile.dist.yml`, `maidfile`, `maidfile.toml` activate; `maidfile.md` doesn't).
 - **`nova.fs.watch`** docs don't say what path the callback receives (absolute or relative) or how the glob is matched. `isRootFile()` in `src/index.ts` handles both path forms; tested in Nova (6.0.1): root edits reload, `npm install` doesn't cause a burst of reloads.
 - **`TaskProcessAction` defaults:** `cwd` defaults to the project folder; if `matchers` is omitted Nova applies its standard issue matchers. Passing `matchers` replaces that set.
-- **`Task`** has only `name`, `image`, `buildBeforeRunning` and actions (`Task.Build`, `Task.Run`, `Task.Clean`). No description field.
+- **`Task`** has only `name`, `image`, `buildBeforeRunning` and actions (`Task.Build`, `Task.Run`, `Task.Clean`). No description field. Any action not set disables that button/menu item for the task.
+- **Timers:** `setTimeout`/`clearTimeout` exist in Nova's runtime. The main `tsconfig` limits `types` to `nova-editor-node` so Node's types (used by tests) don't change them.
 - **`Process.onStdout` is line-based.** Buffer output and parse on exit rather than parsing each line as a complete document (`run()` in `src/process.ts` does this).
 - **Shell and PATH.** Nova doesn't inherit the login shell environment by default; `shell: true` on `Process`/`TaskProcessAction` makes tools like `npm`, `task` and `maid` resolve from the user's `PATH`. The first match on `PATH` wins, so when debugging, check `zsh -lc 'which -a <tool>'` and restart Nova after changing `PATH`.
 - **Command name collisions.** npm's `maid` package (egoist's markdown task runner, reads `maidfile.md`) is unrelated and exits 0 on errors. This extension targets theMackabu's `maid` (formerly exact-labs; `cargo install maid`).
@@ -121,13 +128,16 @@ Things learnt the hard way or not obvious from the docs.
 ## Testing
 
 - **Manual:** `tests/projects/` has one small project per case (each source, filename variants, wildcard/hidden tasks, root-only, the `maidfile.md` collision, all sources for settings toggles). Open each as its own project with the dev build; expected results are in `tests/README.md`. Every task only echoes.
-- **Automated:** none yet (IMPROVEMENTS #12). Parsers only touch Nova through a few globals (`nova.workspace.path`, `nova.fs.stat`, `nova.path`, `Process`, `Task`, `TaskProcessAction`), so stubbing those in Node and bundling a parser with `esbuild --platform=node` runs it against real `task`/`maid` binaries. This was used to verify 6.0.1.
+- **Unit:** `yarn test` bundles `tests/unit/*.test.ts` with esbuild (`--platform=node`, output in gitignored `tests/.build`) and runs them with `node --test`. Bundling (rather than Node's own TypeScript support) keeps extensionless imports working and matches how the extension is built. Tests type-check via `tests/unit/tsconfig.json` (part of `yarn lint`). They cover `src/scripts.ts` and read inputs from `tests/projects/`. `yarn release` runs them first.
+- **Parsers (not automated yet, IMPROVEMENTS #12):** parsers only touch Nova through a few globals (`nova.workspace.path`, `nova.workspace.config`, `nova.config`, `nova.fs.stat/open`, `nova.path`, `Process`, `Task`, `TaskProcessAction`), so stubbing those in Node and bundling a parser with `esbuild --platform=node` runs it against real files and binaries. This was used to verify 6.0.1 and 6.1.0.
 
 ## Build and tooling
 
 - `yarn build` — clean `Scripts/`, bundle `src/index.ts` → `Scripts/main.dist.js` (CJS, minified; flags inline in `package.json`), copy `CHANGELOG.md` into the bundle.
 - `yarn watch` — rebuild on change.
-- `yarn lint` — `tsc --noEmit`.
+- `yarn clear-scripts` — delete `Scripts/` (used by `build`/`watch`). Deliberately not called `clean`: this repo's own scripts appear as tasks in its Nova window, and a `clean` script would be bound to Clean (⇧⌘K), which would delete the dev build and stop the extension in every window.
+- `yarn lint` — `tsc --noEmit` for `src` and `tests/unit`.
+- `yarn test` — unit tests (see Testing).
 - `yarn activate` — open the bundle in Nova as a dev extension. Disable the Extension Library copy first, and leave the window that opens minimised.
 - `yarn release` — build, then `nova extension publish` (validates, asks to confirm, publishes). Don't name it `publish`: that's a built-in Yarn 1 command and would try to publish to npm.
 - `nova extension validate build/taskfinder.novaextension` — validate without publishing.
@@ -140,13 +150,13 @@ Things learnt the hard way or not obvious from the docs.
 1. Update `CHANGELOG.md` (new `## Version X.Y` at the top, credit contributors with GitHub links).
 2. Bump `version` in both `package.json` and `build/taskfinder.novaextension/extension.json` — they must match.
 3. Update both READMEs if features or settings changed; add contributors to Acknowledgements in both.
-4. `yarn lint`, `yarn build`, `nova extension validate build/taskfinder.novaextension`, then test with `yarn activate` against `tests/projects/` (see `tests/README.md`).
+4. `yarn lint`, `yarn test`, `yarn build`, `nova extension validate build/taskfinder.novaextension`, then test with `yarn activate` against `tests/projects/` (see `tests/README.md`).
 5. Merge to `master`, then `yarn release` (needs `nova extension login`; check with `nova extension whoami`).
 
 Versioning: bump major when existing users' behaviour changes (e.g. setting defaults), minor for new sources/features, patch for fixes.
 
 ## Contributing workflow
 
-- `master` requires an approving review to merge PRs.
+- `master` requires a PR (no direct pushes) but no approving reviews, as there's a single maintainer. Merge your own PRs with `gh pr merge <n> --merge`.
 - Contributor PRs usually come from the contributor's fork. With "Allow edits by maintainers" on, you can push follow-up commits to that branch; use the SSH URL (`git@github.com:<user>/nova-taskfinder.git`).
 - Don't add AI attribution to commits, PRs or docs.

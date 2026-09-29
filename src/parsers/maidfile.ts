@@ -1,4 +1,5 @@
 import { parseJson, rootHasFile, run, warnOnce } from '../process';
+import { createTask } from '../tasks';
 
 /* maid looks for "maidfile" with these extensions (https://github.com/theMackabu/maid) */
 export const maidfileFiles = ['maidfile', 'maidfile.toml', 'maidfile.yaml', 'maidfile.yml', 'maidfile.json', 'Maidfile', 'Maidfile.toml'];
@@ -36,16 +37,7 @@ class Maidfile {
 		Object.keys(json.tasks).forEach((key) => {
 			if (json.tasks[key]?.hide === true || key.startsWith('_')) return;
 
-			const task = new Task(key);
-			task.setAction(
-				key.includes('build') || key.includes('compile') ? Task.Build : Task.Run,
-				new TaskProcessAction(this.packageProcessName, {
-					cwd: nova.workspace.path ?? undefined,
-					args: [key],
-					shell: true,
-				})
-			);
-			tasks.push(task);
+			tasks.push(createTask(key, this.packageProcessName, [key]));
 		});
 
 		console.info(`maidfile has ${tasks.length} task(s)`);

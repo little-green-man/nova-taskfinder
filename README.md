@@ -44,6 +44,8 @@ As the feature set grows, it becomes more obvious why Panic may leave this funct
 
 What does it do? In short, **auto-populate the editors tasklist with tasks from your project files** (Node, Composer, Maidfile and Taskfile at the moment). But also:
 
+- Binds `build`/`compile` scripts to Build (⌘B) and `clean` to Clean (⇧⌘K)
+- Hides lifecycle scripts that run automatically (npm hooks, Composer events), with a setting to show them
 - Allows you to modify use of npm/yarn on a per-project basis
 - Allows you to choose which features to enable (per-project also)
 - Applies setting changes immediately, without restarting the workspace

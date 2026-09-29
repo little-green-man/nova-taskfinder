@@ -4,7 +4,7 @@
 	"imageName": "icon",
 	"organization": "Little Green Man Ltd",
 	"description": "Automatically offers Composer, Node, Maidfile & Taskfile actions as Nova Tasks.",
-	"version": "6.0.1",
+	"version": "6.1.0",
 	"categories": ["tasks"],
 	"homepage": "https://github.com/little-green-man/nova-taskfinder",
 	"repository": "https://github.com/little-green-man/nova-taskfinder",
@@ -106,6 +106,19 @@
 						[false, "Disabled"]
 					],
 					"default": null
+				},
+				{
+					"key": "taskfinder.show-lifecycle-scripts",
+					"title": "Show Lifecycle Scripts",
+					"description": "npm hooks (e.g. postinstall, prebuild) and Composer event scripts (e.g. post-install-cmd), which run automatically.",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						[null, "Global Setting"],
+						[true, "Show"],
+						[false, "Hide"]
+					],
+					"default": null
 				}
 			]
 		}
@@ -155,6 +168,13 @@
 					"title": "Include Maidfile Tasks",
 					"type": "boolean",
 					"default": true
+				},
+				{
+					"key": "taskfinder.show-lifecycle-scripts",
+					"title": "Show Lifecycle Scripts",
+					"description": "npm hooks (e.g. postinstall, prebuild) and Composer event scripts (e.g. post-install-cmd), which run automatically.",
+					"type": "boolean",
+					"default": false
 				}
 			]
 		}

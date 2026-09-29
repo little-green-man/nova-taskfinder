@@ -1,3 +1,6 @@
+import { isComposerEvent } from '../scripts';
+import { createTask, showLifecycleScripts } from '../tasks';
+
 class Composer {
 	packageProcessName: string;
 	packageJsonPath: string;
@@ -16,20 +19,12 @@ class Composer {
 				const contents = nova.fs.open(this.packageJsonPath).read() as string;
 				const json = JSON.parse(contents);
 				if (json.hasOwnProperty('scripts')) {
-					for (var key in json.scripts) {
-						if (json.scripts.hasOwnProperty(key)) {
-							const task = new Task(key);
-							task.setAction(
-								Task.Run,
-								new TaskProcessAction(this.packageProcessName, {
-									cwd: nova.workspace.path as string,
-									args: ['run', key],
-									shell: true,
-								})
-							);
-							this.tasks.push(task);
-						}
-					}
+					const showEvents = showLifecycleScripts();
+
+					Object.keys(json.scripts).forEach((key) => {
+						if (!showEvents && isComposerEvent(key)) return;
+						this.tasks.push(createTask(key, this.packageProcessName, ['run', key]));
+					});
 				}
 			} catch (e) {
 				console.log(e);

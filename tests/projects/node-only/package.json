@@ -3,9 +3,13 @@
 	"private": true,
 	"scripts": {
 		"dev": "echo 'node: dev'",
-		"build": "echo 'node: build'",
-		"prebuild": "echo 'node: prebuild (lifecycle hook, runs before build)'",
+		"build": "echo 'node: build (⌘B)'",
+		"prebuild": "echo 'node: prebuild (hook, hidden by default)'",
 		"test": "echo 'node: test'",
-		"lint:fix": "echo 'node: lint:fix'"
+		"lint:fix": "echo 'node: lint:fix'",
+		"clean": "echo 'node: clean (⇧⌘K)'",
+		"build:css": "echo 'node: build:css (⌘B)'",
+		"rebuild-cache": "echo 'node: rebuild-cache (Run only)'",
+		"postinstall": "echo 'node: postinstall (lifecycle, hidden by default)'"
 	}
 }

@@ -1,18 +1,21 @@
 {
 	"name": "task_finder",
-	"version": "6.0.1",
+	"version": "6.1.0",
 	"description": "Automatically offers Composer, Node, Maidfile & Taskfile actions as Nova Tasks.",
 	"main": "index.js",
 	"license": "MIT",
 	"scripts": {
-		"clean": "rm -rf build/taskfinder.novaextension/Scripts",
-		"watch": "yarn clean && esbuild src/index.ts --bundle --minify --format=cjs --outfile=build/taskfinder.novaextension/Scripts/main.dist.js --watch",
-		"build": "yarn clean && esbuild src/index.ts --bundle --minify --format=cjs --outfile=build/taskfinder.novaextension/Scripts/main.dist.js && cp ./CHANGELOG.md ./build/taskfinder.novaextension/CHANGELOG.md",
-		"lint": "tsc --noEmit --pretty",
+		"clear-scripts": "rm -rf build/taskfinder.novaextension/Scripts",
+		"watch": "yarn clear-scripts && esbuild src/index.ts --bundle --minify --format=cjs --outfile=build/taskfinder.novaextension/Scripts/main.dist.js --watch",
+		"build": "yarn clear-scripts && esbuild src/index.ts --bundle --minify --format=cjs --outfile=build/taskfinder.novaextension/Scripts/main.dist.js && cp ./CHANGELOG.md ./build/taskfinder.novaextension/CHANGELOG.md",
+		"lint": "tsc --noEmit --pretty && tsc --noEmit --pretty -p tests/unit",
 		"activate": "nova extension activate build/taskfinder.novaextension",
-		"release": "yarn build && nova extension publish build/taskfinder.novaextension"
+		"release": "yarn test && yarn build && nova extension publish build/taskfinder.novaextension",
+		"pop-tests": "open -a Nova $(find tests/projects -mindepth 1 -maxdepth 1 -type d ! -name root-only | sort) tests/projects/root-only/child",
+		"test": "rm -rf tests/.build && esbuild tests/unit/*.test.ts --bundle --platform=node --sourcemap --outdir=tests/.build --log-level=warning && node --enable-source-maps --test 'tests/.build/*.test.js'"
 	},
 	"devDependencies": {
+		"@types/node": "^22",
 		"@types/nova-editor-node": "^5.1.7",
 		"esbuild": "^0.28.2",
 		"typescript": "^5.0.4"

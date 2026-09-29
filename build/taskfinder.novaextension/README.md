@@ -6,6 +6,8 @@
 
 - _Nova Tasks_ automatically populated from top-level
   - `package.json`, `composer.json`, a [Taskfile](https://taskfile.dev) (`Taskfile.yml`, `taskfile.yaml`, `.dist` variants, …), and a [Maidfile](https://github.com/theMackabu/maid) (`maidfile`, `maidfile.toml`, `.yaml`, `.yml`, `.json`).
+- Scripts named `build`/`compile` also run with Build (⌘B), and `clean` with Clean (⇧⌘K)
+- Lifecycle scripts that run automatically (npm hooks such as `postinstall`, Composer events such as `post-install-cmd`) are hidden; turn on "Show Lifecycle Scripts" to list them
 - Choose Yarn/NPM for task execution, globally or per project
 - Choose which task types to include, globally or per project
 - Settings apply immediately, without restarting the workspace
@@ -13,7 +15,7 @@
 ## Usage
 
 - Install and activate the extension
-- Optional: in the extension's preferences, set your node package manager and which task types to include
+- Optional: in the extension's preferences, set your node package manager, which task types to include, and whether to show lifecycle scripts
 - Optional: in Project Settings, override any of these for the current project
 
 _Project settings default to "Global Setting", which follows the extension's preferences. Choose another value to override them for that project._
