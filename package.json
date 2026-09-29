@@ -9,7 +9,8 @@
 		"watch": "yarn clean && esbuild $(esbuild-config) --watch",
 		"build": "yarn clean && esbuild $(esbuild-config) && cp ./CHANGELOG.md ./build/taskfinder.novaextension/CHANGELOG.md",
 		"lint": "tsc --noEmit --pretty",
-		"activate": "nova extension activate build/taskfinder.novaextension"
+		"activate": "nova extension activate build/taskfinder.novaextension",
+		"release": "yarn build && nova extension publish build/taskfinder.novaextension"
 	},
 	"devDependencies": {
 		"@types/nova-editor-node": "^5.1.7",
