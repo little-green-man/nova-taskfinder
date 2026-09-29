@@ -37,7 +37,7 @@ export const maidSource: CliSource = {
 		}
 		if (diagnosis.kind !== 'ok') return diagnosis;
 
-		const tasks = diagnosis.value.tasks;
+		const tasks = diagnosis.value.tasks ?? {};
 		const names = Object.keys(tasks).filter((name) => tasks[name]?.hide !== true && !name.startsWith('_'));
 		return { kind: 'ok', tasks: names.map((name) => ({ name, command: 'maid', args: [name] })) };
 	},

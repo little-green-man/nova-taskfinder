@@ -1,6 +1,6 @@
 {
 	"name": "task_finder",
-	"version": "7.2.1",
+	"version": "7.3.0",
 	"description": "Automatically offers Composer, Node, Maidfile & Taskfile actions as Nova Tasks.",
 	"main": "index.js",
 	"license": "MIT",
@@ -21,6 +21,6 @@
 		"@types/nova-editor-node": "^5.1.7",
 		"esbuild": "^0.28.2",
 		"prettier": "^3.9",
-		"typescript": "^5.0.4"
+		"typescript": "^7.0.2"
 	}
 }

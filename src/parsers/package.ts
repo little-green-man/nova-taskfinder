@@ -1,4 +1,5 @@
 import { getConfigWithWorkspaceOverride } from '../config';
+import type { PackageJson } from '../formats';
 import { clearNotification, howToInstall, notify, openProjectSettings, setProjectSetting } from '../notify';
 import { fileExists, isInstalled, readRootFile } from '../process';
 import { detectPackageManager, hasConflictingLockfiles, isNpmHook, isPackageManager, packageManagerFiles, runsPrePostHooks } from '../scripts';
@@ -8,7 +9,7 @@ import type { FileSource } from '../source';
 import { showLifecycleScripts } from '../tasks';
 
 /* The package-manager setting wins; `auto` (or unset) detects from package.json and root files. Re-resolved on every reload, as lockfiles change. */
-function resolvePackageManager(json: any, rootFiles: string[]): Detection {
+function resolvePackageManager(json: PackageJson | null, rootFiles: string[]): Detection {
 	const setting = getConfigWithWorkspaceOverride('taskfinder.package-manager');
 	const detection = detectPackageManager(json, rootFiles);
 	return isPackageManager(setting) ? { ...detection, name: setting, source: 'setting' } : detection;
@@ -61,7 +62,7 @@ export const nodeSource: FileSource = {
 	ids: { error: 'node-invalid-json' },
 
 	list(file) {
-		let json: any;
+		let json: PackageJson | null;
 		try {
 			json = JSON.parse(readRootFile(file) ?? '{}');
 		} catch (e) {

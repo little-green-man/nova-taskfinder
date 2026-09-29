@@ -1,3 +1,5 @@
+import type { PackageJson } from './formats';
+
 /**
  * Pure naming rules shared by the parsers. No Nova globals or imports, so it can be unit-tested in Node.
  */
@@ -125,7 +127,7 @@ interface Detection {
  * Works out a project's package manager: the `packageManager` field, then `devEngines.packageManager`
  * (the first entry if it's an array), then root lockfiles, then npm. Unknown names are skipped.
  */
-function detectPackageManager(packageJson: any, rootFiles: string[]): Detection {
+function detectPackageManager(packageJson: PackageJson | null | undefined, rootFiles: string[]): Detection {
 	const present = lockfiles.filter(([file]) => rootFiles.includes(file));
 	const found = (name: PackageManager, source: string): Detection => ({ name, source, lockfiles: present.map(([file]) => file) });
 
@@ -146,7 +148,7 @@ const hasConflictingLockfiles = (files: string[]): boolean =>
 	new Set(lockfiles.filter(([file]) => files.includes(file)).map(([, name]) => name)).size > 1;
 
 interface HookContext {
-	packageJson: any;
+	packageJson: PackageJson | null | undefined;
 	hasYarnrcYml: boolean;
 	/** Contents of .npmrc, if any */
 	npmrc?: string;
