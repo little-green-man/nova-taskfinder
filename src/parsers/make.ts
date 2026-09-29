@@ -51,10 +51,12 @@ class Make {
 
 		if (getConfigWithWorkspaceOverride('taskfinder.make-listing') !== 'file') {
 			if (!(await isInstalled(this.packageProcessName))) {
-				notify('make-missing', "make isn't installed", "This project has a Makefile, but make isn't on your PATH, so its targets can't be listed. Turn Off stops reading the Makefile in this project.", [
-					howToInstall('make'),
-					turnOff('taskfinder.auto-make'),
-				]);
+				notify(
+					'make-missing',
+					"make isn't installed",
+					"This project has a Makefile, but make isn't on your PATH, so its targets can't be listed. Turn Off stops reading the Makefile in this project.",
+					[howToInstall('make'), turnOff('taskfinder.auto-make')]
+				);
 				return [];
 			}
 

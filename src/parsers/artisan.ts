@@ -15,10 +15,12 @@ class Artisan {
 		if (!firstRootFile(['artisan'])) return [];
 
 		if (!(await isInstalled(this.packageProcessName))) {
-			notify('php-missing', "PHP isn't installed", "This project has Laravel's artisan, but php isn't on your PATH, so its commands can't be listed. Turn Off stops listing artisan commands in this project.", [
-				howToInstall('php'),
-				turnOff('taskfinder.auto-artisan'),
-			]);
+			notify(
+				'php-missing',
+				"PHP isn't installed",
+				"This project has Laravel's artisan, but php isn't on your PATH, so its commands can't be listed. Turn Off stops listing artisan commands in this project.",
+				[howToInstall('php'), turnOff('taskfinder.auto-artisan')]
+			);
 			return [];
 		}
 

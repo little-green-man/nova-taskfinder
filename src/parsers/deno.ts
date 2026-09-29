@@ -13,10 +13,12 @@ class Deno {
 	checkInstalled() {
 		isInstalled(this.packageProcessName).then((installed) => {
 			if (installed) return;
-			notify('deno-missing', "Deno isn't installed", "This project has a deno.json, but deno isn't on your PATH, so its tasks won't run. Turn Off stops listing Deno tasks in this project.", [
-				howToInstall('deno'),
-				turnOff('taskfinder.auto-deno'),
-			]);
+			notify(
+				'deno-missing',
+				"Deno isn't installed",
+				"This project has a deno.json, but deno isn't on your PATH, so its tasks won't run. Turn Off stops listing Deno tasks in this project.",
+				[howToInstall('deno'), turnOff('taskfinder.auto-deno')]
+			);
 		});
 	}
 
@@ -28,7 +30,9 @@ class Deno {
 		try {
 			json = parseJsonc(readTextFile(`${nova.workspace.path}/${file}`));
 		} catch (e) {
-			notify('deno-invalid-json', `${file} has an error`, `Deno tasks can't be listed until it's fixed: ${(e as Error).message}`, [openRootFile(file)]);
+			notify('deno-invalid-json', `${file} has an error`, `Deno tasks can't be listed until it's fixed: ${(e as Error).message}`, [
+				openRootFile(file),
+			]);
 			return [];
 		}
 		clearNotification('deno-invalid-json');

@@ -50,7 +50,12 @@ class NodeTaskAssistant {
 				pm.source === 'setting'
 					? [howToInstall(pm.name), openProjectSettings]
 					: [howToInstall(pm.name), ...(pm.name === 'npm' ? [] : [setProjectSetting('Use npm', 'taskfinder.package-manager', 'npm')])];
-			notify('node-pm-missing', `${pm.name} isn't installed`, `This project uses ${pm.name} (${this.describeSource(pm)}), but ${pm.name} isn't on your PATH, so its tasks won't run.`, actions);
+			notify(
+				'node-pm-missing',
+				`${pm.name} isn't installed`,
+				`This project uses ${pm.name} (${this.describeSource(pm)}), but ${pm.name} isn't on your PATH, so its tasks won't run.`,
+				actions
+			);
 		});
 	}
 
@@ -64,7 +69,9 @@ class NodeTaskAssistant {
 				try {
 					json = JSON.parse(contents);
 				} catch (e) {
-					notify('node-invalid-json', 'package.json has an error', `Node tasks can't be listed until it's fixed: ${(e as Error).message}`, [openRootFile('package.json')]);
+					notify('node-invalid-json', 'package.json has an error', `Node tasks can't be listed until it's fixed: ${(e as Error).message}`, [
+						openRootFile('package.json'),
+					]);
 					return;
 				}
 				clearNotification('node-invalid-json');

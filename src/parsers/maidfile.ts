@@ -35,10 +35,12 @@ class Maidfile {
 		if (!maidfile) return [];
 
 		if (!(await isInstalled(this.packageProcessName))) {
-			notify('maid-missing', "maid isn't installed", "This project has a maidfile, but the maid command isn't on your PATH, so its tasks can't be listed. Turn Off stops reading the maidfile in this project.", [
-				howToInstall('maid'),
-				turnOffMaid,
-			]);
+			notify(
+				'maid-missing',
+				"maid isn't installed",
+				"This project has a maidfile, but the maid command isn't on your PATH, so its tasks can't be listed. Turn Off stops reading the maidfile in this project.",
+				[howToInstall('maid'), turnOffMaid]
+			);
 			return [];
 		}
 

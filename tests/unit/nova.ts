@@ -184,9 +184,15 @@ g.Process = class {
 		this.result = result;
 		queueMicrotask(() => {
 			/* Nova delivers output line by line */
-			const pieces = state.chunkSize > 0 ? (result.stdout.match(new RegExp(`[^]{1,${state.chunkSize}}`, 'g')) ?? []) : result.stdout.split(/(?<=\n)/).filter(Boolean);
+			const pieces =
+				state.chunkSize > 0
+					? (result.stdout.match(new RegExp(`[^]{1,${state.chunkSize}}`, 'g')) ?? [])
+					: result.stdout.split(/(?<=\n)/).filter(Boolean);
 			pieces.forEach((piece) => this.handlers.stdout?.(piece));
-			result.stderr.split(/(?<=\n)/).filter(Boolean).forEach((line) => this.handlers.stderr?.(line));
+			result.stderr
+				.split(/(?<=\n)/)
+				.filter(Boolean)
+				.forEach((line) => this.handlers.stderr?.(line));
 			if (!result.hang) this.exit(result.status);
 		});
 	}

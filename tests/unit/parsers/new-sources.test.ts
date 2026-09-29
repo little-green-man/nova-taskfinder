@@ -1,7 +1,17 @@
 import { state, fixture, useProject, install, script, settle, summarise } from '../nova';
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { ArtisanParser, ComposerParser, DenoParser, JustParser, MakeParser, MaidfileParser, PackageJsonParser, TaskfileParser, makeFiles } from '../../../src/parsers';
+import {
+	ArtisanParser,
+	ComposerParser,
+	DenoParser,
+	JustParser,
+	MakeParser,
+	MaidfileParser,
+	PackageJsonParser,
+	TaskfileParser,
+	makeFiles,
+} from '../../../src/parsers';
 
 const ids = () => state.notifications.map((n) => n.id);
 const tasksOf = async (parser: { provideTasks(): any }) => {
@@ -14,7 +24,7 @@ const tasksOf = async (parser: { provideTasks(): any }) => {
 
 const JUST_DUMP = 'just --dump --dump-format json';
 
-test('just-only: recipes and module recipes; Build bound, but a module\'s clean isn\'t the project\'s Clean', async () => {
+test("just-only: recipes and module recipes; Build bound, but a module's clean isn't the project's Clean", async () => {
 	useProject('just-only');
 	install('just');
 	script(JUST_DUMP, { stdout: fixture('just-dump.json') });
@@ -195,7 +205,16 @@ test('every file opened is closed (leaked handles make all file access fail in N
 	for (const project of ['all-sources', 'make-only', 'deno-only', 'broken-deno', 'pnpm-lockfile', 'broken-json']) {
 		useProject(project);
 		state.globalConfig.set('taskfinder.make-listing', 'file');
-		for (const parser of [new PackageJsonParser(), new ComposerParser(), new TaskfileParser(), new MaidfileParser(), new JustParser(), new DenoParser(), new MakeParser(), new ArtisanParser()]) {
+		for (const parser of [
+			new PackageJsonParser(),
+			new ComposerParser(),
+			new TaskfileParser(),
+			new MaidfileParser(),
+			new JustParser(),
+			new DenoParser(),
+			new MakeParser(),
+			new ArtisanParser(),
+		]) {
 			await parser.provideTasks();
 		}
 		await settle();

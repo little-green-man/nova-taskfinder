@@ -173,10 +173,7 @@
 					"type": "enum",
 					"radio": true,
 					"values": [
-						[
-							"database",
-							"Asking make: finds every target, but runs the Makefile's shell commands"
-						],
+						["database", "Asking make: finds every target, but runs the Makefile's shell commands"],
 						["file", "Reading the Makefile: runs nothing"]
 					],
 					"default": "database"

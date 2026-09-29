@@ -11,11 +11,7 @@
 		"noImplicitReturns": true,
 		"noFallthroughCasesInSwitch": true,
 		"forceConsistentCasingInFileNames": true,
-		"types": [
-			"nova-editor-node"
-		]
+		"types": ["nova-editor-node"]
 	},
-	"include": [
-		"src"
-	]
+	"include": ["src"]
 }

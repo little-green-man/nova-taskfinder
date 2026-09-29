@@ -24,10 +24,12 @@ class Taskfile {
 		if (!taskfile) return [];
 
 		if (!(await isInstalled(this.packageProcessName))) {
-			notify('taskfile-missing', "Task isn't installed", "This project has a Taskfile, but the task command isn't on your PATH, so its tasks can't be listed. Turn Off stops reading the Taskfile in this project.", [
-				howToInstall('task'),
-				setProjectSetting('Turn Off', 'taskfinder.auto-taskfile', false),
-			]);
+			notify(
+				'taskfile-missing',
+				"Task isn't installed",
+				"This project has a Taskfile, but the task command isn't on your PATH, so its tasks can't be listed. Turn Off stops reading the Taskfile in this project.",
+				[howToInstall('task'), setProjectSetting('Turn Off', 'taskfinder.auto-taskfile', false)]
+			);
 			return [];
 		}
 

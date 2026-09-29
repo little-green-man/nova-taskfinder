@@ -9,7 +9,8 @@ interface CommandResult {
 	timedOut?: boolean;
 }
 
-type Diagnosis<T> = { kind: 'ok'; value: T } | { kind: 'old-version' } | { kind: 'wrong-tool' } | { kind: 'timeout' } | { kind: 'error'; detail: string };
+type Diagnosis<T> =
+	{ kind: 'ok'; value: T } | { kind: 'old-version' } | { kind: 'wrong-tool' } | { kind: 'timeout' } | { kind: 'error'; detail: string };
 
 /**
  * Parses JSON printed by a tool. Nova delivers output line by line, and a very long line (a real Laravel app prints ~300 KB

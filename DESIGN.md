@@ -6,16 +6,16 @@ Architecture, design decisions and Nova knowledge needed to maintain Automatic T
 
 Reads task definitions from project files and offers them in Nova's Tasks menu without the user writing task configs. Sources:
 
-| Source   | Root files (`Feature.files`)                                  | How tasks are read                                              | Command run                |
-| -------- | ------------------------------------------------------------- | --------------------------------------------------------------- | -------------------------- |
-| Node     | `package.json`                                                | Parse `scripts` in `package.json`                               | `<pm> run <s>` (npm, yarn, pnpm, bun) |
-| Composer | `composer.json`                                               | Parse `scripts` in `composer.json`                              | `composer run <s>`         |
-| Taskfile | `[Tt]askfile[.dist].{yml,yaml}` (8 names)                     | Spawn `task --list-all --json`, use each task's `name` (skip `*` wildcards) | `task <name>`              |
-| Maidfile | `maidfile`, `maidfile.{toml,yaml,yml,json}`, `Maidfile[.toml]` | Spawn `maid --system json` (fallback `maid butler json`); skip `hide = true` and `_`-prefixed tasks | `maid <name>`              |
+| Source   | Root files (`Feature.files`)                                   | How tasks are read                                                                                                         | Command run                                 |
+| -------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Node     | `package.json`                                                 | Parse `scripts` in `package.json`                                                                                          | `<pm> run <s>` (npm, yarn, pnpm, bun)       |
+| Composer | `composer.json`                                                | Parse `scripts` in `composer.json`                                                                                         | `composer run <s>`                          |
+| Taskfile | `[Tt]askfile[.dist].{yml,yaml}` (8 names)                      | Spawn `task --list-all --json`, use each task's `name` (skip `*` wildcards)                                                | `task <name>`                               |
+| Maidfile | `maidfile`, `maidfile.{toml,yaml,yml,json}`, `Maidfile[.toml]` | Spawn `maid --system json` (fallback `maid butler json`); skip `hide = true` and `_`-prefixed tasks                        | `maid <name>`                               |
 | just     | `justfile`, `Justfile`, `JUSTFILE`, `.justfile`                | Spawn `just --dump --dump-format json`; walk modules; skip private, required-argument and (by default) `[confirm]` recipes | `just <namepath>` (`--yes` for `[confirm]`) |
-| Deno     | `deno.json`, `deno.jsonc`                                      | Read `tasks` (JSONC); string, object or dependency-only tasks    | `deno task <name>`         |
-| Make     | `GNUmakefile`, `makefile`, `Makefile` (+ literal includes)     | Spawn `make -pRrq -f <file> :` (default) or read the file as text; `.PHONY` targets, else name-like | `make <target>`            |
-| artisan  | `artisan` (+ `routes/console.php`, `composer.lock` watched)    | Spawn `php artisan list --format=json`; Common or All commands   | `php artisan <name>`       |
+| Deno     | `deno.json`, `deno.jsonc`                                      | Read `tasks` (JSONC); string, object or dependency-only tasks                                                              | `deno task <name>`                          |
+| Make     | `GNUmakefile`, `makefile`, `Makefile` (+ literal includes)     | Spawn `make -pRrq -f <file> :` (default) or read the file as text; `.PHONY` targets, else name-like                        | `make <target>`                             |
+| artisan  | `artisan` (+ `routes/console.php`, `composer.lock` watched)    | Spawn `php artisan list --format=json`; Common or All commands                                                             | `php artisan <name>`                        |
 
 Only root-level files are read. `task`, `maid` and `just` search parent folders, so their parsers check a root file exists before spawning; otherwise a parent folder's tasks would leak in and the tools would run in every project (tested: `tests/projects/root-only/child`). `firstRootFile()` matches **exact** names via `nova.fs.listdir`: macOS file systems usually ignore case, so `stat('makefile')` succeeds for a `Makefile` and the wrong name would reach `make -f` and notifications. If `listdir` throws it falls back to `stat()` and logs once; candidate lists put the usual spelling first (`Makefile` before `makefile`) so the fallback reports the likely name.
 
@@ -53,7 +53,7 @@ IMPROVEMENTS.md              backlog of open work (gitignored, local only)
 SPRINT.md                    current sprint plan (gitignored, local only)
 ```
 
-The bundle is a Nova extension folder, so `build/taskfinder.novaextension` *is* the shipped extension. Everything in it except `Scripts/` is source-controlled and edited by hand.
+The bundle is a Nova extension folder, so `build/taskfinder.novaextension` _is_ the shipped extension. Everything in it except `Scripts/` is source-controlled and edited by hand.
 
 ## Architecture
 
@@ -100,7 +100,7 @@ Lifecycle:
 - File-based parsers (Node, Composer) read with `nova.fs.open(path).read()` and `JSON.parse`, inside `try/catch` that logs and returns what it has.
 - CLI-based parsers (Taskfile, Maid) use `run()` from `src/process.ts`: spawns with `shell: true` (so the user's `PATH` is used) in the workspace root, collects all output and resolves on exit, never rejecting. Check the tool with `isInstalled()` first, then interpret the result with the pure `diagnoseTaskfile()`/`diagnoseMaid()` (`src/diagnose.ts`). On failure return `[]` — never `undefined`, never throw — and tell the user with `notify()` (see Notifications).
 - Check the output, not just the exit status: an unrelated `maid` exits 0 on errors.
-- Build tasks with `createTask(name, command, args)` (`src/tasks.ts`): a `TaskProcessAction` with `shell: true` and `cwd: nova.workspace.path`, always bound to Run, plus Build for `build`/`compile`/`build:*`/`compile:*` and Clean for `clean`/`clean:*` (`actionsFor()` in `src/scripts.ts`). Never bind Build/Clean *instead of* Run: Nova disables any action a task doesn't set.
+- Build tasks with `createTask(name, command, args)` (`src/tasks.ts`): a `TaskProcessAction` with `shell: true` and `cwd: nova.workspace.path`, always bound to Run, plus Build for `build`/`compile`/`build:*`/`compile:*` and Clean for `clean`/`clean:*` (`actionsFor()` in `src/scripts.ts`). Never bind Build/Clean _instead of_ Run: Nova disables any action a task doesn't set.
 - Keep naming decisions in `src/scripts.ts` (no imports, no Nova globals) so they can be unit-tested.
 - Lifecycle scripts are hidden unless `taskfinder.show-lifecycle-scripts` is on: npm's fixed lifecycle names always; `pre<x>`/`post<x>` only when `<x>` exists and the package manager runs them (`runsPrePostHooks()`, see below); Composer command/installer/package events, but not plugin events (`init`, `command`), which are likely real scripts.
 
@@ -126,22 +126,22 @@ Problems that stop tasks being listed or run are shown as Nova notifications, be
 - `clearNotification(id)` cancels it when a later reload finds the problem gone (file fixed, lockfile removed, different package manager chosen).
 - No "don't show again": once per window is quiet enough.
 
-| id | Situation | Actions |
-| -- | --------- | ------- |
-| `node-pm-missing` | Chosen package manager not on `PATH` | Install · Use npm (detected; sets this project to npm) or Settings (set in settings) |
-| `node-lockfiles` | Lockfiles for different managers | Settings |
-| `node-invalid-json` / `composer-invalid-json` | `package.json` / `composer.json` isn't valid JSON | Open File |
-| `composer-missing` | `composer` not on `PATH` (tasks still listed) | Install · Turn Off |
-| `taskfile-missing` / `maid-missing` | `task` / `maid` not on `PATH` | Install · Turn Off |
-| `taskfile-old` | Task < 3.19.1 (`unknown flag: --json`) | Update |
-| `taskfile-error` / `maidfile-error` | The tool failed; body has the first line of its error | Open File |
-| `maid-wrong` | `maid` exits 0 without JSON (npm's unrelated maid) | Install · Turn Off |
-| `just-missing` / `make-missing` / `php-missing` | `just` / `make` (database mode) / `php` not on `PATH` | Install · Turn Off |
-| `deno-missing` | `deno` not on `PATH` (tasks still listed; they're read from the file) | Install · Turn Off |
-| `just-old` | just < 1.15 (no stable JSON dump) | Update |
-| `justfile-error` / `makefile-error` | The tool failed; body has the first line of its error | Open File |
-| `deno-invalid-json` | `deno.json(c)` isn't valid JSONC | Open File |
-| `artisan-error` | `php artisan list` failed (errors are on stdout); body is the exception and message | Open File at the line, when the error names a project file |
+| id                                              | Situation                                                                           | Actions                                                                              |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `node-pm-missing`                               | Chosen package manager not on `PATH`                                                | Install · Use npm (detected; sets this project to npm) or Settings (set in settings) |
+| `node-lockfiles`                                | Lockfiles for different managers                                                    | Settings                                                                             |
+| `node-invalid-json` / `composer-invalid-json`   | `package.json` / `composer.json` isn't valid JSON                                   | Open File                                                                            |
+| `composer-missing`                              | `composer` not on `PATH` (tasks still listed)                                       | Install · Turn Off                                                                   |
+| `taskfile-missing` / `maid-missing`             | `task` / `maid` not on `PATH`                                                       | Install · Turn Off                                                                   |
+| `taskfile-old`                                  | Task < 3.19.1 (`unknown flag: --json`)                                              | Update                                                                               |
+| `taskfile-error` / `maidfile-error`             | The tool failed; body has the first line of its error                               | Open File                                                                            |
+| `maid-wrong`                                    | `maid` exits 0 without JSON (npm's unrelated maid)                                  | Install · Turn Off                                                                   |
+| `just-missing` / `make-missing` / `php-missing` | `just` / `make` (database mode) / `php` not on `PATH`                               | Install · Turn Off                                                                   |
+| `deno-missing`                                  | `deno` not on `PATH` (tasks still listed; they're read from the file)               | Install · Turn Off                                                                   |
+| `just-old`                                      | just < 1.15 (no stable JSON dump)                                                   | Update                                                                               |
+| `justfile-error` / `makefile-error`             | The tool failed; body has the first line of its error                               | Open File                                                                            |
+| `deno-invalid-json`                             | `deno.json(c)` isn't valid JSONC                                                    | Open File                                                                            |
+| `artisan-error`                                 | `php artisan list` failed (errors are on stdout); body is the exception and message | Open File at the line, when the error names a project file                           |
 
 Diagnosis rules live in `src/diagnose.ts` (pure, unit-tested with captured tool output); every notification is also asserted in `tests/unit/parsers/`. Test projects: `broken-json`, `broken-taskfile`, `broken-maidfile`, `broken-justfile`, `broken-deno`, `broken-makefile`, `broken-laravel`, `bun-lockfile`, `package-manager-field`.
 

@@ -56,13 +56,11 @@ This software is open source - pull requests are welcome.
 
 Distributed under the MIT License. See [LICENSE.txt](https://github.com/little-green-man/nova-taskfinder/blob/master/LICENSE.txt) for more information.
 
-
 ## Contact
 
 Elliot - [@elliot](https://social.lgm.ltd/@elliot), or hello [at] lgm.ltd
 
 Project Link: [https://github.com/little-green-man/nova-taskfinder](https://github.com/little-green-man/nova-taskfinder)
-
 
 ## Acknowledgments
 

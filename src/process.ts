@@ -138,7 +138,11 @@ const installed = new Map<string, Promise<boolean>>();
 /** Whether a command is on the user's PATH. Checked once per window (`command -v`, 5 s limit), then cached. */
 function isInstalled(command: string): Promise<boolean> {
 	/* a check that times out counts as installed: the listing that follows reports its own problem, rather than a false "isn't installed" */
-	if (!installed.has(command)) installed.set(command, run('command', ['-v', command], { timeout: 5000 }).then(({ status, timedOut }) => timedOut === true || status === 0));
+	if (!installed.has(command))
+		installed.set(
+			command,
+			run('command', ['-v', command], { timeout: 5000 }).then(({ status, timedOut }) => timedOut === true || status === 0)
+		);
 	return installed.get(command) as Promise<boolean>;
 }
 

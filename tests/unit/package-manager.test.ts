@@ -87,11 +87,11 @@ test('runsPrePostHooks: explicit pnpm settings win, pnpm-workspace.yaml over .np
 	const pnpm8 = { packageJson: { packageManager: 'pnpm@8.15.0' }, hasYarnrcYml: false };
 	assert.equal(runsPrePostHooks('pnpm', { ...pnpm8, npmrc: 'registry=https://example.com\nenable-pre-post-scripts=true\n' }), true);
 	assert.equal(runsPrePostHooks('pnpm', { packageJson: {}, hasYarnrcYml: false, npmrc: 'enable-pre-post-scripts = false' }), false);
-	assert.equal(runsPrePostHooks('pnpm', { packageJson: {}, hasYarnrcYml: false, pnpmWorkspace: 'packages:\n  - app\nenablePrePostScripts: false\n' }), false);
 	assert.equal(
-		runsPrePostHooks('pnpm', { ...pnpm8, npmrc: 'enable-pre-post-scripts=false', pnpmWorkspace: 'enablePrePostScripts: true' }),
-		true
+		runsPrePostHooks('pnpm', { packageJson: {}, hasYarnrcYml: false, pnpmWorkspace: 'packages:\n  - app\nenablePrePostScripts: false\n' }),
+		false
 	);
+	assert.equal(runsPrePostHooks('pnpm', { ...pnpm8, npmrc: 'enable-pre-post-scripts=false', pnpmWorkspace: 'enablePrePostScripts: true' }), true);
 	assert.equal(runsPrePostHooks('pnpm', { packageJson: {}, hasYarnrcYml: false, npmrc: '# enable-pre-post-scripts=false' }), true, 'comment ignored');
 });
 

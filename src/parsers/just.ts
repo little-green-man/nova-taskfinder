@@ -17,10 +17,12 @@ class Just {
 		if (!justfile) return [];
 
 		if (!(await isInstalled(this.packageProcessName))) {
-			notify('just-missing', "just isn't installed", "This project has a justfile, but the just command isn't on your PATH, so its recipes can't be listed. Turn Off stops reading the justfile in this project.", [
-				howToInstall('just'),
-				turnOff('taskfinder.auto-just'),
-			]);
+			notify(
+				'just-missing',
+				"just isn't installed",
+				"This project has a justfile, but the just command isn't on your PATH, so its recipes can't be listed. Turn Off stops reading the justfile in this project.",
+				[howToInstall('just'), turnOff('taskfinder.auto-just')]
+			);
 			return [];
 		}
 

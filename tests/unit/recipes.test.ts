@@ -43,7 +43,10 @@ test('diagnoseJust: ok, error, old version', () => {
 		detail: "expected '*', ':', '$', identifier, or '+', but found end of line",
 	});
 	assert.equal(diagnoseJust({ status: 2, stdout: '', stderr: "error: Found argument '--dump-format' which wasn't expected\n" }).kind, 'old-version');
-	assert.equal(diagnoseJust({ status: 1, stdout: '', stderr: 'The JSON dump format is currently unstable. Invoke `just` with the `--unstable` flag\n' }).kind, 'old-version');
+	assert.equal(
+		diagnoseJust({ status: 1, stdout: '', stderr: 'The JSON dump format is currently unstable. Invoke `just` with the `--unstable` flag\n' }).kind,
+		'old-version'
+	);
 });
 
 /* Deno */
@@ -71,7 +74,9 @@ test('makeRulesFromText: targets, .PHONY and literal includes; assignments and r
 });
 
 test('makeRulesFromText: define blocks, continuations, :: rules and ::= assignments', () => {
-	const rules = makeRulesFromText('define X\nfake: target\nendef\nA ::= 1\nB ?= 2\nall:: one \\\n  two\n\t@echo recipe: not a rule\n-include $(DEPS) local.mk *.d\n');
+	const rules = makeRulesFromText(
+		'define X\nfake: target\nendef\nA ::= 1\nB ?= 2\nall:: one \\\n  two\n\t@echo recipe: not a rule\n-include $(DEPS) local.mk *.d\n'
+	);
 	assert.deepEqual(rules.targets, ['all']);
 	assert.deepEqual(rules.includes, ['local.mk']);
 });
@@ -104,7 +109,19 @@ test('diagnoseMake: the : goal error is ignored; real errors reported', () => {
 const artisanList = () => JSON.parse(read('tests/projects/laravel/artisan-list.json'));
 
 test('artisanCommands: Common is the curated list plus app:*', () => {
-	assert.deepEqual(artisanCommands(artisanList(), 'common').sort(), ['about', 'app:hello', 'db:seed', 'migrate', 'migrate:fresh', 'optimize:clear', 'pail', 'queue:work', 'route:list', 'serve', 'test']);
+	assert.deepEqual(artisanCommands(artisanList(), 'common').sort(), [
+		'about',
+		'app:hello',
+		'db:seed',
+		'migrate',
+		'migrate:fresh',
+		'optimize:clear',
+		'pail',
+		'queue:work',
+		'route:list',
+		'serve',
+		'test',
+	]);
 });
 
 test('artisanCommands: All skips hidden, required-argument and terminal-only commands', () => {

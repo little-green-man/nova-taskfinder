@@ -163,7 +163,8 @@ function runsPrePostHooks(pm: PackageManager, { packageJson, hasYarnrcYml, npmrc
 	if (pm !== 'pnpm') return true;
 
 	/* pnpm-workspace.yaml is where newer pnpm keeps settings, so it wins over .npmrc */
-	const explicit = pnpmWorkspace?.match(/^\s*enablePrePostScripts\s*:\s*(true|false)\s*$/m) ?? npmrc?.match(/^\s*enable-pre-post-scripts\s*=\s*(true|false)\s*$/m);
+	const explicit =
+		pnpmWorkspace?.match(/^\s*enablePrePostScripts\s*:\s*(true|false)\s*$/m) ?? npmrc?.match(/^\s*enable-pre-post-scripts\s*=\s*(true|false)\s*$/m);
 	if (explicit) return explicit[1] === 'true';
 
 	const field = parsePackageManagerField(packageJson?.packageManager);
