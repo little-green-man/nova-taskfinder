@@ -5,6 +5,8 @@ import { createReloader, isWatchedFile } from './watch';
 import { choices, projectChoices, resolveCommand } from './settings';
 import { resetState as resetProcessState, stopAll } from './process';
 import { resetState as resetNotifyState } from './notify';
+import { createSidebar, disposeSidebar } from './sidebar';
+import { forgetLatest } from './source';
 
 const active = new Map<string, Array<Disposable>>();
 
@@ -51,6 +53,7 @@ const disable = (feature: Feature) => {
 	disposables.forEach((d) => d.dispose());
 	active.delete(feature.key);
 	reloader.cancel(feature.id);
+	forgetLatest(feature.key);
 
 	nova.workspace.reloadTasks(feature.id);
 };
@@ -70,6 +73,7 @@ const deactivate = () => {
 	active.clear();
 	reloader.cancelAll();
 	stopAll();
+	disposeSidebar();
 };
 
 const activate = async () => {
@@ -92,6 +96,13 @@ const activate = async () => {
 	Object.keys(choices).forEach((key) =>
 		nova.subscriptions.add(nova.commands.register(resolveCommand(key), () => projectChoices(key, nova.config.get(key))))
 	);
+
+	/* the sidebar is optional: if it can't start, tasks still work from the Tasks menu */
+	try {
+		createSidebar().forEach((d) => nova.subscriptions.add(d));
+	} catch (e) {
+		console.error(`Sidebar: couldn't start: ${e}`);
+	}
 
 	/* each source starts independently, so one failure doesn't stop the others */
 	features.forEach((feature) => {

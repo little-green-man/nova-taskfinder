@@ -7,7 +7,9 @@
 import { clearNotification, howToInstall, installUrls, notify, openRootFile, openUrl, turnOff } from './notify';
 import type { NotificationAction } from './notify';
 import { firstRootFile, isInstalled, LIST_TIMEOUT } from './process';
-import { createTask } from './tasks';
+import { createTask, messageSpec, processAction, runSpec } from './tasks';
+import type { RunSpec } from './tasks';
+import type { ActionName } from './scripts';
 
 interface ListedTask {
 	name: string;
@@ -17,6 +19,11 @@ interface ListedTask {
 	cwd?: string;
 	/** The script's own name, for Build/Clean, when `name` has a package prefix */
 	script?: string;
+	env?: Record<string, string>;
+	/** Nova actions to bind, instead of deciding from the name */
+	actions?: ActionName[];
+	/** Resolve the command when the task runs (see TaskOptions.resolve); the source's resolveAction() gets this */
+	resolve?: Transferrable;
 }
 
 /** What a listing found: tasks, or a problem to tell the user about. */
@@ -69,6 +76,8 @@ interface Source {
 	ids?: Partial<Record<ProblemKind, string>>;
 	/** Extra buttons for the `missing` and `wrong-tool` notifications, before Turn Off (e.g. Maid's path setting) */
 	toolActions?: NotificationAction[];
+	/** For tasks listed with `resolve`: builds the real action when the task runs */
+	resolveAction?: (data: unknown) => RunSpec | undefined;
 	/** Messages for problems only some sources have */
 	oldVersion?: string;
 	wrongTool?: { title: string; body: string };
@@ -148,11 +157,54 @@ const refresh: NotificationAction = { title: 'Refresh', run: () => nova.commands
 const clearProblems = (source: Source) =>
 	(['old-version', 'wrong-tool', 'timeout', 'error'] as ProblemKind[]).forEach((kind) => clearNotification(idFor(source, kind)));
 
-function finish(source: Source, listing: Listing, rootFile: string, started: number): Task[] {
-	if (notifyProblem(source, rootFile, listing) || listing.kind !== 'ok') return [];
-	clearProblems(source);
+/** A listed task for the sidebar: `spec()` gives its command when it runs, resolving it then if needed */
+interface LatestTask {
+	name: string;
+	spec: () => RunSpec;
+}
 
-	const tasks = listing.tasks.map(({ name, command, args, cwd, script }) => createTask(name, command, args, { cwd, script }));
+/* Each source's latest tasks, by setting key, as the Tasks menu shows them; the sidebar reads these */
+const latest = new Map<string, LatestTask[]>();
+let latestChanged: () => void = () => {};
+
+const setLatest = (source: Source, tasks: ListedTask[] | undefined) => {
+	if (tasks === undefined && !latest.has(source.settingKey)) return;
+	if (tasks === undefined) latest.delete(source.settingKey);
+	else
+		latest.set(
+			source.settingKey,
+			tasks.map(({ name, command, args, cwd, env, resolve }) => ({
+				name,
+				spec: () => (resolve === undefined ? runSpec(command, args, { cwd, env }) : resolvedSpec(source, resolve)),
+			}))
+		);
+	latestChanged();
+};
+
+/** The latest tasks of the source with this setting key */
+const latestTasks = (settingKey: string): LatestTask[] => latest.get(settingKey) ?? [];
+
+/** Forgets a source's tasks (it was turned off) */
+const forgetLatest = (settingKey: string) => {
+	if (latest.delete(settingKey)) latestChanged();
+};
+
+/** Called whenever any source's tasks change */
+const onLatestChange = (callback: () => void) => {
+	latestChanged = callback;
+};
+
+function finish(source: Source, listing: Listing, rootFile: string, started: number): Task[] {
+	if (notifyProblem(source, rootFile, listing) || listing.kind !== 'ok') {
+		setLatest(source, []);
+		return [];
+	}
+	clearProblems(source);
+	setLatest(source, listing.tasks);
+
+	const tasks = listing.tasks.map(({ name, command, args, cwd, script, env, actions, resolve }) =>
+		createTask(name, command, args, { cwd, script, env, actions, resolve })
+	);
 	console.info(`${source.id}: ${tasks.length} ${source.names.noun} (${Date.now() - started} ms)`);
 	return tasks;
 }
@@ -161,13 +213,19 @@ function finish(source: Source, listing: Listing, rootFile: string, started: num
 async function provideCli(source: CliSource): Promise<Task[]> {
 	/* tools such as task, maid and just search parent folders, so only run them when the project root has their file */
 	const rootFile = firstRootFile(source.rootFiles);
-	if (!rootFile) return [];
+	if (!rootFile) {
+		setLatest(source, undefined);
+		return [];
+	}
 	const started = Date.now();
 
 	const tool = toolFor(source, rootFile);
 	if (tool && !(await isInstalled(tool.command))) {
 		notifyMissing(source, tool.command, tool.needed);
-		if (tool.needed === 'list') return [];
+		if (tool.needed === 'list') {
+			setLatest(source, []);
+			return [];
+		}
 	}
 
 	return finish(source, await source.list(rootFile), rootFile, started);
@@ -176,7 +234,10 @@ async function provideCli(source: CliSource): Promise<Task[]> {
 /** Tasks from a source read straight from its file. The tool, if any, is only needed to run them, so it's checked in the background. */
 function provideFile(source: FileSource): Task[] {
 	const rootFile = firstRootFile(source.rootFiles);
-	if (!rootFile) return [];
+	if (!rootFile) {
+		setLatest(source, undefined);
+		return [];
+	}
 	const started = Date.now();
 
 	const listing = source.list(rootFile);
@@ -190,10 +251,20 @@ function provideFile(source: FileSource): Task[] {
 }
 
 /** A Nova Task Assistant class for a source, as registered by the feature table. */
+/* Nova asks the Task Assistant for the real action when a resolvable task runs */
+const resolvedSpec = (source: Source, data: unknown): RunSpec =>
+	source.resolveAction?.(data) ?? messageSpec("Automatic Tasks couldn't prepare this task.");
+
+const resolveFor = (source: Source, context: TaskActionResolveContext<Transferrable>): TaskProcessAction =>
+	processAction(resolvedSpec(source, context.data));
+
 const cliAssistant = (source: CliSource) =>
 	class {
 		provideTasks() {
 			return provideCli(source);
+		}
+		resolveTaskAction(context: TaskActionResolveContext<Transferrable>) {
+			return resolveFor(source, context);
 		}
 	};
 
@@ -202,7 +273,10 @@ const fileAssistant = (source: FileSource) =>
 		provideTasks() {
 			return provideFile(source);
 		}
+		resolveTaskAction(context: TaskActionResolveContext<Transferrable>) {
+			return resolveFor(source, context);
+		}
 	};
 
-export { cliAssistant, fileAssistant, provideCli, provideFile };
-export type { Source, CliSource, FileSource, Listing, ListedTask };
+export { cliAssistant, fileAssistant, provideCli, provideFile, latestTasks, forgetLatest, onLatestChange };
+export type { Source, CliSource, FileSource, Listing, ListedTask, LatestTask };

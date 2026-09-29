@@ -27,6 +27,9 @@ import {
 	nodeSource,
 	taskfileFiles,
 	taskfileSource,
+	VscodeParser,
+	vscodeFiles,
+	vscodeSource,
 } from './parsers';
 import type { Source } from './source';
 
@@ -113,6 +116,15 @@ const features: Feature[] = [
 		files: artisanFiles,
 		id: 'taskfinder-tasks-artisan',
 		settings: ['taskfinder.artisan-commands'],
+	}),
+	feature(vscodeSource, VscodeParser, {
+		name: 'VS Code (.vscode/tasks.json)',
+		/* only .vscode/tasks.json reloads; other tasks.json files are ignored by the files filter */
+		globs: ['*tasks.json'],
+		files: vscodeFiles,
+		id: 'taskfinder-tasks-vscode',
+		/* npm tasks run with the project's package manager */
+		settings: ['taskfinder.package-manager'],
 	}),
 ];
 

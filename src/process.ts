@@ -143,6 +143,14 @@ function listRootFolders(dir: string): string[] {
 
 let listdirFailed = false;
 
+const isFolder = (path: string) => {
+	try {
+		return nova.fs.stat(path)?.isDirectory() === true;
+	} catch {
+		return false;
+	}
+};
+
 /**
  * The first of the given files that exists, as paths relative to the workspace root (e.g. `package.json`, `add/deno.json`).
  * Matched by exact name via listdir(): macOS file systems usually ignore case, so stat() alone would report `makefile` for a `Makefile`.
@@ -156,8 +164,14 @@ function firstRootFile(files: string[]): string | undefined {
 	const listings = new Map<string, string[] | undefined>();
 	const namesIn = (dir: string) => {
 		if (!listings.has(dir)) {
+			const path = dir ? nova.path.join(root, dir) : root;
+			/* a missing subfolder (most projects have no .vscode) just means no file there, not a listing failure */
+			if (dir && !isFolder(path)) {
+				listings.set(dir, []);
+				return [];
+			}
 			try {
-				listings.set(dir, nova.fs.listdir(dir ? nova.path.join(root, dir) : root));
+				listings.set(dir, nova.fs.listdir(path));
 			} catch (e) {
 				if (!listdirFailed) console.info(`Couldn't list a project folder (${e}); matching files without checking their case.`);
 				listdirFailed = true;
@@ -198,4 +212,17 @@ const resetState = () => {
 	listdirFailed = false;
 };
 
-export { shellQuote, run, stopAll, fileExists, readTextFile, readRootFile, listRootFolders, firstRootFile, isInstalled, resetState, LIST_TIMEOUT };
+export {
+	shellQuote,
+	run,
+	stopAll,
+	fileExists,
+	readTextFile,
+	readRootFile,
+	listRootFolders,
+	firstRootFile,
+	isInstalled,
+	resetState,
+	LIST_TIMEOUT,
+	KILL_DELAY,
+};

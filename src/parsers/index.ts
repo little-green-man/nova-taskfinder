@@ -6,3 +6,4 @@ export { default as JustParser, justFiles, justSource } from './just';
 export { default as DenoParser, denoFiles, denoSource } from './deno';
 export { default as MakeParser, makeFiles, makeSource } from './make';
 export { default as ArtisanParser, artisanFiles, artisanSource } from './artisan';
+export { default as VscodeParser, vscodeFiles, vscodeSource } from './vscode';

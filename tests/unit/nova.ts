@@ -8,7 +8,8 @@
  * - Settings, notifications, opened URLs/files and created tasks are recorded in `nova.state`.
  */
 
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { appendFileSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { resetState as resetProcess } from '../../src/process';
 import { resetState as resetNotify } from '../../src/notify';
@@ -56,6 +57,10 @@ const state = {
 	subscriptions: [] as Array<{ dispose(): void }>,
 	/* deliver stdout in pieces of this many characters without newlines, as Nova may do for very long lines (0 = whole lines) */
 	chunkSize: 0,
+	/* the open file, for tasks resolved when they run */
+	editor: undefined as undefined | { path: string; text: string; selection: [number, number] },
+	/* the sidebar's tree view */
+	tree: undefined as undefined | { provider: any; selection: any[]; reloads: number },
 };
 
 /** Loads a file from `tests/fixtures/`. */
@@ -100,7 +105,8 @@ console.log = () => {};
 console.warn = () => {};
 
 g.nova = {
-	extension: { version: 'test' },
+	/* a fresh folder per test run, for files the extension writes (sidebar output) */
+	extension: { version: 'test', workspaceStoragePath: join(mkdtempSync(join(tmpdir(), 'taskfinder-storage-')), 'not-yet', 'workspace') },
 	workspace: {
 		get path() {
 			return state.root;
@@ -109,7 +115,18 @@ g.nova = {
 		openFile: (path: string) => state.urls.push(`file:${path}`),
 		openConfig: () => state.urls.push('config:project'),
 		reloadTasks: (id: string) => state.reloads.push(id),
+		showErrorMessage: (message: string) => console.error(message),
+		get activeTextEditor() {
+			const editor = state.editor;
+			if (!editor) return null;
+			const text = (range: { start: number; end: number }) => editor.text.slice(range.start, range.end);
+			return {
+				document: { path: editor.path, getTextInRange: text },
+				selectedRange: new g.Range(...editor.selection),
+			};
+		},
 	},
+	environment: { HOME: '/home', GREETING_FROM_ENV: 'hi' },
 	config: config(state.globalConfig),
 	path: { join, dirname, basename, expanduser: (path: string) => path.replace(/^~(?=\/|$)/, '/home') },
 	fs: {
@@ -122,7 +139,14 @@ g.nova = {
 				return null;
 			}
 		},
-		open: (path: string) => {
+		open: (path: string, mode = 'r') => {
+			if (mode === 'w' || mode === 'a') {
+				state.openFiles++;
+				return {
+					write: (text: string) => (mode === 'w' ? writeFileSync : appendFileSync)(path, text),
+					close: () => state.openFiles--,
+				};
+			}
 			const contents = readFileSync(path, 'utf8');
 			state.openFiles++;
 			let closed = false;
@@ -146,6 +170,8 @@ g.nova = {
 			state.watchers.push(watcher);
 			return watcher;
 		},
+		mkdir: (path: string) => mkdirSync(path),
+		remove: (path: string) => rmSync(path),
 		listdir: (path: string) => {
 			if (state.listdirFails) throw new Error('The operation couldn’t be completed. (NSCocoaErrorDomain error 256.)');
 			return readdirSync(path);
@@ -187,6 +213,43 @@ g.TaskProcessAction = class {
 		public command: string,
 		public options: { args?: string[]; cwd?: string; shell?: boolean }
 	) {}
+};
+
+g.TaskResolvableAction = class {
+	constructor(public options: { data?: unknown }) {}
+};
+
+g.Range = class {
+	constructor(
+		public start: number,
+		public end: number
+	) {}
+};
+
+g.TreeItemCollapsibleState = { None: 0, Collapsed: 1, Expanded: 2 };
+
+g.TreeItem = class {
+	constructor(
+		public name: string,
+		public collapsibleState = 0
+	) {}
+};
+
+g.TreeView = class {
+	constructor(_id: string, { dataProvider }: { dataProvider: unknown }) {
+		state.tree = { provider: dataProvider, selection: [], reloads: 0 };
+	}
+	get selection() {
+		return state.tree?.selection ?? [];
+	}
+	reload() {
+		if (state.tree) state.tree.reloads++;
+		return Promise.resolve();
+	}
+	onDidChangeVisibility() {
+		return { dispose() {} };
+	}
+	dispose() {}
 };
 
 g.Task = class {
@@ -276,6 +339,7 @@ function useProject(name: string, root = 'tests/projects') {
 	state.reloads.length = 0;
 	state.openFiles = 0;
 	state.chunkSize = 0;
+	state.editor = undefined;
 }
 
 const install = (...tools: string[]) => tools.forEach((tool) => state.installed.add(tool));

@@ -16,6 +16,18 @@ function resolvePackageManager(json: PackageJson | null, rootFiles: string[]): D
 	return isPackageManager(setting) ? { ...detection, name: setting, source: 'setting' } : detection;
 }
 
+/** The project's package manager (setting, or detected from package.json and lockfiles), for other sources' npm tasks */
+export function projectPackageManager(): string {
+	let json: PackageJson | null = null;
+	try {
+		json = JSON.parse(readRootFile('package.json') ?? 'null');
+	} catch {
+		/* an invalid package.json is reported by the Node source; detection falls back to the lockfiles */
+	}
+	const rootFiles = packageManagerFiles.filter((name) => fileExists(nova.path.join(nova.workspace.path ?? '', name)));
+	return resolvePackageManager(json, rootFiles).name;
+}
+
 /* Where the package manager choice came from, for messages */
 function describeSource(pm: Detection): string {
 	if (pm.source === 'setting') return 'set in Package Manager';

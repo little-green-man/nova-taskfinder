@@ -1,3 +1,10 @@
+## Version 7.5
+
+- **VS Code tasks:** projects with a `.vscode/tasks.json` get its `shell`, `process` and `npm` tasks, with `dependsOn`, top-level defaults, `osx` overrides and the build group (⌘B). Variables such as `${workspaceFolder}` are filled in, and the open file's (`${file}`, `${fileDirname}`…) when the task runs. Tasks that need VS Code itself are skipped ([#10](https://github.com/little-green-man/nova-taskfinder/issues/10))
+- **Tasks sidebar:** every task in one list, grouped by source. Double-click to run; each task shows its status in its icon, and output streams into a log file named after the task, with Stop and Stop All. Several can run at once ([#11](https://github.com/little-green-man/nova-taskfinder/issues/11))
+- Needs Nova 12 or later
+- The extension now asks for write access to files, only to save the sidebar's output logs in Nova's storage for the extension
+
 ## Version 7.4.1
 
 - A clearer extension page: the Extension Library description has been rewritten, with a table of supported tools, a feature list, the tools each source needs and a tidier Settings guide

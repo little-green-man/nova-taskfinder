@@ -1,0 +1,5 @@
+{
+	"name": "web",
+	"private": true,
+	"scripts": { "dev": "echo 'vscode npm task: web dev, running in:' && pwd" }
+}
