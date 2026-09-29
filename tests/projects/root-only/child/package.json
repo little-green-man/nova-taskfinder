@@ -1,0 +1,7 @@
+{
+	"name": "taskfinder-test-child",
+	"private": true,
+	"scripts": {
+		"child-task": "echo 'child: only this task should appear'"
+	}
+}

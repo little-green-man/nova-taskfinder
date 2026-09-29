@@ -1,0 +1,5 @@
+version: '3'
+
+tasks:
+  from-dist:
+    cmds: [echo "taskfile: from Taskfile.dist.yml"]

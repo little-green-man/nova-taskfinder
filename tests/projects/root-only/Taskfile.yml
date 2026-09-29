@@ -1,0 +1,5 @@
+version: '3'
+
+tasks:
+  parent-task:
+    cmds: [echo "from the PARENT folder - should NOT appear when child/ is opened"]

@@ -1,0 +1,13 @@
+[tasks.hello]
+script = "echo 'hello from maidfile'"
+
+[tasks.build]
+info = "Should bind to Build (⌘B)"
+script = "echo 'building'"
+
+[tasks.hidden]
+hide = true
+script = "echo 'hidden - should NOT appear'"
+
+[tasks._private]
+script = "echo 'underscore - should NOT appear'"

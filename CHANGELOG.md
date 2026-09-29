@@ -1,3 +1,14 @@
+## Version 6.0.1
+
+- Taskfile tasks from included Taskfiles (e.g. `db:migrate`) and names containing `.` now appear and run correctly
+- Lowercase (`taskfile.yml`) and `.dist` Taskfiles are now detected
+- Wildcard Taskfile tasks (e.g. `start:*`) are no longer listed, as they need an argument
+- Maidfile support works with current [maid](https://github.com/theMackabu/maid) versions (`maidfile`, `.toml`, `.yaml`, `.yml` and `.json`)
+- A clear message is logged when the `maid` command isn't theMackabu/maid
+- Taskfile and Maid tasks now only come from the project root, not parent folders, and `task`/`maid` only run when the project has one
+- Tasks only reload when a project's root files change, not files in `node_modules` or `vendor`
+- Updated esbuild to 0.28
+
 ## Version 6.0
 
 - Task type and package manager settings now apply immediately, without restarting the workspace - [Toni Förster](https://github.com/stonerl)

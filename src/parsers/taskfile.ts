@@ -1,62 +1,51 @@
+import { parseJson, rootHasFile, run, warnOnce } from '../process';
+
+/* Filenames Task looks for, in priority order (https://taskfile.dev/usage/) */
+export const taskfileFiles = [
+	'Taskfile.yml',
+	'taskfile.yml',
+	'Taskfile.yaml',
+	'taskfile.yaml',
+	'Taskfile.dist.yml',
+	'taskfile.dist.yml',
+	'Taskfile.dist.yaml',
+	'taskfile.dist.yaml',
+];
+
 class Taskfile {
 	packageProcessName: string = 'task';
-	options: {
-		args: string[];
-		cwd: string;
-		shell: true | string;
-	};
-
-	constructor() {
-		this.options = {
-			cwd: nova.workspace.path as string,
-			args: ['--list-all'],
-			shell: true,
-		};
-	}
 
 	async provideTasks() {
-		let tasks: Array<TaskProcessAction>;
-		tasks = [];
+		/* task walks up parent folders, so only run it when the project root has a Taskfile */
+		if (!rootHasFile(taskfileFiles)) return [];
 
-		try {
-			const taskfile = new Process('task', this.options);
-			taskfile.onStdout((line) => {
-				const regex = /\* ([A-Za-z0-9-_]+)\:/;
-				const match = line.match(regex);
-				if (match) {
-					const key = match[1];
-					const task = new Task(key);
-					task.setAction(
-						Task.Run,
-						new TaskProcessAction(this.packageProcessName, {
-							cwd: nova.workspace.path ?? undefined,
-							args: [key],
-							shell: true,
-						})
-					);
-					tasks.push(task);
-				}
-			});
+		const result = await run(this.packageProcessName, ['--list-all', '--json']);
+		const json = result.status === 0 ? parseJson(result.stdout) : null;
 
-			taskfile.onStderr((line) => console.warn(`finder (taskfile) extraction error: ${line}`));
-
-			const onExit = new Promise((resolve, reject) => {
-				taskfile.onDidExit((status) => {
-					console.log(`exited: finder (taskfile) with code ${status}`);
-					const action = status == 0 ? resolve : reject;
-					action(status);
-				});
-			});
-
-			taskfile.start();
-			await onExit;
-			console.info(`taskfile has ${tasks.length} task(s)`);
-
-			return tasks;
-		} catch (e) {
-			console.log(e);
+		if (!Array.isArray(json?.tasks)) {
+			warnOnce(`Taskfile: couldn't list tasks (exit ${result.status}). Task v3.19.1 or later is required. ${result.stderr.trim()}`);
 			return [];
 		}
+
+		const tasks: Array<Task> = [];
+		json.tasks.forEach(({ name }: { name?: unknown }) => {
+			/* wildcard tasks (e.g. start:*) need an argument, so can't be run as-is */
+			if (typeof name !== 'string' || name.includes('*')) return;
+
+			const task = new Task(name);
+			task.setAction(
+				Task.Run,
+				new TaskProcessAction(this.packageProcessName, {
+					cwd: nova.workspace.path ?? undefined,
+					args: [name],
+					shell: true,
+				})
+			);
+			tasks.push(task);
+		});
+
+		console.info(`taskfile has ${tasks.length} task(s)`);
+		return tasks;
 	}
 }
 

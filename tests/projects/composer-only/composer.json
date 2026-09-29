@@ -1,0 +1,12 @@
+{
+	"name": "taskfinder/test-composer",
+	"description": "Automatic Tasks test project",
+	"scripts": {
+		"test": "echo 'composer: test'",
+		"analyse": "echo 'composer: analyse'",
+		"post-install-cmd": "echo 'composer: post-install-cmd (event script)'"
+	},
+	"scripts-descriptions": {
+		"test": "Run the tests"
+	}
+}

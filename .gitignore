@@ -2,3 +2,5 @@ node_modules
 .DS_Store
 .nova
 build/taskfinder.novaextension/Scripts
+IMPROVEMENTS.md
+SPRINT.md

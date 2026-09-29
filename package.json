@@ -1,21 +1,20 @@
 {
 	"name": "task_finder",
-	"version": "6.0.0",
+	"version": "6.0.1",
 	"description": "Automatically offers Composer, Node, Maidfile & Taskfile actions as Nova Tasks.",
 	"main": "index.js",
 	"license": "MIT",
 	"scripts": {
 		"clean": "rm -rf build/taskfinder.novaextension/Scripts",
-		"watch": "yarn clean && esbuild $(esbuild-config) --watch",
-		"build": "yarn clean && esbuild $(esbuild-config) && cp ./CHANGELOG.md ./build/taskfinder.novaextension/CHANGELOG.md",
+		"watch": "yarn clean && esbuild src/index.ts --bundle --minify --format=cjs --outfile=build/taskfinder.novaextension/Scripts/main.dist.js --watch",
+		"build": "yarn clean && esbuild src/index.ts --bundle --minify --format=cjs --outfile=build/taskfinder.novaextension/Scripts/main.dist.js && cp ./CHANGELOG.md ./build/taskfinder.novaextension/CHANGELOG.md",
 		"lint": "tsc --noEmit --pretty",
 		"activate": "nova extension activate build/taskfinder.novaextension",
 		"release": "yarn build && nova extension publish build/taskfinder.novaextension"
 	},
 	"devDependencies": {
 		"@types/nova-editor-node": "^5.1.7",
-		"esbuild": "^0.17.18",
-		"esbuild-config": "^1.0.1",
+		"esbuild": "^0.28.2",
 		"typescript": "^5.0.4"
 	}
 }

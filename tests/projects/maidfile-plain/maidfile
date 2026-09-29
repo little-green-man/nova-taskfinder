@@ -1,0 +1,2 @@
+[tasks.plain]
+script = "echo 'maid: from extensionless maidfile'"

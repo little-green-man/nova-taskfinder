@@ -1,0 +1,2 @@
+[tasks.parent-maid]
+script = "echo 'from the PARENT folder - should NOT appear when child/ is opened'"
