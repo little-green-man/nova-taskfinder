@@ -11,7 +11,10 @@ interface PackageManagerEntry {
 
 /** package.json */
 interface PackageJson {
+	name?: unknown;
 	scripts?: Record<string, unknown>;
+	/** npm, Yarn and bun: an array of patterns, or Yarn 1's `{ packages: [...] }` */
+	workspaces?: unknown;
 	/** Corepack: `pnpm@9.1.0+sha512…` */
 	packageManager?: unknown;
 	devEngines?: { packageManager?: PackageManagerEntry | PackageManagerEntry[] };
@@ -24,7 +27,10 @@ interface ComposerJson {
 
 /** deno.json / deno.jsonc: a task is a command string, or `{ command?, description?, dependencies? }` */
 interface DenoJson {
+	name?: unknown;
 	tasks?: Record<string, unknown>;
+	/** member folders: an array, or `{ members: [...] }` */
+	workspace?: unknown;
 }
 
 /** `task --list-all --json` */

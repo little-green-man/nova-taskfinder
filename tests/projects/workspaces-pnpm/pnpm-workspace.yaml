@@ -1,0 +1,7 @@
+# pnpm workspace: apps one level down, libs at any depth
+packages:
+  - 'apps/*'
+  - "libs/**"
+
+catalog:
+  react: ^19.0.0

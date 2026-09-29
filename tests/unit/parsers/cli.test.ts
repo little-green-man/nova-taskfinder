@@ -140,3 +140,32 @@ test('maid missing: notification', async () => {
 	await maidTasks();
 	assert.deepEqual(ids(), ['taskfinder.maid-missing']);
 });
+
+test('maid Path: a configured maid is used to check, list and run', async () => {
+	useProject('maidfile-only');
+	state.globalConfig.set('taskfinder.maid-path', '/opt/mackabu/bin/maid');
+	script('command -v /opt/mackabu/bin/maid', { status: 0 });
+	script('/opt/mackabu/bin/maid --system json', { stdout: fixture('maid-list.json') });
+	assert.deepEqual(await maidTasks(), [
+		['hello', 'run', '/opt/mackabu/bin/maid hello'],
+		['build', 'run+build', '/opt/mackabu/bin/maid build'],
+	]);
+});
+
+test('maid Path: spaces are quoted, ~ is expanded, and a blank project value follows the preference', async () => {
+	useProject('maidfile-only');
+	state.globalConfig.set('taskfinder.maid-path', '~/My Tools/maid');
+	state.workspaceConfig.set('taskfinder.maid-path', '  ');
+	script("command -v '/home/My Tools/maid'", { status: 0 });
+	script("'/home/My Tools/maid' --system json", { stdout: fixture('maid-list.json') });
+	assert.equal((await maidTasks())[0][2], "'/home/My Tools/maid' hello");
+});
+
+test('maid Path: the wrong maid notification offers Settings to choose another', async () => {
+	useProject('maidfile-only');
+	install('maid');
+	script('maid --system json', { stdout: fixture('npm-maid-help.txt') });
+	script('maid butler json', { stdout: fixture('npm-maid-help.txt') });
+	await maidTasks();
+	assert.deepEqual(state.notifications[0].actions, ['Install', 'Settings', 'Turn Off', 'Dismiss']);
+});

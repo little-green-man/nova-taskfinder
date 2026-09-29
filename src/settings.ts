@@ -39,6 +39,10 @@ const choices: Record<string, Choice[]> = {
 		[true, 'On'],
 		[false, 'Off'],
 	],
+	'taskfinder.workspace-packages': [
+		[true, 'On'],
+		[false, 'Off'],
+	],
 	'taskfinder.package-manager': [
 		['auto', 'Automatic'],
 		['npm', 'npm'],

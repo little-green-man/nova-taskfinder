@@ -68,6 +68,9 @@ const setProjectSetting = (title: string, key: string, value: string | boolean):
 
 const openProjectSettings: NotificationAction = { title: 'Settings', run: () => nova.workspace.openConfig() };
 
+/** Opens the extension's preferences (Extensions → Automatic Tasks → Settings) */
+const openExtensionSettings: NotificationAction = { title: 'Settings', run: () => nova.openConfig() };
+
 const installUrls: Record<string, string> = {
 	npm: 'https://docs.npmjs.com/downloading-and-installing-node-js-and-npm',
 	yarn: 'https://yarnpkg.com/getting-started/install',
@@ -94,5 +97,17 @@ function resetState() {
 	visible.clear();
 }
 
-export { resetState, notify, clearNotification, openUrl, openRootFile, setProjectSetting, openProjectSettings, howToInstall, turnOff, installUrls };
+export {
+	resetState,
+	notify,
+	clearNotification,
+	openUrl,
+	openRootFile,
+	setProjectSetting,
+	openProjectSettings,
+	openExtensionSettings,
+	howToInstall,
+	turnOff,
+	installUrls,
+};
 export type { NotificationAction };

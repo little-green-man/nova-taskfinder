@@ -123,10 +123,28 @@ function readRootFile(file: string): string | undefined {
 	}
 }
 
+/** Subfolder names of a folder relative to the workspace root ('' is the root); empty if it can't be listed. */
+function listRootFolders(dir: string): string[] {
+	const root = nova.workspace.path;
+	if (!root) return [];
+	const path = dir ? nova.path.join(root, dir) : root;
+	try {
+		return nova.fs.listdir(path).filter((name) => {
+			try {
+				return nova.fs.stat(nova.path.join(path, name))?.isDirectory() ?? false;
+			} catch {
+				return false;
+			}
+		});
+	} catch {
+		return [];
+	}
+}
+
 let listdirFailed = false;
 
 /**
- * The first of the given filenames that exists at the workspace root.
+ * The first of the given files that exists, as paths relative to the workspace root (e.g. `package.json`, `add/deno.json`).
  * Matched by exact name via listdir(): macOS file systems usually ignore case, so stat() alone would report `makefile` for a `Makefile`.
  * If listdir() fails, fall back to stat(), which reports the name as listed here; list the most common spelling first.
  */
@@ -134,16 +152,31 @@ function firstRootFile(files: string[]): string | undefined {
 	const root = nova.workspace.path;
 	if (!root) return undefined;
 
-	const exists = (file: string) => fileExists(nova.path.join(root, file));
+	/* each file's own folder is listed once, so nested paths (`add/deno.json`) are matched exactly too */
+	const listings = new Map<string, string[] | undefined>();
+	const namesIn = (dir: string) => {
+		if (!listings.has(dir)) {
+			try {
+				listings.set(dir, nova.fs.listdir(dir ? nova.path.join(root, dir) : root));
+			} catch (e) {
+				if (!listdirFailed) console.info(`Couldn't list a project folder (${e}); matching files without checking their case.`);
+				listdirFailed = true;
+				listings.set(dir, undefined);
+			}
+		}
+		return listings.get(dir);
+	};
 
-	let names: string[] | undefined;
-	try {
-		names = nova.fs.listdir(root);
-	} catch (e) {
-		if (!listdirFailed) console.info(`Couldn't list the project folder (${e}); matching root files without checking their case.`);
-		listdirFailed = true;
-	}
-	return files.find((file) => (names ? names.includes(file) : true) && exists(file));
+	return files.find((file) => {
+		const slash = file.lastIndexOf('/');
+		const names = namesIn(slash === -1 ? '' : file.slice(0, slash));
+		return (names ? names.includes(file.slice(slash + 1)) : true) && fileExists(nova.path.join(root, file));
+	});
+}
+
+/** Quotes a word for the shell (commands run with `shell: true`), e.g. a path with spaces; plain words are left as they are. */
+function shellQuote(word: string): string {
+	return /^[\w@%+=:,./-]+$/.test(word) ? word : `'${word.replace(/'/g, `'\\''`)}'`;
 }
 
 const installed = new Map<string, Promise<boolean>>();
@@ -165,4 +198,4 @@ const resetState = () => {
 	listdirFailed = false;
 };
 
-export { run, stopAll, fileExists, readTextFile, readRootFile, firstRootFile, isInstalled, resetState, LIST_TIMEOUT };
+export { shellQuote, run, stopAll, fileExists, readTextFile, readRootFile, listRootFolders, firstRootFile, isInstalled, resetState, LIST_TIMEOUT };

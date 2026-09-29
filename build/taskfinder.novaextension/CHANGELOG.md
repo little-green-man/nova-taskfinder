@@ -1,3 +1,9 @@
+## Version 7.4
+
+- **Monorepos:** a new **Workspace Packages** setting (off by default) also lists tasks from workspace packages, named `<package>: <script>` and run in the package's folder. It reads npm, Yarn and bun `workspaces`, `pnpm-workspace.yaml` and Deno `workspace` members, with `*`, `**` and `!` patterns
+- **maid Path** setting, to use theMackabu's maid when another `maid` comes first on your `PATH`; the maid notifications have a Settings button for it
+- Tasks menu headings now match the settings' names, e.g. "Node (package.json)", "Laravel (artisan)"
+
 ## Version 7.3
 
 - Internal: moved to TypeScript 7, and tightened types for the files and tool output each source reads (a just recipe without a name is now skipped rather than listed as "undefined")

@@ -1,11 +1,12 @@
 import { getConfigWithWorkspaceOverride } from '../config';
 import type { PackageJson } from '../formats';
 import { clearNotification, howToInstall, notify, openProjectSettings, setProjectSetting } from '../notify';
-import { fileExists, isInstalled, readRootFile } from '../process';
+import { fileExists, isInstalled, listRootFolders, readRootFile } from '../process';
 import { detectPackageManager, hasConflictingLockfiles, isNpmHook, isPackageManager, packageManagerFiles, runsPrePostHooks } from '../scripts';
 import type { Detection } from '../scripts';
 import { fileAssistant } from '../source';
-import type { FileSource } from '../source';
+import type { FileSource, ListedTask } from '../source';
+import { expandWorkspaces, memberTaskName, packageJsonWorkspaces, pnpmWorkspaces } from '../workspaces';
 import { showLifecycleScripts } from '../tasks';
 
 /* The package-manager setting wins; `auto` (or unset) detects from package.json and root files. Re-resolved on every reload, as lockfiles change. */
@@ -52,6 +53,45 @@ function notifyLockfiles(pm: Detection) {
 	);
 }
 
+/**
+ * Files whose changes reload Node tasks: package.json and package-manager files, plus each workspace package's
+ * package.json found on the last read. The feature registry holds this same array, so it's updated in place.
+ */
+const baseFiles = ['package.json', ...packageManagerFiles];
+export const nodeFiles: string[] = [...baseFiles];
+
+const workspacePackagesOn = () => getConfigWithWorkspaceOverride('taskfinder.workspace-packages') === true;
+
+/** Scripts to list from a package.json, hiding lifecycle hooks unless they're shown */
+const visibleScripts = (json: PackageJson | null, prePostHooks: boolean) => {
+	const scripts = Object.keys(json?.scripts ?? {});
+	return showLifecycleScripts() ? scripts : scripts.filter((name) => !isNpmHook(name, scripts, prePostHooks));
+};
+
+/** Tasks from workspace packages (`<package>: <script>`, run in the package's folder), when Workspace Packages is on */
+function workspaceTasks(json: PackageJson | null, pm: string, prePostHooks: boolean): ListedTask[] {
+	const patterns = [...packageJsonWorkspaces(json), ...pnpmWorkspaces(readRootFile('pnpm-workspace.yaml'))];
+	const members = expandWorkspaces(patterns, listRootFolders).filter((folder) => readRootFile(`${folder}/package.json`) !== undefined);
+	nodeFiles.splice(baseFiles.length, Infinity, ...members.map((folder) => `${folder}/package.json`));
+
+	return members.flatMap((folder) => {
+		let member: PackageJson | null;
+		try {
+			member = JSON.parse(readRootFile(`${folder}/package.json`) ?? '{}');
+		} catch (e) {
+			console.error(`node: skipping ${folder}/package.json: ${(e as Error).message}`);
+			return [];
+		}
+		return visibleScripts(member, prePostHooks).map((script) => ({
+			name: memberTaskName(member?.name, folder, script),
+			command: pm,
+			args: ['run', script],
+			cwd: folder,
+			script,
+		}));
+	});
+}
+
 export const nodeSource: FileSource = {
 	id: 'node',
 	names: { tool: 'npm', file: 'a package.json', listing: 'Node tasks', noun: 'tasks', turnOff: 'listing Node tasks' },
@@ -76,8 +116,6 @@ export const nodeSource: FileSource = {
 		notifyLockfiles(pm);
 		checkInstalled(pm);
 
-		const scripts = Object.keys(json?.scripts ?? {});
-		const showHooks = showLifecycleScripts();
 		const prePostHooks = runsPrePostHooks(pm.name, {
 			packageJson: json,
 			hasYarnrcYml: rootFiles.includes('.yarnrc.yml'),
@@ -86,8 +124,10 @@ export const nodeSource: FileSource = {
 		});
 
 		/* always `run`: built-in commands take priority over scripts of the same name in yarn, pnpm and bun */
-		const names = scripts.filter((name) => showHooks || !isNpmHook(name, scripts, prePostHooks));
-		return { kind: 'ok', tasks: names.map((name) => ({ name, command: pm.name, args: ['run', name] })) };
+		const tasks: ListedTask[] = visibleScripts(json, prePostHooks).map((name) => ({ name, command: pm.name, args: ['run', name] }));
+		if (workspacePackagesOn()) tasks.push(...workspaceTasks(json, pm.name, prePostHooks));
+		else nodeFiles.splice(baseFiles.length);
+		return { kind: 'ok', tasks };
 	},
 };
 

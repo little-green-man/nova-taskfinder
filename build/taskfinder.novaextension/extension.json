@@ -4,7 +4,7 @@
 	"imageName": "icon",
 	"organization": "Little Green Man Ltd",
 	"description": "Automatically offers Node (npm, yarn, pnpm, bun), Composer, Taskfile, Maidfile, just, Deno, Make and Laravel artisan tasks as Nova Tasks.",
-	"version": "7.3.0",
+	"version": "7.4.0",
 	"categories": ["tasks"],
 	"homepage": "https://github.com/little-green-man/nova-taskfinder",
 	"repository": "https://github.com/little-green-man/nova-taskfinder",
@@ -141,6 +141,34 @@
 					"description": "Hooks such as postinstall and prebuild, and Composer events, which run automatically.",
 					"type": "boolean",
 					"default": false
+				}
+			]
+		},
+		{
+			"title": "Monorepos",
+			"type": "section",
+			"link": "https://github.com/little-green-man/nova-taskfinder#monorepos",
+			"children": [
+				{
+					"key": "taskfinder.workspace-packages",
+					"title": "Workspace Packages",
+					"description": "Also list tasks from workspace packages: npm, Yarn, pnpm and bun workspaces, and Deno workspaces.",
+					"type": "boolean",
+					"default": false
+				}
+			]
+		},
+		{
+			"title": "Maid",
+			"type": "section",
+			"link": "https://github.com/little-green-man/nova-taskfinder#maid",
+			"children": [
+				{
+					"key": "taskfinder.maid-path",
+					"title": "maid Path",
+					"description": "Leave empty to use maid from your PATH. Set it if a different maid comes first.",
+					"type": "path",
+					"placeholder": "maid"
 				}
 			]
 		},
@@ -352,6 +380,41 @@
 					],
 					"resolve": "taskfinder.show-lifecycle-scripts.choices",
 					"default": null
+				}
+			]
+		},
+		{
+			"title": "Monorepos",
+			"type": "section",
+			"link": "https://github.com/little-green-man/nova-taskfinder#monorepos",
+			"children": [
+				{
+					"key": "taskfinder.workspace-packages",
+					"title": "Workspace Packages",
+					"description": "Also list tasks from workspace packages: npm, Yarn, pnpm and bun workspaces, and Deno workspaces.",
+					"type": "enum",
+					"radio": false,
+					"values": [
+						[null, "Use Global Setting"],
+						[true, "On"],
+						[false, "Off"]
+					],
+					"resolve": "taskfinder.workspace-packages.choices",
+					"default": null
+				}
+			]
+		},
+		{
+			"title": "Maid",
+			"type": "section",
+			"link": "https://github.com/little-green-man/nova-taskfinder#maid",
+			"children": [
+				{
+					"key": "taskfinder.maid-path",
+					"title": "maid Path",
+					"description": "Leave empty to use the extension's preference.",
+					"type": "path",
+					"placeholder": "Use Global Setting"
 				}
 			]
 		},

@@ -1,0 +1,6 @@
+{
+	"name": "@acme/ignored",
+	"scripts": {
+		"nope": "echo 'excluded by !packages/ignored - should NOT appear'"
+	}
+}

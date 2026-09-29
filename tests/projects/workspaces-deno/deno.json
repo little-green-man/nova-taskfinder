@@ -1,0 +1,6 @@
+{
+	"workspace": ["./add", "./subtract"],
+	"tasks": {
+		"check": "echo 'root: check'"
+	}
+}

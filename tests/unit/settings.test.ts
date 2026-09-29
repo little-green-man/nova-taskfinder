@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { readFileSync } from 'node:fs';
 import { choices, projectChoices, resolveCommand, USE_GLOBAL } from '../../src/settings';
+import { features } from '../../src/features';
 import { notify, resetState } from '../../src/notify';
 
 const manifest = JSON.parse(readFileSync('build/taskfinder.novaextension/extension.json', 'utf8'));
@@ -10,6 +11,9 @@ const manifest = JSON.parse(readFileSync('build/taskfinder.novaextension/extensi
 /* Every setting item in a config list, flattening sections */
 const items = (list: any[]): any[] => list.flatMap((item) => (item.type === 'section' ? items(item.children) : [item]));
 const settings = (list: any[]) => items(list).filter((item) => item.key);
+/* Pop-up settings, whose choices live in src/settings.ts (path fields like maid Path have none) */
+const enums = (list: any[]) => settings(list).filter((item) => item.type === 'enum' || item.type === 'boolean');
+const projectEnums = (list: any[]) => settings(list).filter((item) => item.type === 'enum');
 
 test('projectChoices: names the current preference', () => {
 	assert.deepEqual(projectChoices('taskfinder.auto-make', true), [
@@ -31,11 +35,16 @@ test('manifest: both panes have the same settings, in the same order, all descri
 	const global = settings(manifest.config).map((item) => item.key);
 	const project = settings(manifest.configWorkspace).map((item) => item.key);
 	assert.deepEqual(project, global);
-	assert.deepEqual([...global].sort(), Object.keys(choices).sort());
+	assert.deepEqual(
+		enums(manifest.config)
+			.map((item) => item.key)
+			.sort(),
+		Object.keys(choices).sort()
+	);
 });
 
 test('manifest: Project Settings choices match src/settings.ts and resolve through its command', () => {
-	settings(manifest.configWorkspace).forEach((item) => {
+	projectEnums(manifest.configWorkspace).forEach((item) => {
 		assert.equal(item.resolve, resolveCommand(item.key), item.key);
 		assert.equal(item.default, null, item.key);
 		assert.deepEqual(item.values, projectChoices(item.key, undefined), item.key);
@@ -72,4 +81,9 @@ test('Refresh Tasks: showing notifications are removed and may show again', asyn
 	notify('demo', 'Demo', 'Body');
 	await settle();
 	assert.equal(state.notifications.length, 2);
+});
+
+test('Tasks menu headings match the Task Sources titles in the settings', () => {
+	const titles = new Map(settings(manifest.config).map((item) => [item.key, item.title]));
+	features.forEach((feature) => assert.equal(feature.name, titles.get(feature.key), feature.key));
 });

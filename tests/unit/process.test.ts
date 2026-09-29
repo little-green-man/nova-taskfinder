@@ -1,7 +1,7 @@
 import { state, useProject, script } from './nova';
 import { test, mock } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { isInstalled, run, stopAll, LIST_TIMEOUT } from '../../src/process';
+import { isInstalled, run, shellQuote, stopAll, LIST_TIMEOUT } from '../../src/process';
 import { diagnoseArtisan, diagnoseJust, diagnoseMaid, diagnoseMake, diagnoseTaskfile } from '../../src/diagnose';
 
 /* Let queued process output and exits run (setImmediate isn't faked) */
@@ -96,4 +96,10 @@ test('diagnose: a timed-out listing is reported as a timeout', () => {
 	assert.equal(diagnoseMake(timedOut).kind, 'timeout');
 	assert.equal(diagnoseArtisan(timedOut).kind, 'timeout');
 	assert.equal(diagnoseMaid([{ status: 1, stdout: '', stderr: 'x' }, timedOut]).kind, 'timeout');
+});
+
+test('shellQuote: plain words unchanged; anything else single-quoted', () => {
+	assert.equal(shellQuote('/usr/local/bin/maid'), '/usr/local/bin/maid');
+	assert.equal(shellQuote('/Users/me/My Tools/maid'), "'/Users/me/My Tools/maid'");
+	assert.equal(shellQuote("it's"), "'it'\\''s'");
 });

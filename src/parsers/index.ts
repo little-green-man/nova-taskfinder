@@ -1,5 +1,5 @@
 export { default as ComposerParser, composerSource } from './composer';
-export { default as PackageJsonParser, nodeSource } from './package';
+export { default as PackageJsonParser, nodeFiles, nodeSource } from './package';
 export { default as TaskfileParser, taskfileFiles, taskfileSource } from './taskfile';
 export { default as MaidfileParser, maidfileFiles, maidSource } from './maidfile';
 export { default as JustParser, justFiles, justSource } from './just';

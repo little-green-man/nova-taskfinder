@@ -23,11 +23,11 @@ import {
 	maidfileFiles,
 	makeFiles,
 	makeSource,
+	nodeFiles,
 	nodeSource,
 	taskfileFiles,
 	taskfileSource,
 } from './parsers';
-import { packageManagerFiles } from './scripts';
 import type { Source } from './source';
 
 /** A Nova Task Assistant: what Nova calls to list a source's tasks */
@@ -37,7 +37,7 @@ interface Feature {
 	/** `taskfinder.auto-<source>`: turns the source on or off (from the source definition) */
 	key: string;
 	Parser: Assistant;
-	/** Shown in logs, and as the Task Assistant's name */
+	/** The Tasks menu heading for this source's tasks (and in logs); matches its Task Sources title in the settings */
 	name: string;
 	/** Patterns for nova.fs.watch */
 	globs: string[];
@@ -57,15 +57,16 @@ const feature = (source: Source, Parser: Assistant, details: Omit<Feature, 'key'
 
 const features: Feature[] = [
 	feature(nodeSource, PackageJsonParser, {
-		name: 'package.json',
+		name: 'Node (package.json)',
 		/* lockfiles and package manager config change which package manager runs the scripts */
 		globs: ['*package.json', '*.lock', '*.lockb', '*lock.yaml', '*-lock.json', '*shrinkwrap.json', '*.yarnrc.yml', '*.npmrc', '*pnpm-workspace.yaml'],
-		files: ['package.json', ...packageManagerFiles],
+		/* nodeFiles also gains workspace packages' package.json when Workspace Packages is on */
+		files: nodeFiles,
 		id: 'taskfinder-tasks-node',
-		settings: ['taskfinder.package-manager', 'taskfinder.show-lifecycle-scripts'],
+		settings: ['taskfinder.package-manager', 'taskfinder.show-lifecycle-scripts', 'taskfinder.workspace-packages'],
 	}),
 	feature(composerSource, ComposerParser, {
-		name: 'composer.json',
+		name: 'Composer (composer.json)',
 		globs: ['*composer.json'],
 		files: ['composer.json'],
 		id: 'taskfinder-tasks-composer',
@@ -82,22 +83,24 @@ const features: Feature[] = [
 		globs: ['*aidfile*'],
 		files: maidfileFiles,
 		id: 'taskfinder-tasks-maidfile',
+		settings: ['taskfinder.maid-path'],
 	}),
 	feature(justSource, JustParser, {
-		name: 'justfile',
+		name: 'just (justfile)',
 		globs: ['*ustfile', '*USTFILE'],
 		files: justFiles,
 		id: 'taskfinder-tasks-just',
 		settings: ['taskfinder.just-confirm-recipes'],
 	}),
 	feature(denoSource, DenoParser, {
-		name: 'deno.json',
+		name: 'Deno (deno.json)',
 		globs: ['*deno.json*'],
 		files: denoFiles,
 		id: 'taskfinder-tasks-deno',
+		settings: ['taskfinder.workspace-packages'],
 	}),
 	feature(makeSource, MakeParser, {
-		name: 'Makefile',
+		name: 'Make (Makefile)',
 		/* makeFiles also gains the Makefile's literal includes; only *.mk includes are watched */
 		globs: ['*akefile', '*.mk'],
 		files: makeFiles,
@@ -105,7 +108,7 @@ const features: Feature[] = [
 		settings: ['taskfinder.make-listing'],
 	}),
 	feature(artisanSource, ArtisanParser, {
-		name: 'artisan',
+		name: 'Laravel (artisan)',
 		globs: ['*artisan', '*console.php', '*composer.lock'],
 		files: artisanFiles,
 		id: 'taskfinder-tasks-artisan',

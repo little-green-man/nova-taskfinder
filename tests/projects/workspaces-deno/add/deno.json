@@ -1,0 +1,4 @@
+{
+	"name": "@calc/add",
+	"tasks": { "test": "echo '@calc/add: test'" }
+}

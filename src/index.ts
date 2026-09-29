@@ -75,18 +75,7 @@ const deactivate = () => {
 const activate = async () => {
 	console.log(`Starting Automatic Tasks ${nova.extension.version}`);
 
-	/* each source starts independently, so one failure doesn't stop the others */
-	features.forEach((feature) => {
-		const safeToggle = () => {
-			try {
-				toggle(feature);
-			} catch (e) {
-				console.error(`${feature.name}: couldn't start: ${e}`);
-			}
-		};
-		observeConfigWithWorkspaceOverride(feature.key, safeToggle).forEach((d) => nova.subscriptions.add(d));
-		safeToggle();
-	});
+	/* Commands first: Project Settings may already be open and asking for its choices (resolve) while the sources start */
 
 	/* Refresh Tasks: forget install checks and shown notifications, then re-read every source */
 	nova.subscriptions.add(
@@ -103,6 +92,19 @@ const activate = async () => {
 	Object.keys(choices).forEach((key) =>
 		nova.subscriptions.add(nova.commands.register(resolveCommand(key), () => projectChoices(key, nova.config.get(key))))
 	);
+
+	/* each source starts independently, so one failure doesn't stop the others */
+	features.forEach((feature) => {
+		const safeToggle = () => {
+			try {
+				toggle(feature);
+			} catch (e) {
+				console.error(`${feature.name}: couldn't start: ${e}`);
+			}
+		};
+		observeConfigWithWorkspaceOverride(feature.key, safeToggle).forEach((d) => nova.subscriptions.add(d));
+		safeToggle();
+	});
 
 	/* listing settings are read on each provideTasks(), so a change just reloads the sources that use them */
 	const listingSettings = [...new Set(features.flatMap((feature) => feature.settings ?? []))];

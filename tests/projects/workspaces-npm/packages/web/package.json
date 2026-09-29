@@ -1,0 +1,6 @@
+{
+	"name": "@acme/web",
+	"scripts": {
+		"dev": "echo '@acme/web: dev (runs in packages/web)' && pwd"
+	}
+}

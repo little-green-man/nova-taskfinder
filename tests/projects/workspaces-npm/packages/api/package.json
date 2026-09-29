@@ -1,0 +1,8 @@
+{
+	"name": "@acme/api",
+	"scripts": {
+		"build": "echo '@acme/api: build (⌘B)'",
+		"prebuild": "echo 'hook - hidden unless Show Lifecycle Scripts is on'",
+		"test": "echo '@acme/api: test'"
+	}
+}

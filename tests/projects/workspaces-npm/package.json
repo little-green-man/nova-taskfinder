@@ -1,0 +1,8 @@
+{
+	"name": "acme",
+	"private": true,
+	"workspaces": ["packages/*", "!packages/ignored"],
+	"scripts": {
+		"lint": "echo 'root: lint'"
+	}
+}
