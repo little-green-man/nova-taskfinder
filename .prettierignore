@@ -1,4 +1,15 @@
-build
 node_modules
-.github
 .git
+.github/images
+# the built bundle; extension.json and the READMEs in build/ are hand-edited and formatted
+build/taskfinder.novaextension/Scripts
+build/taskfinder.novaextension/CHANGELOG.md
+build/taskfinder.novaextension/Images
+# deliberately broken files and captured tool output must stay exactly as they are
+tests/projects
+tests/fixtures
+tests/.build
+# local notes
+IMPROVEMENTS.md
+SPRINT.md
+.claude

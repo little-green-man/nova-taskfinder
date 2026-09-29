@@ -57,7 +57,8 @@ test('manifest: preference values match src/settings.ts', () => {
 test('manifest: short titles, and Refresh Tasks in the menu and both panes', () => {
 	[...items(manifest.config), ...items(manifest.configWorkspace)].forEach((item) => assert.ok(!/^Include /.test(item.title), item.title));
 	assert.ok(manifest.commands.extensions.some((command: any) => command.command === 'taskfinder.refresh'));
-	for (const list of [manifest.config, manifest.configWorkspace]) assert.ok(items(list).some((item) => item.type === 'command' && item.command === 'taskfinder.refresh'));
+	for (const list of [manifest.config, manifest.configWorkspace])
+		assert.ok(items(list).some((item) => item.type === 'command' && item.command === 'taskfinder.refresh'));
 });
 
 test('Refresh Tasks: showing notifications are removed and may show again', async () => {

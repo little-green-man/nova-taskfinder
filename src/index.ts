@@ -1,103 +1,10 @@
 import { getConfigWithWorkspaceOverride, observeConfigWithWorkspaceOverride } from './config';
-import {
-	ComposerParser,
-	PackageJsonParser,
-	TaskfileParser,
-	MaidfileParser,
-	JustParser,
-	DenoParser,
-	MakeParser,
-	ArtisanParser,
-	taskfileFiles,
-	maidfileFiles,
-	justFiles,
-	denoFiles,
-	makeFiles,
-	artisanFiles,
-} from './parsers';
-import { packageManagerFiles } from './scripts';
+import { features } from './features';
+import type { Feature } from './features';
 import { createReloader, isWatchedFile } from './watch';
 import { choices, projectChoices, resolveCommand } from './settings';
-import { resetState as resetProcessState } from './process';
+import { resetState as resetProcessState, stopAll } from './process';
 import { resetState as resetNotifyState } from './notify';
-
-interface Feature {
-	key: string;
-	Parser: any;
-	name: string;
-	globs: Array<string>;
-	files: Array<string>;
-	id: string;
-}
-
-const features: Array<Feature> = [
-	{
-		key: 'taskfinder.auto-node',
-		Parser: PackageJsonParser,
-		name: 'package.json',
-		/* lockfiles and package manager config change which package manager runs the scripts */
-		globs: ['*package.json', '*.lock', '*.lockb', '*lock.yaml', '*-lock.json', '*shrinkwrap.json', '*.yarnrc.yml', '*.npmrc', '*pnpm-workspace.yaml'],
-		files: ['package.json', ...packageManagerFiles],
-		id: 'taskfinder-tasks-node',
-	},
-	{
-		key: 'taskfinder.auto-composer',
-		Parser: ComposerParser,
-		name: 'composer.json',
-		globs: ['*composer.json'],
-		files: ['composer.json'],
-		id: 'taskfinder-tasks-composer',
-	},
-	{
-		key: 'taskfinder.auto-taskfile',
-		Parser: TaskfileParser,
-		name: 'Taskfile',
-		globs: ['*askfile*'],
-		files: taskfileFiles,
-		id: 'taskfinder-tasks-taskfile',
-	},
-	{
-		key: 'taskfinder.auto-maidfile',
-		Parser: MaidfileParser,
-		name: 'Maidfile',
-		globs: ['*aidfile*'],
-		files: maidfileFiles,
-		id: 'taskfinder-tasks-maidfile',
-	},
-	{
-		key: 'taskfinder.auto-just',
-		Parser: JustParser,
-		name: 'justfile',
-		globs: ['*ustfile', '*USTFILE'],
-		files: justFiles,
-		id: 'taskfinder-tasks-just',
-	},
-	{
-		key: 'taskfinder.auto-deno',
-		Parser: DenoParser,
-		name: 'deno.json',
-		globs: ['*deno.json*'],
-		files: denoFiles,
-		id: 'taskfinder-tasks-deno',
-	},
-	{
-		key: 'taskfinder.auto-make',
-		Parser: MakeParser,
-		name: 'Makefile',
-		/* makeFiles also gains the Makefile's literal includes; only *.mk includes are watched */
-		globs: ['*akefile', '*.mk'],
-		files: makeFiles,
-		id: 'taskfinder-tasks-make',
-	},
-	{
-		key: 'taskfinder.auto-artisan',
-		Parser: ArtisanParser,
-		name: 'artisan',
-		globs: ['*artisan', '*console.php', '*composer.lock'],
-		files: artisanFiles,
-		id: 'taskfinder-tasks-artisan',
-	},
-];
 
 const active = new Map<string, Array<Disposable>>();
 
@@ -157,15 +64,16 @@ const toggle = (feature: Feature) => {
 };
 
 const deactivate = () => {
-	console.info('Deactivating TaskFinder');
+	console.info('Stopping Automatic Tasks');
 
 	active.forEach((disposables) => disposables.forEach((d) => d.dispose()));
 	active.clear();
 	reloader.cancelAll();
+	stopAll();
 };
 
 const activate = async () => {
-	console.log(`Starting TaskFinder (nova v${nova.extension.version})`);
+	console.log(`Starting Automatic Tasks ${nova.extension.version}`);
 
 	/* each source starts independently, so one failure doesn't stop the others */
 	features.forEach((feature) => {
@@ -196,25 +104,15 @@ const activate = async () => {
 		nova.subscriptions.add(nova.commands.register(resolveCommand(key), () => projectChoices(key, nova.config.get(key))))
 	);
 
-	/* these settings are read on each provideTasks(), so a reload is enough */
-	const reloadIfActive = (ids: string[]) =>
-		ids.forEach((id) => {
-			if (features.some((f) => f.id === id && active.has(f.key))) nova.workspace.reloadTasks(id);
-		});
-
-	observeConfigWithWorkspaceOverride('taskfinder.package-manager', () => reloadIfActive(['taskfinder-tasks-node'])).forEach((d) =>
-		nova.subscriptions.add(d)
+	/* listing settings are read on each provideTasks(), so a change just reloads the sources that use them */
+	const listingSettings = [...new Set(features.flatMap((feature) => feature.settings ?? []))];
+	listingSettings.forEach((key) =>
+		observeConfigWithWorkspaceOverride(key, () =>
+			features
+				.filter((feature) => feature.settings?.includes(key) && active.has(feature.key))
+				.forEach((feature) => nova.workspace.reloadTasks(feature.id))
+		).forEach((d) => nova.subscriptions.add(d))
 	);
-	observeConfigWithWorkspaceOverride('taskfinder.show-lifecycle-scripts', () =>
-		reloadIfActive(['taskfinder-tasks-node', 'taskfinder-tasks-composer'])
-	).forEach((d) => nova.subscriptions.add(d));
-	(
-		[
-			['taskfinder.just-confirm-recipes', 'taskfinder-tasks-just'],
-			['taskfinder.make-listing', 'taskfinder-tasks-make'],
-			['taskfinder.artisan-commands', 'taskfinder-tasks-artisan'],
-		] as const
-	).forEach(([key, id]) => observeConfigWithWorkspaceOverride(key, () => reloadIfActive([id])).forEach((d) => nova.subscriptions.add(d)));
 };
 
 export { activate, deactivate };

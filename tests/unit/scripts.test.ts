@@ -53,7 +53,14 @@ test('isNpmHook: node-only test project', () => {
 });
 
 test('isComposerEvent: command, installer and package events', () => {
-	for (const name of ['post-install-cmd', 'pre-update-cmd', 'post-autoload-dump', 'post-root-package-install', 'pre-operations-exec', 'post-package-install']) {
+	for (const name of [
+		'post-install-cmd',
+		'pre-update-cmd',
+		'post-autoload-dump',
+		'post-root-package-install',
+		'pre-operations-exec',
+		'post-package-install',
+	]) {
 		assert.equal(isComposerEvent(name), true, name);
 	}
 });

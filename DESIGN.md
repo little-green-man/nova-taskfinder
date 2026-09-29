@@ -6,16 +6,16 @@ Architecture, design decisions and Nova knowledge needed to maintain Automatic T
 
 Reads task definitions from project files and offers them in Nova's Tasks menu without the user writing task configs. Sources:
 
-| Source   | Root files (`Feature.files`)                                  | How tasks are read                                              | Command run                |
-| -------- | ------------------------------------------------------------- | --------------------------------------------------------------- | -------------------------- |
-| Node     | `package.json`                                                | Parse `scripts` in `package.json`                               | `<pm> run <s>` (npm, yarn, pnpm, bun) |
-| Composer | `composer.json`                                               | Parse `scripts` in `composer.json`                              | `composer run <s>`         |
-| Taskfile | `[Tt]askfile[.dist].{yml,yaml}` (8 names)                     | Spawn `task --list-all --json`, use each task's `name` (skip `*` wildcards) | `task <name>`              |
-| Maidfile | `maidfile`, `maidfile.{toml,yaml,yml,json}`, `Maidfile[.toml]` | Spawn `maid --system json` (fallback `maid butler json`); skip `hide = true` and `_`-prefixed tasks | `maid <name>`              |
+| Source   | Root files (`Feature.files`)                                   | How tasks are read                                                                                                         | Command run                                 |
+| -------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Node     | `package.json`                                                 | Parse `scripts` in `package.json`                                                                                          | `<pm> run <s>` (npm, yarn, pnpm, bun)       |
+| Composer | `composer.json`                                                | Parse `scripts` in `composer.json`                                                                                         | `composer run <s>`                          |
+| Taskfile | `[Tt]askfile[.dist].{yml,yaml}` (8 names)                      | Spawn `task --list-all --json`, use each task's `name` (skip `*` wildcards)                                                | `task <name>`                               |
+| Maidfile | `maidfile`, `maidfile.{toml,yaml,yml,json}`, `Maidfile[.toml]` | Spawn `maid --system json` (fallback `maid butler json`); skip `hide = true` and `_`-prefixed tasks                        | `maid <name>`                               |
 | just     | `justfile`, `Justfile`, `JUSTFILE`, `.justfile`                | Spawn `just --dump --dump-format json`; walk modules; skip private, required-argument and (by default) `[confirm]` recipes | `just <namepath>` (`--yes` for `[confirm]`) |
-| Deno     | `deno.json`, `deno.jsonc`                                      | Read `tasks` (JSONC); string, object or dependency-only tasks    | `deno task <name>`         |
-| Make     | `GNUmakefile`, `makefile`, `Makefile` (+ literal includes)     | Spawn `make -pRrq -f <file> :` (default) or read the file as text; `.PHONY` targets, else name-like | `make <target>`            |
-| artisan  | `artisan` (+ `routes/console.php`, `composer.lock` watched)    | Spawn `php artisan list --format=json`; Common or All commands   | `php artisan <name>`       |
+| Deno     | `deno.json`, `deno.jsonc`                                      | Read `tasks` (JSONC); string, object or dependency-only tasks                                                              | `deno task <name>`                          |
+| Make     | `GNUmakefile`, `makefile`, `Makefile` (+ literal includes)     | Spawn `make -pRrq -f <file> :` (default) or read the file as text; `.PHONY` targets, else name-like                        | `make <target>`                             |
+| artisan  | `artisan` (+ `routes/console.php`, `composer.lock` watched)    | Spawn `php artisan list --format=json`; Common or All commands                                                             | `php artisan <name>`                        |
 
 Only root-level files are read. `task`, `maid` and `just` search parent folders, so their parsers check a root file exists before spawning; otherwise a parent folder's tasks would leak in and the tools would run in every project (tested: `tests/projects/root-only/child`). `firstRootFile()` matches **exact** names via `nova.fs.listdir`: macOS file systems usually ignore case, so `stat('makefile')` succeeds for a `Makefile` and the wrong name would reach `make -f` and notifications. If `listdir` throws it falls back to `stat()` and logs once; candidate lists put the usual spelling first (`Makefile` before `makefile`) so the fallback reports the likely name.
 
@@ -25,18 +25,19 @@ Only root-level files are read. `task`, `maid` and `just` search parent folders,
 
 ```
 src/                         TypeScript source (the only code you edit)
-  index.ts                   activation, feature registry, enable/disable/toggle
+  index.ts                   activation and lifecycle: enable/disable/toggle, commands, setting observers
+  features.ts                the feature registry: each source's setting, Task Assistant, watched files, listing settings
+  source.ts                  the shared source pipeline (find root file → check tool → list → notify → tasks)
   config.ts                  workspace-over-global config helpers
-  process.ts                 run(), isInstalled() (cached `command -v`), firstRootFile()
+  process.ts                 run() (with timeouts), stopAll(), isInstalled() (cached `command -v`), firstRootFile(), readRootFile()
   scripts.ts                 pure naming rules (Build/Clean, npm hooks, Composer events, package manager) — unit-tested
   recipes.ts                 pure listing rules for just, Deno (JSONC), Make and artisan — unit-tested
   diagnose.ts                pure rules interpreting tool output (errors, old/wrong tool) — unit-tested
   watch.ts                   isWatchedFile() and the debounced reloader — unit-tested
   settings.ts                each setting's choice labels; Project Settings choices ("Use Global Setting (On)") — unit-tested
   notify.ts                  user notifications and their actions
-  tasks.ts                   createTask() and the lifecycle setting, shared by all parsers
-  globals.d.ts               FileSystem type fix (see "TypeScript quirks")
-  parsers/                   one Task Assistant class per source
+  tasks.ts                   createTask() and the lifecycle setting
+  parsers/                   one source definition per file (run by source.ts)
   images/                    source artwork (Acorn)
 build/taskfinder.novaextension/
   extension.json             manifest — hand-edited, tracked in git
@@ -53,56 +54,86 @@ IMPROVEMENTS.md              backlog of open work (gitignored, local only)
 SPRINT.md                    current sprint plan (gitignored, local only)
 ```
 
-The bundle is a Nova extension folder, so `build/taskfinder.novaextension` *is* the shipped extension. Everything in it except `Scripts/` is source-controlled and edited by hand.
+The bundle is a Nova extension folder, so `build/taskfinder.novaextension` _is_ the shipped extension. Everything in it except `Scripts/` is source-controlled and edited by hand.
 
 ## Architecture
 
-### Feature registry (`src/index.ts`)
+### Sources (`src/source.ts`, `src/parsers/`)
 
-Each source is a `Feature`: `{ key, Parser, name, globs, files, id }`.
+Each source is a small **definition** run by one shared pipeline. A definition gives:
+
+- `id`: the log name and notification-id prefix;
+- `names`: the phrases used in messages;
+- `rootFiles`: the files that mark a project as using the source, most common spelling first;
+- `settingKey`: its on/off setting, for Turn Off;
+- `installKey`: its install link;
+- `tool`: the command and whether listing or only running needs it; it can be a function (Make needs `make` only in database mode);
+- optional custom notification `ids` and messages;
+- `list(rootFile)`, which returns a `Listing`: `ok` with tasks, `old-version`, `wrong-tool`, `timeout`, or `error` with details.
+
+`cliAssistant(source)` and `fileAssistant(source)` turn a definition into Nova's Task Assistant class.
+
+- **CLI sources** (Taskfile, Maid, just, Make, artisan; `provideCli`):
+  - find the root file; tools that search parent folders only run when it exists;
+  - check the tool (`isInstalled`), showing `<id>-missing` if needed;
+  - `await list()`;
+  - show the notification for any problem, or clear earlier ones on success;
+  - build tasks with `createTask()` and log `<id>: N <noun> (X ms)`.
+- **File sources** (Node, Composer, Deno; `provideFile`) list synchronously from the file. The tool is only needed to run the tasks, so it's checked in the background once the listing succeeds, and the tasks are listed either way.
+- **Source-specific logic** stays in the definition, or in the pure modules where it can be tested: Node's package-manager detection and its own `node-pm-missing`/`node-lockfiles` notifications, Maid's command fallback, Make's two listing modes and include watching, and artisan's error location.
+
+### Feature registry (`src/features.ts`)
+
+Each source is registered as a `Feature`: `{ key, Parser, name, globs, files, id, settings? }`.
 
 - `key` — config key that turns the source on/off (`taskfinder.auto-<source>`).
-- `Parser` — class implementing Nova's `TaskAssistant` (`provideTasks()`).
+- `Parser` — the source's Task Assistant class (`new () => { provideTasks() }`).
+- `settings` — the listing settings it reads (e.g. `taskfinder.make-listing`); changing one reloads only the sources that list it.
 - `globs` — patterns for `nova.fs.watch`, one watcher each. Deliberately broad (`*askfile*`, `*aidfile*`, `*ustfile` cover both cases); the callback reloads only when `isWatchedFile()` (`src/watch.ts`) finds the changed path in `files`, relative to the workspace root, which also ignores `node_modules`/`vendor`. Node watches lockfiles and package-manager config as well as `package.json`.
 - `files` — paths relative to the root that trigger a reload (Node: `package.json` plus `packageManagerFiles` from `src/scripts.ts`). Entries may be nested (artisan watches `routes/console.php`). Parsers export theirs (`taskfileFiles`, `maidfileFiles`, `justFiles`, `denoFiles`, `makeFiles`, `artisanFiles`). `makeFiles` is updated in place with the Makefile's literal includes on each read (only `*.mk` includes match a watch glob). Keep `activationEvents` in `extension.json` in sync (root files only).
 - `id` — Task Assistant identifier.
 
 Lifecycle:
 
-- `activate()` — for each feature, observe its config key (workspace and global) and call `toggle()`; also observe `taskfinder.package-manager` and `taskfinder.show-lifecycle-scripts`.
+- `activate()` — for each feature, observe its config key (workspace and global) and call `toggle()`, each in its own `try` so one failing source doesn't stop the others; register Refresh Tasks and the Project Settings resolvers; observe every listing setting in `features[].settings`.
 - `toggle()` — `enable()` or `disable()` based on the resolved config value.
 - `enable()` — registers the Task Assistant and file watcher, stores both disposables in the module-level `active` map, and reloads tasks. No-op if already enabled.
 - `disable()` — disposes that feature's assistant and watcher, removes it from `active`, reloads tasks.
-- Package manager or lifecycle setting change — reload the affected tasks (Node; Node and Composer). Parsers read both settings, and detect the package manager, on every `provideTasks()`, because lockfiles change.
-- Listing settings (`just-confirm-recipes`, `make-listing`, `artisan-commands`) — reload that source only.
+- Listing setting change — reload the sources whose `settings` include it (sources read settings, and Node detects its package manager, on every `provideTasks()`, because lockfiles change).
 - File changes — `createReloader()` (`src/watch.ts`) debounces per feature (300 ms), so bursts (saves, branch switches) cause one reload. `disable()` and `deactivate()` cancel pending reloads.
-- `deactivate()` — disposes everything in `active`.
+- `deactivate()` — disposes everything in `active`, cancels pending reloads and stops listing processes still running (`stopAll()`). Nova disposes `nova.subscriptions` itself.
 
 **Why an `active` map instead of `nova.subscriptions`:** features must be disposed and re-registered individually at runtime when settings change. `nova.subscriptions` has no per-item removal, so it only holds the config observers, which live for the whole session. Anything in `active` must be disposed in `deactivate()` or it leaks and can double-register on reload.
 
 ### Adding a source
 
-1. Parser in `src/parsers/<source>.ts` implementing `provideTasks()` (sync array or `Promise`); export it from `src/parsers/index.ts`.
-2. Add a `Feature` to `features` in `src/index.ts`.
-3. `extension.json`:
-   - `activationEvents`: one `onWorkspaceContains:<filename>` per entry in `files`.
-   - `config` (global): boolean `taskfinder.auto-<source>`, default `true`.
-   - `config-workspace`: enum `taskfinder.auto-<source>` with `[null, "Global Setting"], [true, "Enabled"], [false, "Disabled"]`, default `null`.
-   - Update `description`.
-4. `README.md`, `build/.../README.md`, `CHANGELOG.md`.
-5. Pure listing/diagnosis rules in `src/recipes.ts` / `src/diagnose.ts` with unit tests; capture real tool output (success and failure) into `tests/fixtures/`, anonymising paths and never including environment variables.
-6. A parser test in `tests/unit/parsers/` (stand-in Nova from `tests/unit/nova.ts`, scripted processes).
-7. A test project in `tests/projects/` (and a `broken-…` one) with a row in `tests/README.md`.
-8. Notifications: `<source>-missing` (Install · Turn Off), file errors (Open File), an install link in `installUrls`; add them to the table below.
+1. **Definition:** `src/parsers/<source>.ts` exporting a `CliSource` or `FileSource` (see Sources) and `export default cliAssistant(…)` / `fileAssistant(…)`. Export it and its watched files from `src/parsers/index.ts`.
+2. **Pure rules:** listing and diagnosis rules go in `src/recipes.ts` / `src/diagnose.ts`, with unit tests. Capture real tool output (success and failure) into `tests/fixtures/`, anonymising paths and never including environment variables.
+3. **Registry:** add a `Feature` to `src/features.ts` (key, Assistant, watch globs, watched files, listing settings).
+4. **`extension.json`:**
+   - `activationEvents`: one `onWorkspaceContains:<filename>` per root file. `tests/unit/index.test.ts` checks this.
+   - Settings: `taskfinder.auto-<source>` in **Task Sources** in both `config` (boolean, default `true`) and `configWorkspace` (enum with `resolve`); any listing settings in a section named after the tool.
+   - Add the setting's choices to `src/settings.ts` (the settings test checks both panes against it), and update `description`.
+5. **Notifications:** an install link in `installUrls`. The pipeline supplies `<id>-missing`, `-old`, `-wrong`, `-timeout` and `-error`; add them to the table below.
+6. **Tests:** a parser test in `tests/unit/parsers/` using the stand-in Nova from `tests/unit/nova.ts` and scripted processes; a test project in `tests/projects/` (and a `broken-…` one) with a row in `tests/README.md`.
+7. **Docs:** `README.md` (Settings section), `build/.../README.md`, `CHANGELOG.md`.
 
-### Parser conventions
+### Source conventions
 
-- File-based parsers (Node, Composer) read with `nova.fs.open(path).read()` and `JSON.parse`, inside `try/catch` that logs and returns what it has.
-- CLI-based parsers (Taskfile, Maid) use `run()` from `src/process.ts`: spawns with `shell: true` (so the user's `PATH` is used) in the workspace root, collects all output and resolves on exit, never rejecting. Check the tool with `isInstalled()` first, then interpret the result with the pure `diagnoseTaskfile()`/`diagnoseMaid()` (`src/diagnose.ts`). On failure return `[]` — never `undefined`, never throw — and tell the user with `notify()` (see Notifications).
-- Check the output, not just the exit status: an unrelated `maid` exits 0 on errors.
-- Build tasks with `createTask(name, command, args)` (`src/tasks.ts`): a `TaskProcessAction` with `shell: true` and `cwd: nova.workspace.path`, always bound to Run, plus Build for `build`/`compile`/`build:*`/`compile:*` and Clean for `clean`/`clean:*` (`actionsFor()` in `src/scripts.ts`). Never bind Build/Clean *instead of* Run: Nova disables any action a task doesn't set.
+- **Reading files:** use `readRootFile()` (safe, closes the file) and `firstRootFile()` (exact-name match) from `src/process.ts`. Never call `nova.fs.open`/`stat` directly (see Nova platform notes).
+- **Running tools:** use `run()` from `src/process.ts`.
+  - It spawns with `shell: true` (so the user's `PATH` is used) in the workspace root, collects all output and resolves on exit, never rejecting.
+  - It stops the command after 15 s (`terminate()`, then `kill()` 2 s later) and resolves with `timedOut: true`. The pipeline shows `<id>-timeout` with a Refresh button.
+  - `isInstalled()` uses a 5 s limit, and a timeout counts as installed.
+  - Interpret the output with the pure `diagnose…()` functions; each returns `timeout` for a timed-out result.
+- **Check the output, not just the exit status:** an unrelated `maid` exits 0 on errors.
+- **Return a `Listing`, never throw:** the pipeline turns problems into notifications and returns `[]`.
+- **Build/Clean:** `createTask(name, command, args)` (`src/tasks.ts`) makes a `TaskProcessAction` with `shell: true` and `cwd: nova.workspace.path`. It's always bound to Run, plus Build for `build`/`compile`/`build:*`/`compile:*` and Clean for `clean`/`clean:*` (`actionsFor()` in `src/scripts.ts`). Never bind Build/Clean _instead of_ Run: Nova disables any action a task doesn't set.
 - Keep naming decisions in `src/scripts.ts` (no imports, no Nova globals) so they can be unit-tested.
-- Lifecycle scripts are hidden unless `taskfinder.show-lifecycle-scripts` is on: npm's fixed lifecycle names always; `pre<x>`/`post<x>` only when `<x>` exists and the package manager runs them (`runsPrePostHooks()`, see below); Composer command/installer/package events, but not plugin events (`init`, `command`), which are likely real scripts.
+- **Lifecycle scripts** are hidden unless `taskfinder.show-lifecycle-scripts` is on:
+  - npm's fixed lifecycle names, always;
+  - `pre<x>`/`post<x>`, only when `<x>` exists and the package manager runs them (`runsPrePostHooks()`, see below);
+  - Composer command, installer and package events, but not plugin events (`init`, `command`), which are likely real scripts.
 
 ### Node package manager
 
@@ -121,27 +152,28 @@ Who runs `pre<x>`/`post<x>` automatically (`runsPrePostHooks()`): npm, Yarn 1, b
 
 Problems that stop tasks being listed or run are shown as Nova notifications, because most users never open the Extension Console. `notify(id, title, body, actions)`:
 
-- Shows each situation (`id`) at most once per window; the request identifier (`taskfinder.<id>`) means a repeat replaces rather than stacks. Also logs to the console.
+- Shows each situation (`id`) at most once per window **while it persists**; once it's cleared (fixed), it can notify again if it recurs; the request identifier (`taskfinder.<id>`) means a repeat replaces rather than stacks. Also logs to the console.
 - Always adds Dismiss. Nova's buttons are small, so titles are one or two words (Install, Update, Open File, Settings, Use npm, Turn Off); the body explains what Turn Off does (sets that source to Disabled in Project Settings). Actions: `howToInstall()` / `openUrl()` (`nova.openURL`), `openRootFile()` (`nova.workspace.openFile`), `setProjectSetting()` (`nova.workspace.config.set`), `openProjectSettings` (`nova.workspace.openConfig`).
 - `clearNotification(id)` cancels it when a later reload finds the problem gone (file fixed, lockfile removed, different package manager chosen).
 - No "don't show again": once per window is quiet enough.
 
-| id | Situation | Actions |
-| -- | --------- | ------- |
-| `node-pm-missing` | Chosen package manager not on `PATH` | Install · Use npm (detected; sets this project to npm) or Settings (set in settings) |
-| `node-lockfiles` | Lockfiles for different managers | Settings |
-| `node-invalid-json` / `composer-invalid-json` | `package.json` / `composer.json` isn't valid JSON | Open File |
-| `composer-missing` | `composer` not on `PATH` (tasks still listed) | Install · Turn Off |
-| `taskfile-missing` / `maid-missing` | `task` / `maid` not on `PATH` | Install · Turn Off |
-| `taskfile-old` | Task < 3.19.1 (`unknown flag: --json`) | Update |
-| `taskfile-error` / `maidfile-error` | The tool failed; body has the first line of its error | Open File |
-| `maid-wrong` | `maid` exits 0 without JSON (npm's unrelated maid) | Install · Turn Off |
-| `just-missing` / `make-missing` / `php-missing` | `just` / `make` (database mode) / `php` not on `PATH` | Install · Turn Off |
-| `deno-missing` | `deno` not on `PATH` (tasks still listed; they're read from the file) | Install · Turn Off |
-| `just-old` | just < 1.15 (no stable JSON dump) | Update |
-| `justfile-error` / `makefile-error` | The tool failed; body has the first line of its error | Open File |
-| `deno-invalid-json` | `deno.json(c)` isn't valid JSONC | Open File |
-| `artisan-error` | `php artisan list` failed (errors are on stdout); body is the exception and message | Open File at the line, when the error names a project file |
+| id                                                   | Situation                                                                           | Actions                                                                              |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `node-pm-missing`                                    | Chosen package manager not on `PATH`                                                | Install · Use npm (detected; sets this project to npm) or Settings (set in settings) |
+| `node-lockfiles`                                     | Lockfiles for different managers                                                    | Settings                                                                             |
+| `node-invalid-json` / `composer-invalid-json`        | `package.json` / `composer.json` isn't valid JSON                                   | Open File                                                                            |
+| `composer-missing`                                   | `composer` not on `PATH` (tasks still listed)                                       | Install · Turn Off                                                                   |
+| `taskfile-missing` / `maid-missing`                  | `task` / `maid` not on `PATH`                                                       | Install · Turn Off                                                                   |
+| `taskfile-old`                                       | Task < 3.19.1 (`unknown flag: --json`)                                              | Update                                                                               |
+| `taskfile-error` / `maidfile-error`                  | The tool failed; body has the first line of its error                               | Open File                                                                            |
+| `maid-wrong`                                         | `maid` exits 0 without JSON (npm's unrelated maid)                                  | Install · Turn Off                                                                   |
+| `just-missing` / `make-missing` / `php-missing`      | `just` / `make` (database mode) / `php` not on `PATH`                               | Install · Turn Off                                                                   |
+| `deno-missing`                                       | `deno` not on `PATH` (tasks still listed; they're read from the file)               | Install · Turn Off                                                                   |
+| `just-old`                                           | just < 1.15 (no stable JSON dump)                                                   | Update                                                                               |
+| `<id>-timeout` (taskfile, maid, just, make, artisan) | Listing took more than 15 s and was stopped                                         | Refresh (runs Refresh Tasks)                                                         |
+| `justfile-error` / `makefile-error`                  | The tool failed; body has the first line of its error                               | Open File                                                                            |
+| `deno-invalid-json`                                  | `deno.json(c)` isn't valid JSONC                                                    | Open File                                                                            |
+| `artisan-error`                                      | `php artisan list` failed (errors are on stdout); body is the exception and message | Open File at the line, when the error names a project file                           |
 
 Diagnosis rules live in `src/diagnose.ts` (pure, unit-tested with captured tool output); every notification is also asserted in `tests/unit/parsers/`. Test projects: `broken-json`, `broken-taskfile`, `broken-maidfile`, `broken-justfile`, `broken-deno`, `broken-makefile`, `broken-laravel`, `bun-lockfile`, `package-manager-field`.
 
@@ -179,10 +211,10 @@ Things learnt the hard way or not obvious from the docs.
 - **Preferences** (https://docs.nova.app/extensions/preferences/): types `boolean`, `enum`, `string`, `text`, `number`, `path`, `stringArray`, `pathArray`, `section`, `command` (a button running an extension command). Every item takes `title`, `description`, `default`, `required`, `placeholder` and `link` (a (?) help button). Enums take `values` (strings or `[value, label]`), `radio` (Nova uses radio buttons for ≤ 3 choices unless `radio: false`), `resolve` (a command returning the choices when the pane is shown) and `allowsCustom`. The documented workspace key is `configWorkspace`.
 - **Enum values needn't be strings.** The preferences docs say enum `values` are strings, but `null`, `true` and `false` work as stored values (tested in Nova, 6.0.0). The workspace settings rely on this.
 - **`onWorkspaceContains` takes a glob.** An exact name (e.g. `maidfile`) won't match variants like `maidfile.toml`. The docs don't say whether matching is case-sensitive, so activation events list exact filenames in each case (tested in Nova, 6.0.1: `taskfile.yml`, `Taskfile.dist.yml`, `maidfile`, `maidfile.toml` activate; `maidfile.md` doesn't).
-- **`nova.fs.watch`** docs don't say what path the callback receives (absolute or relative) or how the glob is matched. `isRootFile()` in `src/index.ts` handles both path forms; tested in Nova (6.0.1): root edits reload, `npm install` doesn't cause a burst of reloads.
+- **`nova.fs.watch`** docs don't say what path the callback receives (absolute or relative) or how the glob is matched. Confirmed (7.2.1): `*.mk` fires for an included `extra.mk`. `isWatchedFile()` in `src/watch.ts` handles both path forms; tested in Nova (6.0.1): root edits reload, `npm install` doesn't cause a burst of reloads.
 - **`TaskProcessAction` defaults:** `cwd` defaults to the project folder; if `matchers` is omitted Nova applies its standard issue matchers. Passing `matchers` replaces that set.
 - **`Task`** has only `name`, `image`, `buildBeforeRunning` and actions (`Task.Build`, `Task.Run`, `Task.Clean`). No description field. Any action not set disables that button/menu item for the task.
-- **Notifications:** `NotificationRequest` has `title`, `body`, `actions` (buttons) and a `type` only for text input; a request with the same identifier replaces the previous one; `nova.notifications.cancel(id)` removes it. The buttons are small, so keep labels to a word or two. Docs don't say whether notifications persist or whether each window has its own extension instance (to verify).
+- **Notifications:** `NotificationRequest` has `title`, `body`, `actions` (buttons) and a `type` only for text input; a request with the same identifier replaces the previous one; `nova.notifications.cancel(id)` removes it. The buttons are small, so keep labels to a word or two. Confirmed in Nova (7.2.1): notifications stay until dismissed, each window has its own extension instance (so "once per window" holds), and `cancel()` removes a showing notification.
 - **Timers:** `setTimeout`/`clearTimeout` exist in Nova's runtime. The main `tsconfig` limits `types` to `nova-editor-node` so Node's types (used by tests) don't change them.
 - **Always close files.** `nova.fs.open()` returns a handle that stays open until `close()`. Until 7.1.0 every read leaked one; with more reads per reload, many windows and many reloads, the extension ran out of handles and **every** file operation failed (`open`/`listdir` with NSCocoaErrorDomain 512/256) in every window, until Nova restarted (confirmed in 7.1.0 testing: closing files and restarting Nova fixed it). Symptoms: every source lists 0 tasks and the Extension Console shows NSCocoaErrorDomain 256/512 from reads or `listdir`. Read through `readTextFile()` (`src/process.ts`, closes in `finally`); a test (`state.openFiles`) fails if any parser leaves a file open.
 - **Defensive file checks:** `fileExists()` treats a throwing `stat()` as missing, and `firstRootFile()` falls back from `listdir` to `stat()`. Both were added while chasing the leak (its errors first looked like a quirk of this repo's `*.novaextension` folder); they're harmless and keep one bad call from emptying a source. Tests simulate both (`state.listdirFails`, `state.statThrowsIfMissing`).
@@ -201,7 +233,7 @@ Things learnt the hard way or not obvious from the docs.
 
 ## TypeScript quirks
 
-- `src/globals.d.ts` re-declares `FileSystem.stat/open/watch`. TypeScript's DOM lib declares its own `FileSystem` interface, which wins the global binding and hides Nova's methods; re-declaring them as an interface merges them back. Keep this until the types or `tsconfig` `lib` change (setting `"lib": ["es2020"]` without DOM may make it unnecessary — test with `yarn lint`).
+- `tsconfig.json` sets `"lib": ["es2020"]` (no DOM) and `"types": ["nova-editor-node"]`. Without DOM, TypeScript's own `FileSystem` interface no longer hides Nova's, so the old `src/globals.d.ts` workaround was removed in 7.2.1. Node's types are only in `tests/unit/tsconfig.json`.
 - `tsc` is only used for type checking (`yarn lint`); esbuild does the build and ignores type errors, so run `yarn lint` before releasing.
 
 ## Testing
@@ -209,7 +241,18 @@ Things learnt the hard way or not obvious from the docs.
 - **Manual:** `tests/projects/` has one small project per case (each source, filename variants, wildcard/hidden tasks, root-only, the `maidfile.md` collision, all sources for settings toggles). Open each as its own project with the dev build; expected results are in `tests/README.md`. Every task only echoes.
 - **Unit:** `yarn test` bundles `tests/unit/*.test.ts` and `tests/unit/parsers/*.test.ts` with esbuild (`--platform=node`, output in gitignored `tests/.build`) and runs them with `node --test`. Bundling (rather than Node's own TypeScript support) keeps extensionless imports working and matches how the extension is built. Tests type-check via `tests/unit/tsconfig.json` (Node and Nova types; part of `yarn lint`). `yarn release` runs them first.
   - Pure rules: `src/scripts.ts`, `src/recipes.ts`, `src/diagnose.ts`, `src/watch.ts` (fake timers via `node:test`'s `mock.timers`).
-  - Parsers: `tests/unit/nova.ts` installs stand-in Nova globals — real file reads from `tests/projects/<name>` (`useProject()`), in-memory settings, recorded notifications/URLs/tasks, and **scripted processes** (`script()`, `install()` for `command -v`) fed from `tests/fixtures/`. No tools need to be installed. Import it before any `src/` module (`src/tasks.ts` reads `Task.Run` on load). `useProject()` also calls each module's `resetForTests()` (install-check cache, shown notifications).
+  - **Sources:** `tests/unit/nova.ts` installs stand-in Nova globals. No tools need to be installed.
+    - Real file reads from `tests/projects/<name>` (`useProject()`).
+    - In-memory settings with observers (`setConfig()`).
+    - Recorded notifications, URLs, tasks, reloads, Task Assistants, commands, watchers and subscriptions.
+    - **Scripted processes** (`script()`, and `install()` for `command -v`), fed from `tests/fixtures/`. They can `hang` (and `ignoresTerminate`) for timeout tests; `terminate()`/`kill()` calls are recorded in `state.signals`.
+    - Import it before any `src/` module (`src/tasks.ts` reads `Task.Run` on load). `useProject()` also calls each module's `resetState()`.
+  - **Lifecycle:** `tests/unit/index.test.ts` activates the real `index.ts` against the stand-in and covers:
+    - registration, turning a source off and on, the debounced watcher, and listing settings;
+    - Refresh Tasks, and `deactivate()` (disposing, and stopping processes);
+    - activation events versus each source's root files.
+      Call `deactivate()` and then dispose `state.subscriptions`, as Nova would.
+  - **Timeouts:** `tests/unit/process.test.ts` covers the timeout, kill and single-resolve behaviour, with fake timers.
 
 ## Build and tooling
 
@@ -221,7 +264,8 @@ Things learnt the hard way or not obvious from the docs.
 - `yarn activate` — open the bundle in Nova as a dev extension. Disable the Extension Library copy first, and leave the window that opens minimised.
 - `yarn release` — build, then `nova extension publish` (validates, asks to confirm, publishes). Don't name it `publish`: that's a built-in Yarn 1 command and would try to publish to npm.
 - `nova extension validate build/taskfinder.novaextension` — validate without publishing.
-- Formatting: Prettier (`.prettierrc.toml`) — tabs, single quotes, width 150.
+- `yarn format` / `yarn format:check`: Prettier (`.prettierrc.toml`: tabs, single quotes, width 150). It formats `src`, tests, docs and `extension.json`. `.prettierignore` leaves out the deliberately broken files in `tests/projects/` and the captured output in `tests/fixtures/`.
+- **CI** (`.github/workflows/ci.yml`, GitHub Actions, Ubuntu, Node 24) runs `format:check`, `lint`, `test` and `build` on pull requests and pushes to `master`. It's a **required check** for merging into `master`. Actions is limited to GitHub-owned actions. `nova extension validate` needs Nova, so it stays in the local release steps.
 - Yarn 1 (via Corepack). esbuild 0.28.
 - Extension logs: Nova → Extensions → Extension Console.
 
@@ -230,13 +274,13 @@ Things learnt the hard way or not obvious from the docs.
 1. Update `CHANGELOG.md` (new `## Version X.Y` at the top, credit contributors with GitHub links).
 2. Bump `version` in both `package.json` and `build/taskfinder.novaextension/extension.json` — they must match.
 3. Update both READMEs if features or settings changed; add contributors to Acknowledgements in both.
-4. `yarn lint`, `yarn test`, `yarn build`, `nova extension validate build/taskfinder.novaextension`, then test with `yarn activate` against `tests/projects/` (see `tests/README.md`).
+4. `yarn format:check`, `yarn lint`, `yarn test`, `yarn build`, `nova extension validate build/taskfinder.novaextension`, then test with `yarn activate` against `tests/projects/` (see `tests/README.md`). CI must pass on the PR.
 5. Merge to `master`, then `yarn release` (needs `nova extension login`; check with `nova extension whoami`).
 
 Versioning: bump major when existing users' behaviour changes (e.g. setting defaults), minor for new sources/features, patch for fixes.
 
 ## Contributing workflow
 
-- `master` requires a PR (no direct pushes) but no approving reviews, as there's a single maintainer. Merge your own PRs with `gh pr merge <n> --merge`.
+- `master` requires a PR (no direct pushes) and a passing CI check, but no approving reviews, as there's a single maintainer. Merge your own PRs with `gh pr merge <n> --merge` once CI is green.
 - Contributor PRs usually come from the contributor's fork. With "Allow edits by maintainers" on, you can push follow-up commits to that branch; use the SSH URL (`git@github.com:<user>/nova-taskfinder.git`).
 - Don't add AI attribution to commits, PRs or docs.

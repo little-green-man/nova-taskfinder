@@ -1,3 +1,10 @@
+## Version 7.2.1
+
+- Fixed: a tool that hangs while listing tasks (for example `make` asking to install Apple's command-line tools, or a Laravel app waiting on its database) is now stopped after 15 seconds, with a notification offering Refresh, instead of that source's tasks never appearing
+- Listing processes still running are stopped when the extension stops
+- A problem that's fixed and later comes back (e.g. `package.json` broken again) now shows its notification again
+- Internal tidying: a shared pipeline for all task sources, more tests (including start-up and shutdown), consistent formatting, and automated checks on every pull request
+
 ## Version 7.2
 
 - Tidier settings: sources are listed once under **Task Sources** with short names (e.g. "Node (package.json)"), and each tool with options has its own short section (Node and Composer, just, Make, Laravel). Descriptions are shorter, with a (?) button linking to the new Settings section of the README. Two-choice options use radio buttons

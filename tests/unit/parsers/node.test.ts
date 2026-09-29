@@ -1,5 +1,6 @@
 import { state, useProject, install, settle, summarise } from '../nova';
 import { test } from 'node:test';
+import { resolve } from 'node:path';
 import { strict as assert } from 'node:assert';
 import { PackageJsonParser } from '../../../src/parsers';
 
@@ -103,6 +104,22 @@ test('stat throwing for missing lockfiles (a *.novaextension folder) still lists
 	state.statThrowsIfMissing = true;
 	state.listdirFails = true;
 	assert.equal((await tasksFor()).length, 7);
+});
+
+test('a problem that comes back after being fixed notifies again', async () => {
+	useProject('broken-json');
+	install('npm');
+	await tasksFor();
+	/* "fix" the file: same window, so the extension's state is kept */
+	state.root = resolve('tests/projects/node-only');
+	await tasksFor();
+	assert.deepEqual(state.cancelled, ['taskfinder.node-invalid-json']);
+	state.root = resolve('tests/projects/broken-json');
+	await tasksFor();
+	assert.deepEqual(
+		state.notifications.map((n) => n.id),
+		['taskfinder.node-invalid-json', 'taskfinder.node-invalid-json']
+	);
 });
 
 test('notifications show once per window', async () => {

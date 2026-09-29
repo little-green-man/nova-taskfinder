@@ -1,6 +1,6 @@
 {
 	"name": "task_finder",
-	"version": "7.2.0",
+	"version": "7.2.1",
 	"description": "Automatically offers Composer, Node, Maidfile & Taskfile actions as Nova Tasks.",
 	"main": "index.js",
 	"license": "MIT",
@@ -12,12 +12,15 @@
 		"activate": "nova extension activate build/taskfinder.novaextension",
 		"release": "yarn test && yarn build && nova extension publish build/taskfinder.novaextension",
 		"pop-tests": "open -a Nova $(find tests/projects -mindepth 1 -maxdepth 1 -type d ! -name root-only | sort) tests/projects/root-only/child",
-		"test": "rm -rf tests/.build && esbuild tests/unit/*.test.ts tests/unit/parsers/*.test.ts --bundle --platform=node --sourcemap --outbase=tests/unit --outdir=tests/.build --log-level=warning && node --enable-source-maps --test 'tests/.build/**/*.test.js'"
+		"test": "rm -rf tests/.build && esbuild tests/unit/*.test.ts tests/unit/parsers/*.test.ts --bundle --platform=node --sourcemap --outbase=tests/unit --outdir=tests/.build --log-level=warning && node --enable-source-maps --test 'tests/.build/**/*.test.js'",
+		"format": "prettier --write .",
+		"format:check": "prettier --check ."
 	},
 	"devDependencies": {
 		"@types/node": "^22",
 		"@types/nova-editor-node": "^5.1.7",
 		"esbuild": "^0.28.2",
+		"prettier": "^3.9",
 		"typescript": "^5.0.4"
 	}
 }
