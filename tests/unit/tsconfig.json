@@ -4,5 +4,5 @@
 		"types": ["node", "nova-editor-node"],
 		"noEmit": true
 	},
-	"include": ["./**/*.ts", "../../src/globals.d.ts"]
+	"include": ["./**/*.ts"]
 }

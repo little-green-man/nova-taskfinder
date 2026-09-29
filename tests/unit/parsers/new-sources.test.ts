@@ -1,5 +1,5 @@
 import { state, fixture, useProject, install, script, settle, summarise } from '../nova';
-import { test } from 'node:test';
+import { test, mock } from 'node:test';
 import { strict as assert } from 'node:assert';
 import {
 	ArtisanParser,
@@ -219,5 +219,36 @@ test('every file opened is closed (leaked handles make all file access fail in N
 		}
 		await settle();
 		assert.equal(state.openFiles, 0, project);
+	}
+});
+
+test('a listing that hangs is stopped after 15 s, with a Refresh button; a later listing clears it', async () => {
+	mock.timers.enable({ apis: ['setTimeout'] });
+	try {
+		useProject('just-only');
+		install('just');
+		script(JUST_DUMP, { hang: true });
+		let tasks: any;
+		new JustParser().provideTasks().then((t: any) => (tasks = t));
+		for (let i = 0; i < 5; i++) await new Promise((done) => setImmediate(done));
+
+		mock.timers.tick(15000);
+		for (let i = 0; i < 5; i++) await new Promise((done) => setImmediate(done));
+		assert.deepEqual(tasks, []);
+		assert.deepEqual(state.signals, [`terminate ${JUST_DUMP}`]);
+		assert.deepEqual(state.notifications, [
+			{
+				id: 'taskfinder.just-timeout',
+				title: 'just took too long',
+				body: 'Listing just recipes was stopped after 15 seconds. Refresh tries again.',
+				actions: ['Refresh', 'Dismiss'],
+			},
+		]);
+
+		script(JUST_DUMP, { stdout: fixture('just-dump.json') });
+		await new JustParser().provideTasks();
+		assert.ok(state.cancelled.includes('taskfinder.just-timeout'));
+	} finally {
+		mock.timers.reset();
 	}
 });

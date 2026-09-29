@@ -1,8 +1,8 @@
 import { diagnoseMaid } from '../diagnose';
 import type { CommandResult } from '../diagnose';
-import { clearNotification, howToInstall, notify, openRootFile, setProjectSetting } from '../notify';
-import { firstRootFile, isInstalled, run } from '../process';
-import { createTask } from '../tasks';
+import { run } from '../process';
+import { cliAssistant } from '../source';
+import type { CliSource } from '../source';
 
 /* maid looks for "maidfile" with these extensions (https://github.com/theMackabu/maid) */
 export const maidfileFiles = ['maidfile', 'maidfile.toml', 'maidfile.yaml', 'maidfile.yml', 'maidfile.json', 'Maidfile', 'Maidfile.toml'];
@@ -13,68 +13,34 @@ const listCommands = [
 	['butler', 'json'],
 ];
 
-const turnOffMaid = setProjectSetting('Turn Off', 'taskfinder.auto-maidfile', false);
+export const maidSource: CliSource = {
+	id: 'maid',
+	names: { tool: 'maid', file: 'a maidfile', listing: 'Maidfile tasks', noun: 'tasks', turnOff: 'reading the maidfile' },
+	rootFiles: maidfileFiles,
+	settingKey: 'taskfinder.auto-maidfile',
+	installKey: 'maid',
+	tool: { command: 'maid', needed: 'list' },
+	ids: { error: 'maidfile-error' },
+	wrongTool: {
+		title: 'A different maid is installed',
+		body: "The maid command on your PATH isn't theMackabu/maid, the Maidfile task runner (npm's maid package is an unrelated tool), so Maidfile tasks can't be listed. Turn Off stops reading the maidfile in this project.",
+	},
 
-class Maidfile {
-	packageProcessName: string = 'maid';
-
-	/* Tries each list command until one returns a Maidfile, keeping every result for diagnosis */
-	async readMaidfile() {
+	async list() {
+		/* try each list command until one returns a Maidfile, keeping every result for diagnosis */
 		const results: CommandResult[] = [];
+		let diagnosis = diagnoseMaid(results);
 		for (const args of listCommands) {
-			results.push(await run(this.packageProcessName, args));
-			const diagnosis = diagnoseMaid(results);
-			if (diagnosis.kind === 'ok') return diagnosis;
+			results.push(await run('maid', args));
+			diagnosis = diagnoseMaid(results);
+			if (diagnosis.kind === 'ok') break;
 		}
-		return diagnoseMaid(results);
-	}
+		if (diagnosis.kind !== 'ok') return diagnosis;
 
-	async provideTasks() {
-		/* maid walks up parent folders, so only run it when the project root has a maidfile */
-		const maidfile = firstRootFile(maidfileFiles);
-		if (!maidfile) return [];
+		const tasks = diagnosis.value.tasks;
+		const names = Object.keys(tasks).filter((name) => tasks[name]?.hide !== true && !name.startsWith('_'));
+		return { kind: 'ok', tasks: names.map((name) => ({ name, command: 'maid', args: [name] })) };
+	},
+};
 
-		if (!(await isInstalled(this.packageProcessName))) {
-			notify(
-				'maid-missing',
-				"maid isn't installed",
-				"This project has a maidfile, but the maid command isn't on your PATH, so its tasks can't be listed. Turn Off stops reading the maidfile in this project.",
-				[howToInstall('maid'), turnOffMaid]
-			);
-			return [];
-		}
-
-		const diagnosis = await this.readMaidfile();
-
-		if (diagnosis.kind === 'wrong-tool') {
-			notify(
-				'maid-wrong',
-				'A different maid is installed',
-				"The maid command on your PATH isn't theMackabu/maid, the Maidfile task runner (npm's maid package is an unrelated tool), so Maidfile tasks can't be listed. Turn Off stops reading the maidfile in this project.",
-				[howToInstall('maid'), turnOffMaid]
-			);
-			return [];
-		}
-		if (diagnosis.kind === 'error') {
-			notify('maidfile-error', `${maidfile} has an error`, `Maidfile tasks can't be listed: ${diagnosis.detail}`, [openRootFile(maidfile)]);
-			return [];
-		}
-		if (diagnosis.kind !== 'ok') return [];
-
-		clearNotification('maid-wrong');
-		clearNotification('maidfile-error');
-
-		const json = diagnosis.value;
-		const tasks: Array<Task> = [];
-		Object.keys(json.tasks).forEach((key) => {
-			if (json.tasks[key]?.hide === true || key.startsWith('_')) return;
-
-			tasks.push(createTask(key, this.packageProcessName, [key]));
-		});
-
-		console.info(`maidfile has ${tasks.length} task(s)`);
-		return tasks;
-	}
-}
-
-export default Maidfile;
+export default cliAssistant(maidSource);

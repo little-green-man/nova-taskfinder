@@ -110,6 +110,19 @@ function readTextFile(path: string): string {
 	}
 }
 
+/** Reads a file at the workspace root (`file` may be nested, e.g. `routes/console.php`); undefined if it's missing or unreadable. */
+function readRootFile(file: string): string | undefined {
+	const root = nova.workspace.path;
+	if (!root) return undefined;
+	const path = nova.path.join(root, file);
+	try {
+		return fileExists(path) ? readTextFile(path) : undefined;
+	} catch (e) {
+		console.error(`Couldn't read ${file}: ${e}`);
+		return undefined;
+	}
+}
+
 let listdirFailed = false;
 
 /**
@@ -152,4 +165,4 @@ const resetState = () => {
 	listdirFailed = false;
 };
 
-export { run, stopAll, fileExists, readTextFile, firstRootFile, isInstalled, resetState, LIST_TIMEOUT };
+export { run, stopAll, fileExists, readTextFile, readRootFile, firstRootFile, isInstalled, resetState, LIST_TIMEOUT };

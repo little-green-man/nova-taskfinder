@@ -11,7 +11,8 @@
 		"noImplicitReturns": true,
 		"noFallthroughCasesInSwitch": true,
 		"forceConsistentCasingInFileNames": true,
-		"types": ["nova-editor-node"]
+		"types": ["nova-editor-node"],
+		"lib": ["es2020"]
 	},
 	"include": ["src"]
 }

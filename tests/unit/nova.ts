@@ -47,6 +47,13 @@ const state = {
 	signals: [] as string[],
 	/* files opened and not yet closed */
 	openFiles: 0,
+	/* nova.workspace.reloadTasks() calls */
+	reloads: [] as string[],
+	/* registered Task Assistants, commands and file watchers */
+	assistants: new Set<string>(),
+	commands: new Map<string, (...args: any[]) => any>(),
+	watchers: [] as Array<{ glob: string; callback: (path: string) => void; disposed: boolean }>,
+	subscriptions: [] as Array<{ dispose(): void }>,
 	/* deliver stdout in pieces of this many characters without newlines, as Nova may do for very long lines (0 = whole lines) */
 	chunkSize: 0,
 };
@@ -54,11 +61,36 @@ const state = {
 /** Loads a file from `tests/fixtures/`. */
 const fixture = (name: string) => readFileSync(`tests/fixtures/${name}`, 'utf8');
 
+/* Settings observers, called when a value changes (see setConfig) */
+const configObservers = new Map<string, Set<() => void>>();
+
 const config = (values: Map<string, unknown>) => ({
 	get: (key: string) => (values.has(key) ? values.get(key) : null),
 	set: (key: string, value: unknown) => values.set(key, value),
-	onDidChange: () => ({ dispose() {} }),
+	onDidChange: (key: string, callback: () => void) => {
+		if (!configObservers.has(key)) configObservers.set(key, new Set());
+		configObservers.get(key)?.add(callback);
+		return { dispose: () => configObservers.get(key)?.delete(callback) };
+	},
 });
+
+/** Changes a setting and notifies its observers, as Nova does. */
+function setConfig(scope: 'global' | 'workspace', key: string, value: unknown) {
+	(scope === 'global' ? state.globalConfig : state.workspaceConfig).set(key, value);
+	configObservers.get(key)?.forEach((callback) => callback());
+}
+
+/* A Disposable that records whether it was disposed */
+const disposable = (onDispose?: () => void) => {
+	const d = {
+		disposed: false,
+		dispose() {
+			d.disposed = true;
+			onDispose?.();
+		},
+	};
+	return d;
+};
 
 const g = globalThis as any;
 
@@ -76,7 +108,7 @@ g.nova = {
 		config: config(state.workspaceConfig),
 		openFile: (path: string) => state.urls.push(`file:${path}`),
 		openConfig: () => state.urls.push('config:project'),
-		reloadTasks: () => {},
+		reloadTasks: (id: string) => state.reloads.push(id),
 	},
 	config: config(state.globalConfig),
 	path: { join, dirname, basename },
@@ -102,6 +134,18 @@ g.nova = {
 				},
 			};
 		},
+		watch: (glob: string, callback: (path: string) => void) => {
+			const watcher = {
+				glob,
+				callback,
+				disposed: false,
+				dispose() {
+					watcher.disposed = true;
+				},
+			};
+			state.watchers.push(watcher);
+			return watcher;
+		},
 		listdir: (path: string) => {
 			if (state.listdirFails) throw new Error('The operation couldn’t be completed. (NSCocoaErrorDomain error 256.)');
 			return readdirSync(path);
@@ -115,6 +159,20 @@ g.nova = {
 		cancel: (id: string) => state.cancelled.push(id),
 	},
 	openURL: (url: string) => state.urls.push(url),
+	assistants: {
+		registerTaskAssistant: (_assistant: unknown, options: { identifier: string }) => {
+			state.assistants.add(options.identifier);
+			return disposable(() => state.assistants.delete(options.identifier));
+		},
+	},
+	commands: {
+		register: (name: string, callback: (...args: any[]) => any) => {
+			state.commands.set(name, callback);
+			return disposable(() => state.commands.delete(name));
+		},
+		invoke: async (name: string, ...args: any[]) => state.commands.get(name)?.(...args),
+	},
+	subscriptions: { add: (d: { dispose(): void }) => state.subscriptions.push(d) },
 };
 
 g.NotificationRequest = class {
@@ -215,6 +273,7 @@ function useProject(name: string, root = 'tests/projects') {
 	state.urls.length = 0;
 	state.ran.length = 0;
 	state.signals.length = 0;
+	state.reloads.length = 0;
 	state.openFiles = 0;
 	state.chunkSize = 0;
 }
@@ -232,4 +291,4 @@ const summarise = (task: any) => {
 	return [task.name, Object.keys(task.actions).join('+'), [action.command, ...(action.options.args ?? [])].join(' ')];
 };
 
-export { state, fixture, useProject, install, script, settle, summarise };
+export { state, fixture, useProject, install, script, settle, summarise, setConfig };
