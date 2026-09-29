@@ -1,11 +1,12 @@
 import { getConfigWithWorkspaceOverride, observeConfigWithWorkspaceOverride } from './config';
 import { ComposerParser, PackageJsonParser, TaskfileParser, MaidfileParser, taskfileFiles, maidfileFiles } from './parsers';
+import { packageManagerFiles } from './scripts';
 
 interface Feature {
 	key: string;
 	Parser: any;
 	name: string;
-	glob: string;
+	globs: Array<string>;
 	files: Array<string>;
 	id: string;
 }
@@ -15,15 +16,16 @@ const features: Array<Feature> = [
 		key: 'taskfinder.auto-node',
 		Parser: PackageJsonParser,
 		name: 'package.json',
-		glob: '*package.json',
-		files: ['package.json'],
+		/* lockfiles and package manager config change which package manager runs the scripts */
+		globs: ['*package.json', '*.lock', '*.lockb', '*lock.yaml', '*-lock.json', '*shrinkwrap.json', '*.yarnrc.yml', '*.npmrc', '*pnpm-workspace.yaml'],
+		files: ['package.json', ...packageManagerFiles],
 		id: 'taskfinder-tasks-node',
 	},
 	{
 		key: 'taskfinder.auto-composer',
 		Parser: ComposerParser,
 		name: 'composer.json',
-		glob: '*composer.json',
+		globs: ['*composer.json'],
 		files: ['composer.json'],
 		id: 'taskfinder-tasks-composer',
 	},
@@ -31,7 +33,7 @@ const features: Array<Feature> = [
 		key: 'taskfinder.auto-taskfile',
 		Parser: TaskfileParser,
 		name: 'Taskfile',
-		glob: '*askfile*',
+		globs: ['*askfile*'],
 		files: taskfileFiles,
 		id: 'taskfinder-tasks-taskfile',
 	},
@@ -39,7 +41,7 @@ const features: Array<Feature> = [
 		key: 'taskfinder.auto-maidfile',
 		Parser: MaidfileParser,
 		name: 'Maidfile',
-		glob: '*aidfile*',
+		globs: ['*aidfile*'],
 		files: maidfileFiles,
 		id: 'taskfinder-tasks-maidfile',
 	},
@@ -93,11 +95,13 @@ const enable = (feature: Feature) => {
 	});
 	nova.workspace.reloadTasks(feature.id);
 
-	const watcher = nova.fs.watch(feature.glob, (path) => {
-		if (isRootFile(feature, path)) scheduleReload(feature.id);
-	});
+	const watchers = feature.globs.map((glob) =>
+		nova.fs.watch(glob, (path) => {
+			if (isRootFile(feature, path)) scheduleReload(feature.id);
+		})
+	);
 
-	active.set(feature.key, [assistant, watcher]);
+	active.set(feature.key, [assistant, ...watchers]);
 };
 
 const disable = (feature: Feature) => {
@@ -138,21 +142,18 @@ const activate = async () => {
 		toggle(feature);
 	});
 
-	/* package manager changes re-register the node assistant */
-	observeConfigWithWorkspaceOverride('taskfinder.package-manager', () => {
-		const feature = features.find((f) => f.id === 'taskfinder-tasks-node');
-		if (!feature || !active.has(feature.key)) return;
-
-		disable(feature);
-		enable(feature);
-	}).forEach((d) => nova.subscriptions.add(d));
-
-	/* the lifecycle setting is read on each provideTasks(), so a reload is enough */
-	observeConfigWithWorkspaceOverride('taskfinder.show-lifecycle-scripts', () => {
-		['taskfinder-tasks-node', 'taskfinder-tasks-composer'].forEach((id) => {
+	/* both settings are read on each provideTasks(), so a reload is enough */
+	const reloadIfActive = (ids: string[]) =>
+		ids.forEach((id) => {
 			if (features.some((f) => f.id === id && active.has(f.key))) nova.workspace.reloadTasks(id);
 		});
-	}).forEach((d) => nova.subscriptions.add(d));
+
+	observeConfigWithWorkspaceOverride('taskfinder.package-manager', () => reloadIfActive(['taskfinder-tasks-node'])).forEach((d) =>
+		nova.subscriptions.add(d)
+	);
+	observeConfigWithWorkspaceOverride('taskfinder.show-lifecycle-scripts', () =>
+		reloadIfActive(['taskfinder-tasks-node', 'taskfinder-tasks-composer'])
+	).forEach((d) => nova.subscriptions.add(d));
 };
 
 export { activate, deactivate };

@@ -1,0 +1,4 @@
+{
+	"name": "taskfinder/test-broken-json",
+	"scripts": { "test": "echo test" 
+}

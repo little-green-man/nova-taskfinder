@@ -1,0 +1,9 @@
+{
+	"name": "taskfinder-test-package-manager-field",
+	"private": true,
+	"packageManager": "pnpm@8.15.0",
+	"scripts": {
+		"build": "echo 'field: build'",
+		"prebuild": "echo 'field: prebuild (pnpm 8 does not run hooks, so listed)'"
+	}
+}

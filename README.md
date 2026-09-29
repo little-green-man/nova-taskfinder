@@ -46,7 +46,7 @@ What does it do? In short, **auto-populate the editors tasklist with tasks from 
 
 - Binds `build`/`compile` scripts to Build (⌘B) and `clean` to Clean (⇧⌘K)
 - Hides lifecycle scripts that run automatically (npm hooks, Composer events), with a setting to show them
-- Allows you to modify use of npm/yarn on a per-project basis
+- Detects the Node package manager (npm, yarn, pnpm, bun), or lets you choose one globally or per project
 - Allows you to choose which features to enable (per-project also)
 - Applies setting changes immediately, without restarting the workspace
 - Watches files to automatically update the task list on file changes

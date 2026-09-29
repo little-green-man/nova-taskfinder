@@ -1,0 +1,12 @@
+{
+	"name": "taskfinder-test-dev-engines",
+	"private": true,
+	"devEngines": {
+		"packageManager": { "name": "yarn", "onFail": "warn" }
+	},
+	"scripts": {
+		"info": "echo 'dev-engines: info script (not yarn info)'",
+		"version": "echo 'dev-engines: version (npm lifecycle name, hidden by default)'",
+		"dev": "echo 'dev-engines: dev'"
+	}
+}
