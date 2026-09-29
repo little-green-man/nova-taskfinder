@@ -52,9 +52,9 @@ CHANGELOG.md                 source of truth for the changelog
 tests/projects/              manual test projects to open in Nova, one per case (expected results in tests/README.md)
 tests/unit/                  unit tests (node:test); parsers/ runs each parser against nova.ts (stand-in Nova globals)
 tests/fixtures/              captured real tool output used by the tests (anonymised)
-IMPROVEMENTS.md              backlog of open work (gitignored, local only)
-SPRINT.md                    current sprint plan (gitignored, local only)
 ```
+
+Planned work lives in GitHub issues (https://github.com/little-green-man/nova-taskfinder/issues), with the reasoning behind each idea. `SPRINT.md` is gitignored, for a local plan while a release is in progress.
 
 The bundle is a Nova extension folder, so `build/taskfinder.novaextension` _is_ the shipped extension. Everything in it except `Scripts/` is source-controlled and edited by hand.
 
