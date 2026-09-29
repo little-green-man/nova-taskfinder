@@ -1,3 +1,8 @@
+## Version 7.4.1
+
+- A clearer extension page: the Extension Library description has been rewritten, with a table of supported tools, a feature list, the tools each source needs and a tidier Settings guide
+- For contributors: the GitHub README has a step-by-step guide to adding a new task source, with a worked example
+
 ## Version 7.4
 
 - **Monorepos:** a new **Workspace Packages** setting (off by default) also lists tasks from workspace packages, named `<package>: <script>` and run in the package's folder. It reads npm, Yarn and bun `workspaces`, `pnpm-workspace.yaml` and Deno `workspace` members, with `*`, `**` and `!` patterns

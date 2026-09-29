@@ -4,7 +4,7 @@
 	"imageName": "icon",
 	"organization": "Little Green Man Ltd",
 	"description": "Automatically offers Node (npm, yarn, pnpm, bun), Composer, Taskfile, Maidfile, just, Deno, Make and Laravel artisan tasks as Nova Tasks.",
-	"version": "7.4.0",
+	"version": "7.4.1",
 	"categories": ["tasks"],
 	"homepage": "https://github.com/little-green-man/nova-taskfinder",
 	"repository": "https://github.com/little-green-man/nova-taskfinder",

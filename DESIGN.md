@@ -119,6 +119,8 @@ Lifecycle:
 
 ### Adding a source
 
+The README's Contributing → Adding a source section walks through this with a worked example (a made-up `mytool` source). This is the complete checklist.
+
 1. **Definition:** `src/parsers/<source>.ts` exporting a `CliSource` or `FileSource` (see Sources) and `export default cliAssistant(…)` / `fileAssistant(…)`. Export it and its watched files from `src/parsers/index.ts`.
 2. **Pure rules:** listing and diagnosis rules go in `src/recipes.ts` / `src/diagnose.ts`, with unit tests. Capture real tool output (success and failure) into `tests/fixtures/`, anonymising paths and never including environment variables.
 3. **Registry:** add a `Feature` to `src/features.ts` (key, Assistant, watch globs, watched files, listing settings).
