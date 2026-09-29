@@ -1,11 +1,12 @@
-# Automatically populate Tasks from package.json, composer.json, Taskfile and Maidfiles
+# Automatically populate Tasks from package.json, composer.json, Taskfiles, Maidfiles, justfiles, deno.json, Makefiles and Laravel artisan
 
 ![Screenshot](https://raw.githubusercontent.com/little-green-man/nova-taskfinder/master/.github/images/screenshot.png)
 
 ## Features
 
 - _Nova Tasks_ automatically populated from top-level
-  - `package.json`, `composer.json`, a [Taskfile](https://taskfile.dev) (`Taskfile.yml`, `taskfile.yaml`, `.dist` variants, …), and a [Maidfile](https://github.com/theMackabu/maid) (`maidfile`, `maidfile.toml`, `.yaml`, `.yml`, `.json`).
+  - `package.json`, `composer.json`, a [Taskfile](https://taskfile.dev) (`Taskfile.yml`, `taskfile.yaml`, `.dist` variants, …), and a [Maidfile](https://github.com/theMackabu/maid) (`maidfile`, `maidfile.toml`, `.yaml`, `.yml`, `.json`)
+  - a [justfile](https://just.systems) (including module recipes), [Deno](https://deno.com)'s `deno.json`/`deno.jsonc`, a `Makefile` (`.PHONY` targets), and Laravel's `artisan` (common commands, or all)
 - Scripts named `build`/`compile` also run with Build (⌘B), and `clean` with Clean (⇧⌘K)
 - Lifecycle scripts that run automatically (npm hooks such as `postinstall`, Composer events such as `post-install-cmd`) are hidden; turn on "Show Lifecycle Scripts" to list them
 - Detects your package manager (npm, yarn, pnpm or bun) from `packageManager`, `devEngines` or the lockfile, or choose one globally or per project
@@ -15,14 +16,16 @@
 ## Usage
 
 - Install and activate the extension
-- Optional: in the extension's preferences, set your node package manager, which task types to include, and whether to show lifecycle scripts
+- Optional: in the extension's preferences, set your node package manager, which task types to include, whether to show lifecycle scripts, and options for just, Make and artisan
 - Optional: in Project Settings, override any of these for the current project
 
 _Project settings default to "Global Setting", which follows the extension's preferences. Choose another value to override them for that project._
 
 The rest is automatic! Tasks will refresh when files and settings change.
 
-Taskfile and Maidfile tasks need the `task` (v3.19.1+) and `maid` commands on your `PATH`. For Maidfiles, install theMackabu's maid (`cargo install maid`); the npm package called `maid` is an unrelated tool.
+Taskfile, Maidfile, just, Make and artisan tasks are listed using `task` (v3.19.1+), `maid`, `just` (1.15+), `make` and `php` on your `PATH`; Deno tasks are read from the file and need `deno` to run. For Maidfiles, install theMackabu's maid (`cargo install maid`); the npm package called `maid` is an unrelated tool. If something's missing, a notification explains it.
+
+Listing Make targets from make's database (the default) and listing artisan commands run the project's own code (the Makefile's `$(shell …)`, and Laravel's service providers). For projects you don't trust, turn those sources off, or set "List Targets From" to "Read Makefile".
 
 ## To Do
 

@@ -1,0 +1,10 @@
+#!/usr/bin/env php
+<?php
+
+/*
+ * A stand-in for a broken Laravel app: prints the error a real app printed for a syntax error
+ * in routes/console.php (captured in tests/fixtures/artisan-error.txt) and fails.
+ */
+
+readfile(__DIR__ . '/../../fixtures/artisan-error.txt');
+exit(1);

@@ -1,6 +1,22 @@
 import { getConfigWithWorkspaceOverride, observeConfigWithWorkspaceOverride } from './config';
-import { ComposerParser, PackageJsonParser, TaskfileParser, MaidfileParser, taskfileFiles, maidfileFiles } from './parsers';
+import {
+	ComposerParser,
+	PackageJsonParser,
+	TaskfileParser,
+	MaidfileParser,
+	JustParser,
+	DenoParser,
+	MakeParser,
+	ArtisanParser,
+	taskfileFiles,
+	maidfileFiles,
+	justFiles,
+	denoFiles,
+	makeFiles,
+	artisanFiles,
+} from './parsers';
 import { packageManagerFiles } from './scripts';
+import { createReloader, isWatchedFile } from './watch';
 
 interface Feature {
 	key: string;
@@ -45,43 +61,49 @@ const features: Array<Feature> = [
 		files: maidfileFiles,
 		id: 'taskfinder-tasks-maidfile',
 	},
+	{
+		key: 'taskfinder.auto-just',
+		Parser: JustParser,
+		name: 'justfile',
+		globs: ['*ustfile', '*USTFILE'],
+		files: justFiles,
+		id: 'taskfinder-tasks-just',
+	},
+	{
+		key: 'taskfinder.auto-deno',
+		Parser: DenoParser,
+		name: 'deno.json',
+		globs: ['*deno.json*'],
+		files: denoFiles,
+		id: 'taskfinder-tasks-deno',
+	},
+	{
+		key: 'taskfinder.auto-make',
+		Parser: MakeParser,
+		name: 'Makefile',
+		/* makeFiles also gains the Makefile's literal includes; only *.mk includes are watched */
+		globs: ['*akefile', '*.mk'],
+		files: makeFiles,
+		id: 'taskfinder-tasks-make',
+	},
+	{
+		key: 'taskfinder.auto-artisan',
+		Parser: ArtisanParser,
+		name: 'artisan',
+		globs: ['*artisan', '*console.php', '*composer.lock'],
+		files: artisanFiles,
+		id: 'taskfinder-tasks-artisan',
+	},
 ];
 
 const active = new Map<string, Array<Disposable>>();
 
-/* Pending debounced reloads, per feature id */
-const reloadTimers = new Map<string, number>();
-const RELOAD_DELAY = 300;
-
-/* Collapse bursts of file changes (saves, branch switches) into one reload */
-const scheduleReload = (id: string) => {
-	cancelReload(id);
-	reloadTimers.set(
-		id,
-		setTimeout(() => {
-			reloadTimers.delete(id);
-			nova.workspace.reloadTasks(id);
-		}, RELOAD_DELAY)
-	);
-};
-
-const cancelReload = (id: string) => {
-	const timer = reloadTimers.get(id);
-	if (timer !== undefined) clearTimeout(timer);
-	reloadTimers.delete(id);
-};
+/* Debounced reloads after file changes, per feature id */
+const reloader = createReloader((id) => nova.workspace.reloadTasks(id));
 
 const isAutoEnabled = (key: string): boolean => {
 	const value = getConfigWithWorkspaceOverride(key);
 	return value === null || value === undefined ? true : Boolean(value);
-};
-
-/* Only root-level project files are read, so ignore changes elsewhere (e.g. node_modules). The watcher may pass relative or absolute paths. */
-const isRootFile = (feature: Feature, path: string): boolean => {
-	const root = nova.workspace.path;
-	let relative = root && path.startsWith(`${root}/`) ? path.slice(root.length + 1) : path;
-	relative = relative.replace(/^\.\//, '');
-	return feature.files.includes(relative);
 };
 
 const enable = (feature: Feature) => {
@@ -95,11 +117,19 @@ const enable = (feature: Feature) => {
 	});
 	nova.workspace.reloadTasks(feature.id);
 
-	const watchers = feature.globs.map((glob) =>
-		nova.fs.watch(glob, (path) => {
-			if (isRootFile(feature, path)) scheduleReload(feature.id);
-		})
-	);
+	/* one failing watcher shouldn't stop the source, or the rest of the extension, from working */
+	const watchers: Disposable[] = [];
+	feature.globs.forEach((glob) => {
+		try {
+			watchers.push(
+				nova.fs.watch(glob, (path) => {
+					if (isWatchedFile(feature.files, path, nova.workspace.path)) reloader.schedule(feature.id);
+				})
+			);
+		} catch (e) {
+			console.error(`${feature.name}: couldn't watch "${glob}": ${e}`);
+		}
+	});
 
 	active.set(feature.key, [assistant, ...watchers]);
 };
@@ -110,7 +140,7 @@ const disable = (feature: Feature) => {
 
 	disposables.forEach((d) => d.dispose());
 	active.delete(feature.key);
-	cancelReload(feature.id);
+	reloader.cancel(feature.id);
 
 	nova.workspace.reloadTasks(feature.id);
 };
@@ -128,21 +158,26 @@ const deactivate = () => {
 
 	active.forEach((disposables) => disposables.forEach((d) => d.dispose()));
 	active.clear();
-	reloadTimers.forEach((timer) => clearTimeout(timer));
-	reloadTimers.clear();
+	reloader.cancelAll();
 };
 
 const activate = async () => {
 	console.log(`Starting TaskFinder (nova v${nova.extension.version})`);
 
+	/* each source starts independently, so one failure doesn't stop the others */
 	features.forEach((feature) => {
-		const disposables = observeConfigWithWorkspaceOverride(feature.key, () => toggle(feature));
-		disposables.forEach((d) => nova.subscriptions.add(d));
-
-		toggle(feature);
+		const safeToggle = () => {
+			try {
+				toggle(feature);
+			} catch (e) {
+				console.error(`${feature.name}: couldn't start: ${e}`);
+			}
+		};
+		observeConfigWithWorkspaceOverride(feature.key, safeToggle).forEach((d) => nova.subscriptions.add(d));
+		safeToggle();
 	});
 
-	/* both settings are read on each provideTasks(), so a reload is enough */
+	/* these settings are read on each provideTasks(), so a reload is enough */
 	const reloadIfActive = (ids: string[]) =>
 		ids.forEach((id) => {
 			if (features.some((f) => f.id === id && active.has(f.key))) nova.workspace.reloadTasks(id);
@@ -154,6 +189,13 @@ const activate = async () => {
 	observeConfigWithWorkspaceOverride('taskfinder.show-lifecycle-scripts', () =>
 		reloadIfActive(['taskfinder-tasks-node', 'taskfinder-tasks-composer'])
 	).forEach((d) => nova.subscriptions.add(d));
+	(
+		[
+			['taskfinder.just-confirm-recipes', 'taskfinder-tasks-just'],
+			['taskfinder.make-listing', 'taskfinder-tasks-make'],
+			['taskfinder.artisan-commands', 'taskfinder-tasks-artisan'],
+		] as const
+	).forEach(([key, id]) => observeConfigWithWorkspaceOverride(key, () => reloadIfActive([id])).forEach((d) => nova.subscriptions.add(d)));
 };
 
 export { activate, deactivate };

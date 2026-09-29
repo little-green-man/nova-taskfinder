@@ -10,7 +10,7 @@ Small projects to open in Nova with the dev build (`yarn build && yarn activate`
 
 Every task just echoes, so running any of them is safe.
 
-Setup: `task` (`brew install go-task`, v3.19.1+), `maid` from theMackabu (`cargo install maid`; `which maid` must not point to npm's unrelated `maid`), `composer`, and `npm`, `yarn`, `pnpm` (and `bun` to run bun tasks; without it, `bun-lockfile` should log a missing-tool warning).
+Setup: `task` (`brew install go-task`, v3.19.1+), `just` and `deno` (`brew install just deno`), `make` (Xcode command-line tools), `php`, `maid` from theMackabu (`cargo install maid`; `which maid` must not point to npm's unrelated `maid`), `composer`, and `npm`, `yarn`, `pnpm` (and `bun` to run bun tasks; without it, `bun-lockfile` should log a missing-tool warning).
 
 | Project | Expected tasks | Not listed / checks |
 | ------- | -------------- | ------------------- |
@@ -20,6 +20,12 @@ Setup: `task` (`brew install go-task`, v3.19.1+), `maid` from theMackabu (`cargo
 | `pnpm-lockfile` | `build`, `test` | pnpm (from `pnpm-lock.yaml`); runs `pnpm run <script>`. `prebuild` hidden (pnpm 9+ runs hooks). Delete `pnpm-lock.yaml` → switches to npm without reopening (restore it after) |
 | `bun-lockfile` | `build`, `dev` | bun (from `bun.lock`); runs `bun run build` (not the bundler). Without bun installed: notification "bun isn't installed" with Install and Use npm (which switches the project to npm and clears the notification); tasks still listed |
 | `package-manager-field` | `build`, `prebuild` | pnpm (from `packageManager`) despite `package-lock.json`; notification about lockfiles for several package managers, with Settings. `prebuild` listed (pnpm 8 doesn't run hooks) |
+| `just-only` | `build` (⌘B), `test`, `watch`, `sub::clean`, `sub::lint` | Not listed: `deploy` (needs an argument), `helper`/`_hidden` (private), alias `b`. `release` appears only with [confirm] Recipes = Run with --yes (runs `just --yes release`) |
+| `deno-only` | `dev`, `build` (⌘B), `all`, `url` | From `deno.jsonc` with comments and trailing commas; `all` runs its dependencies; `url` keeps its `//`. Needs `deno` to run |
+| `make-only` | `build` (⌘B), `clean` (⇧⌘K), `lint`, `test` | `lint` comes from `extra.mk`. Not listed: `app.o`, `docs/site`, `%.o`, `_internal`. Set List Targets From = Read Makefile: same targets in file order, nothing run. Editing `extra.mk` reloads |
+| `laravel` | Common: `about`, `app:hello`, `db:seed`, `migrate`, `migrate:fresh`, `optimize:clear`, `pail`, `queue:work`, `route:list`, `serve`, `test` | Fake `artisan` (prints a captured list; running a command echoes it). Artisan Commands = All adds `cache:clear`, `config:cache`. Never listed: `tinker`, `dev`, `make:controller` (needs an argument) |
+| `broken-justfile` / `broken-deno` / `broken-makefile` | none | "… has an error" notification with the tool's error and Open File |
+| `broken-laravel` | none | "Laravel couldn't list its commands" with the ParseError; Open File opens `routes/console.php` at line 9 |
 | `broken-json` | none | Notifications: "package.json has an error" and "composer.json has an error", each with Open File. Fix a file and save: its notification disappears and tasks appear (undo afterwards) |
 | `broken-taskfile` | none | Notification "Taskfile.yml has an error" with the YAML error and Open File |
 | `broken-maidfile` | none | Notification "maidfile.toml has an error" with the TOML error and Open File |

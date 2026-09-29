@@ -1,0 +1,70 @@
+{
+  "tasks": [
+    {
+      "name": "build",
+      "task": "build",
+      "desc": "",
+      "summary": "",
+      "aliases": [],
+      "up_to_date": false,
+      "location": {
+        "line": 10,
+        "column": 3,
+        "taskfile": "/project/Taskfile.yml"
+      }
+    },
+    {
+      "name": "docs.site",
+      "task": "docs.site",
+      "desc": "",
+      "summary": "",
+      "aliases": [],
+      "up_to_date": false,
+      "location": {
+        "line": 12,
+        "column": 3,
+        "taskfile": "/project/Taskfile.yml"
+      }
+    },
+    {
+      "name": "hello",
+      "task": "hello",
+      "desc": "Plain task",
+      "summary": "",
+      "aliases": [],
+      "up_to_date": false,
+      "location": {
+        "line": 7,
+        "column": 3,
+        "taskfile": "/project/Taskfile.yml"
+      }
+    },
+    {
+      "name": "db:migrate",
+      "task": "db:migrate",
+      "desc": "",
+      "summary": "",
+      "aliases": [],
+      "up_to_date": false,
+      "location": {
+        "line": 4,
+        "column": 3,
+        "taskfile": "/project/db/Taskfile.yml"
+      }
+    },
+    {
+      "name": "start:*",
+      "task": "start:*",
+      "desc": "Wildcard - should NOT appear",
+      "summary": "",
+      "aliases": [],
+      "up_to_date": false,
+      "location": {
+        "line": 14,
+        "column": 3,
+        "taskfile": "/project/Taskfile.yml"
+      }
+    }
+  ],
+  "location": "/project/Taskfile.yml"
+}

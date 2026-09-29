@@ -1,0 +1,440 @@
+{
+  "application": {
+    "name": "Laravel Framework",
+    "version": "13.33.0"
+  },
+  "commands": [
+    {
+      "name": "_complete",
+      "description": "Internal command to provide shell completion suggestions",
+      "usage": [
+        "_complete [-s|--shell SHELL] [-i|--input INPUT] [-c|--current CURRENT] [-a|--api-version API-VERSION] [-S|--symfony SYMFONY]"
+      ],
+      "help": "",
+      "definition": {
+        "arguments": [],
+        "options": {}
+      },
+      "hidden": true
+    },
+    {
+      "name": "about",
+      "description": "Display basic information about your application",
+      "usage": [
+        "about [--only [ONLY]] [--json]"
+      ],
+      "help": "",
+      "definition": {
+        "arguments": [],
+        "options": {}
+      },
+      "hidden": false
+    },
+    {
+      "name": "dev",
+      "description": "Run the dev processes",
+      "usage": [
+        "dev [-s|--stream] [-t|--tabs] [-i|--inline] [--timestamps] [--no-restart] [--json] [--buffer-size [BUFFER-SIZE]] [--stream-buffer-size [STREAM-BUFFER-SIZE]]"
+      ],
+      "help": "",
+      "definition": {
+        "arguments": [],
+        "options": {}
+      },
+      "hidden": false
+    },
+    {
+      "name": "docs",
+      "description": "Access the Laravel documentation",
+      "usage": [
+        "docs [<page> [<section>]]"
+      ],
+      "help": "",
+      "definition": {
+        "arguments": {
+          "page": {
+            "name": "page",
+            "is_required": false,
+            "is_array": false,
+            "description": "The documentation page to open",
+            "default": null
+          },
+          "section": {
+            "name": "section",
+            "is_required": false,
+            "is_array": false,
+            "description": "The section of the page to open",
+            "default": null
+          }
+        },
+        "options": {}
+      },
+      "hidden": false
+    },
+    {
+      "name": "help",
+      "description": "Display help for a command",
+      "usage": [
+        "help [--format FORMAT] [--raw] [--] [<command_name>]"
+      ],
+      "help": "",
+      "definition": {
+        "arguments": {
+          "command_name": {
+            "name": "command_name",
+            "is_required": false,
+            "is_array": false,
+            "description": "The command name",
+            "default": "help"
+          }
+        },
+        "options": {}
+      },
+      "hidden": false
+    },
+    {
+      "name": "list",
+      "description": "List commands",
+      "usage": [
+        "list [--raw] [--format FORMAT] [--short] [--] [<namespace>]"
+      ],
+      "help": "",
+      "definition": {
+        "arguments": {
+          "namespace": {
+            "name": "namespace",
+            "is_required": false,
+            "is_array": false,
+            "description": "The namespace name",
+            "default": null
+          }
+        },
+        "options": {}
+      },
+      "hidden": false
+    },
+    {
+      "name": "migrate",
+      "description": "Run the database migrations",
+      "usage": [
+        "migrate [--database [DATABASE]] [--force] [--path [PATH]] [--realpath] [--schema-path [SCHEMA-PATH]] [--pretend] [--seed] [--seeder [SEEDER]] [--step] [--graceful] [--isolated [ISOLATED]]"
+      ],
+      "help": "",
+      "definition": {
+        "arguments": [],
+        "options": {}
+      },
+      "hidden": false
+    },
+    {
+      "name": "pail",
+      "description": "Tails the application logs",
+      "usage": [
+        "pail [--filter [FILTER]] [--message [MESSAGE]] [--level [LEVEL]] [--auth [AUTH]] [--user [USER]] [--timeout [TIMEOUT]]"
+      ],
+      "help": "",
+      "definition": {
+        "arguments": [],
+        "options": {}
+      },
+      "hidden": false
+    },
+    {
+      "name": "serve",
+      "description": "Serve the application on the PHP development server",
+      "usage": [
+        "serve [--host [HOST]] [--port [PORT]] [--tries [TRIES]] [--no-reload]"
+      ],
+      "help": "",
+      "definition": {
+        "arguments": [],
+        "options": {}
+      },
+      "hidden": false
+    },
+    {
+      "name": "test",
+      "description": "Run the application tests",
+      "usage": [
+        "test [--without-tty] [--compact] [--coverage] [--min [MIN]] [-p|--parallel] [--profile] [--recreate-databases] [--drop-databases] [--without-databases] [--without-cache]"
+      ],
+      "help": "",
+      "definition": {
+        "arguments": [],
+        "options": {}
+      },
+      "hidden": false
+    },
+    {
+      "name": "tinker",
+      "description": "Interact with your application",
+      "usage": [
+        "tinker [--execute [EXECUTE]] [--] [<include>...]"
+      ],
+      "help": "",
+      "definition": {
+        "arguments": {
+          "include": {
+            "name": "include",
+            "is_required": false,
+            "is_array": true,
+            "description": "Include file(s) before starting tinker",
+            "default": []
+          }
+        },
+        "options": {}
+      },
+      "hidden": false
+    },
+    {
+      "name": "app:hello",
+      "description": "Say hi",
+      "usage": [
+        "app:hello"
+      ],
+      "help": "",
+      "definition": {
+        "arguments": [],
+        "options": {}
+      },
+      "hidden": false
+    },
+    {
+      "name": "cache:clear",
+      "description": "Flush the application cache",
+      "usage": [
+        "cache:clear [--tags [TAGS]] [--locks] [--] [<store>]"
+      ],
+      "help": "",
+      "definition": {
+        "arguments": {
+          "store": {
+            "name": "store",
+            "is_required": false,
+            "is_array": false,
+            "description": "The name of the store you would like to clear",
+            "default": null
+          }
+        },
+        "options": {}
+      },
+      "hidden": false
+    },
+    {
+      "name": "cache:forget",
+      "description": "Remove an item from the cache",
+      "usage": [
+        "cache:forget <key> [<store>]"
+      ],
+      "help": "",
+      "definition": {
+        "arguments": {
+          "key": {
+            "name": "key",
+            "is_required": true,
+            "is_array": false,
+            "description": "The key to remove",
+            "default": null
+          },
+          "store": {
+            "name": "store",
+            "is_required": false,
+            "is_array": false,
+            "description": "The store to remove the key from",
+            "default": null
+          }
+        },
+        "options": {}
+      },
+      "hidden": false
+    },
+    {
+      "name": "config:cache",
+      "description": "Create a cache file for faster configuration loading",
+      "usage": [
+        "config:cache"
+      ],
+      "help": "",
+      "definition": {
+        "arguments": [],
+        "options": {}
+      },
+      "hidden": false
+    },
+    {
+      "name": "db:seed",
+      "description": "Seed the database with records",
+      "usage": [
+        "db:seed [--class [CLASS]] [--database [DATABASE]] [--force] [--] [<class>]"
+      ],
+      "help": "",
+      "definition": {
+        "arguments": {
+          "class": {
+            "name": "class",
+            "is_required": false,
+            "is_array": false,
+            "description": "The class name of the root seeder",
+            "default": null
+          }
+        },
+        "options": {}
+      },
+      "hidden": false
+    },
+    {
+      "name": "make:controller",
+      "description": "Create a new controller class",
+      "usage": [
+        "make:controller [--api] [--type TYPE] [--force] [-i|--invokable] [-m|--model [MODEL]] [-p|--parent [PARENT]] [-r|--resource] [-R|--requests] [-s|--singleton] [--creatable] [--test] [--pest] [--phpunit] [--] <name>"
+      ],
+      "help": "",
+      "definition": {
+        "arguments": {
+          "name": {
+            "name": "name",
+            "is_required": true,
+            "is_array": false,
+            "description": "The name of the controller",
+            "default": null
+          }
+        },
+        "options": {}
+      },
+      "hidden": false
+    },
+    {
+      "name": "migrate:fresh",
+      "description": "Drop all tables and re-run all migrations",
+      "usage": [
+        "migrate:fresh [--database [DATABASE]] [--drop-views] [--drop-types] [--force] [--path [PATH]] [--realpath] [--schema-path [SCHEMA-PATH]] [--seed] [--seeder [SEEDER]] [--step]"
+      ],
+      "help": "",
+      "definition": {
+        "arguments": [],
+        "options": {}
+      },
+      "hidden": false
+    },
+    {
+      "name": "optimize:clear",
+      "description": "Remove the cached bootstrap files",
+      "usage": [
+        "optimize:clear [-e|--except [EXCEPT]]"
+      ],
+      "help": "",
+      "definition": {
+        "arguments": [],
+        "options": {}
+      },
+      "hidden": false
+    },
+    {
+      "name": "queue:work",
+      "description": "Start processing jobs on the queue as a daemon",
+      "usage": [
+        "queue:work [--name [NAME]] [--queue [QUEUE]] [--daemon] [--once] [--stop-when-empty] [--stop-when-empty-for [STOP-WHEN-EMPTY-FOR]] [--delay [DELAY]] [--backoff [BACKOFF]] [--max-jobs [MAX-JOBS]] [--max-time [MAX-TIME]] [--force] [--memory [MEMORY]] [--sleep [SLEEP]] [--rest [REST]] [--timeout [TIMEOUT]] [--tries [TRIES]] [--json] [--] [<connection>]"
+      ],
+      "help": "",
+      "definition": {
+        "arguments": {
+          "connection": {
+            "name": "connection",
+            "is_required": false,
+            "is_array": false,
+            "description": "The name of the queue connection to work",
+            "default": null
+          }
+        },
+        "options": {}
+      },
+      "hidden": false
+    },
+    {
+      "name": "route:list",
+      "description": "List all registered routes",
+      "usage": [
+        "route:list [--json] [--method [METHOD]] [--action [ACTION]] [--name [NAME]] [--domain [DOMAIN]] [--middleware [MIDDLEWARE]] [--path [PATH]] [--except-path [EXCEPT-PATH]] [-r|--reverse] [--sort [SORT]] [--except-vendor] [--only-vendor]"
+      ],
+      "help": "",
+      "definition": {
+        "arguments": [],
+        "options": {}
+      },
+      "hidden": false
+    }
+  ],
+  "namespaces": [
+    {
+      "id": "_global",
+      "commands": [
+        "_complete",
+        "about",
+        "dev",
+        "docs",
+        "help",
+        "list",
+        "migrate",
+        "pail",
+        "serve",
+        "test",
+        "tinker"
+      ]
+    },
+    {
+      "id": "app",
+      "commands": [
+        "app:hello"
+      ]
+    },
+    {
+      "id": "cache",
+      "commands": [
+        "cache:clear",
+        "cache:forget"
+      ]
+    },
+    {
+      "id": "config",
+      "commands": [
+        "config:cache"
+      ]
+    },
+    {
+      "id": "db",
+      "commands": [
+        "db:seed"
+      ]
+    },
+    {
+      "id": "make",
+      "commands": [
+        "make:controller"
+      ]
+    },
+    {
+      "id": "migrate",
+      "commands": [
+        "migrate:fresh"
+      ]
+    },
+    {
+      "id": "optimize",
+      "commands": [
+        "optimize:clear"
+      ]
+    },
+    {
+      "id": "queue",
+      "commands": [
+        "queue:work"
+      ]
+    },
+    {
+      "id": "route",
+      "commands": [
+        "route:list"
+      ]
+    }
+  ]
+}

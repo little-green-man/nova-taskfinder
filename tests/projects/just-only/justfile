@@ -1,0 +1,30 @@
+mod sub
+
+alias b := build
+
+# Build the project (⌘B)
+build:
+    @echo 'just: build'
+
+# Has a default, so it can run without arguments
+test target="all":
+    @echo 'just: test {{target}}'
+
+# Needs an argument - should NOT appear
+deploy env:
+    @echo 'just: deploy {{env}}'
+
+# Zero or more arguments, so it can run bare
+watch *files:
+    @echo 'just: watch {{files}}'
+
+[confirm]
+release:
+    @echo 'just: release (listed only with [confirm] Recipes set to Run with --yes)'
+
+[private]
+helper:
+    @echo 'private - should NOT appear'
+
+_hidden:
+    @echo 'underscore - should NOT appear'
