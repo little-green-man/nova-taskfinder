@@ -1,141 +1,80 @@
 <a name="readme-top"></a>
 
-<br />
 <div align="center">
-  <a href="https://github.com/little-green-man/nova-taskfinder">
-    <img src=".github/images/screenshot.png" alt="Screenshot">
-  </a>
+  <img src=".github/images/screenshot.png" alt="Nova's Tasks menu listing scripts found by Automatic Tasks">
 
-  <h3 align="center">Automatic Tasks - The ~~missing feature~~ best extension for Panic's Nova editor</h3>
+  <h1>Automatic Tasks for Nova</h1>
+
+  <p><strong>Your project's scripts, in Nova's Tasks menu.</strong></p>
+
+  <p>
+    <a href="https://extensions.panic.com/extensions/littlegreenman/littlegreenman.TaskFinder/">Install from the Extension Library</a>
+    ·
+    <a href="CHANGELOG.md">Changelog</a>
+    ·
+    <a href="https://github.com/little-green-man/nova-taskfinder/issues">Issues</a>
+  </p>
 </div>
 
-<!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#settings">Settings</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
-  </ol>
-</details>
+Automatic Tasks reads your project's task runners and lists their scripts in [Nova](https://nova.app)'s Tasks menu, ready to run with ⌘R. Open a project and the tasks are there; change a file or a setting and the list updates.
 
-<!-- ABOUT THE PROJECT -->
+## Supported tools
 
-## About The Project
+| Source   | Reads                                                         | Runs                                   |
+| -------- | ------------------------------------------------------------- | -------------------------------------- |
+| Node     | `package.json` scripts                                        | `npm`, `yarn`, `pnpm` or `bun` (`run`) |
+| Composer | `composer.json` scripts                                       | `composer run`                         |
+| Task     | `Taskfile.yml` and its variants, including included Taskfiles | `task`                                 |
+| Maid     | `maidfile`, `maidfile.toml`, `.yaml`, `.yml`, `.json`         | `maid`                                 |
+| just     | `justfile` or `.justfile`, including modules                  | `just`                                 |
+| Deno     | `deno.json` or `deno.jsonc` tasks                             | `deno task`                            |
+| Make     | `Makefile` targets                                            | `make`                                 |
+| Laravel  | `artisan` commands                                            | `php artisan`                          |
 
-This project is the source code for Little Green Man's [Automatic Tasks](https://extensions.panic.com/extensions/littlegreenman/littlegreenman.TaskFinder/) extension for Panic's Nova editor (phew). It was first established to plug holes that we had in our workflow, but addresses a key feature offered by most editors, and a great extension for Nova.
-As the feature set grows, it becomes more obvious why Panic may leave this functionality out of Nova itself, but we'd sure appreciate support, review and PRs from them to make it the best it can be.
+## Features
 
-What does it do? In short, **auto-populate the editors tasklist with tasks from your project files** (Node, Composer, Taskfile, Maidfile, just, Deno, Make and Laravel artisan at the moment). But also:
+- **Nothing to configure.** Tasks are read from the project's own files, at the top level of the project, and refresh when those files change.
+- **Build and Clean shortcuts.** Scripts named `build` or `compile` also run with Build (⌘B), and `clean` with Clean (⇧⌘K).
+- **The right package manager.** Node projects use npm, Yarn, pnpm or bun, detected from `packageManager`, `devEngines` or the lockfile, or chosen in Settings.
+- **Monorepos.** Optionally list tasks from npm, Yarn, pnpm, bun and Deno workspace packages, each run in its own folder.
+- **Only the tasks you run.** Lifecycle hooks such as `postinstall`, Composer events, private recipes and tasks that need arguments are left out.
+- **Clear notifications.** A missing tool, a broken file or a task list that hangs is explained, with a button to fix it: Install, Open File, Settings or Turn Off.
+- **Global or per project.** Every setting can be set once for all projects or overridden in Project Settings, and applies straight away.
 
-- Binds `build`/`compile` scripts to Build (⌘B) and `clean` to Clean (⇧⌘K)
-- Hides lifecycle scripts that run automatically (npm hooks, Composer events), with a setting to show them
-- Detects the Node package manager (npm, yarn, pnpm, bun), or lets you choose one globally or per project (see [Settings](#settings))
-- Optionally lists tasks from monorepo workspace packages (npm, Yarn, pnpm, bun and Deno workspaces)
-- Allows you to choose which features to enable (per-project also)
-- Applies setting changes immediately, without restarting the workspace
-- Watches files to automatically update the task list on file changes
+## Install
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+In Nova, open **Extensions → Extension Library…** (⇧⌘2), search for **Automatic Tasks** and click **Install**. Or [install it from the Extension Library website](https://extensions.panic.com/extensions/littlegreenman/littlegreenman.TaskFinder/).
 
-### Built With
+Each source needs its tool on your `PATH`: `task` (v3.19.1 or later), `maid`, `just` (1.15 or later), `make` or `php` to list tasks. Node, Composer and Deno tasks are read from their files, and need `npm` (or your package manager), `composer` or `deno` to run. For Maidfiles, use [theMackabu's maid](https://github.com/theMackabu/maid) (`cargo install maid`); npm's `maid` package is an unrelated tool.
 
-This project was built with the following libraries and helpers.
-
-- [TypeScript](https://www.typescriptlang.org/)
-- [ESBuild](https://esbuild.github.io/)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- GETTING STARTED -->
-
-## Getting Started
-
-If you just want to install the extension in Nova, then load Nova, load the Extension Library (shift-cmd-2), search for "Automatic Tasks" and press install.
-
-Otherwise, to hack on it, develop it and/or load a local copy in Nova, carry on reading.
-
-### Prerequisites
-
-- nodejs
-- yarn
-- Nova
-
-### Developing the Extension
-
-1. Clone the repo
-   ```sh
-   git clone https://github.com/little-green-man/nova-taskfinder.git
-   ```
-2. Install NPM packages
-   ```sh
-   yarn
-   ```
-3. Build the extension
-   ```sh
-   yarn watch # or yarn build
-   ```
-4. Activate the extension
-   Disable the formal extension from Panic, by unchecking it in the Extension Library.
-   ```sh
-   yarn activate
-   ```
-   Finally, minimise the window that opens for `./build/taskfinder.novaextension`, as you don't want to edit these files.
-5. Edit the files in the `src`, run `yarn build`, and Nova will automatically reload the extension (from your minimised window)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- USAGE EXAMPLES -->
-
-## Usage
-
-The [extension](https://extensions.panic.com/extensions/littlegreenman/littlegreenman.TaskFinder/) is submitted to the Panic Extension store by Little Green Man Ltd, following merged pull requests.
-
-You just need to load Nova, load the Extension Library (shift-cmd-2), search for "Automatic Tasks" and press install.
-
-Of course, if you fork the extension or prefer to submit your own variant, then you may do (having first modified the name, `build/extension.js` file, readme, changelog and more, choose `Extension > Submit to the Extension Library...` from Nova's menu).
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+> [!NOTE]
+> Listing Make targets (by default) and Laravel commands runs some of the project's own code: the Makefile's `$(shell …)` and Laravel's service providers. For projects you don't trust, turn those sources off, or set Make to read the Makefile instead (see [Make](#make)).
 
 ## Settings
 
-Set preferences in Extensions → Automatic Tasks → Settings. Project Settings has the same settings for one project: each starts on **Use Global Setting**, which follows your preferences and shows their current value, e.g. "Use Global Setting (On)". Changes apply straight away.
+Set preferences in **Extensions → Automatic Tasks → Settings**. Project Settings has the same settings for one project: each starts on **Use Global Setting**, which follows your preferences and shows their current value, e.g. "Use Global Setting (On)".
 
 **Refresh Tasks** (a button in both panes, and in the Extensions menu) re-reads every source. Use it after installing a missing tool, such as `just` or `deno`.
 
 ### Task Sources
 
-Turn each kind of task on or off. A source is only read when the project has its file at the top level: `package.json`, `composer.json`, a Taskfile, a maidfile, a justfile, `deno.json`, a Makefile or Laravel's `artisan`. If the tool a source needs isn't installed, or its file has an error, a notification explains what to do.
+Turn each kind of task on or off. A source is only read when the project has its file at the top level. If the tool a source needs isn't installed, or its file has an error, a notification explains what to do.
 
 ### Node and Composer
 
-- **Package Manager:** Automatic uses the `packageManager` field in `package.json`, then `devEngines.packageManager`, then the lockfile (bun, pnpm, yarn, then npm), and otherwise npm. Choose one to always use it.
-- **Show Lifecycle Scripts:** off by default. npm and Composer run some scripts for you: npm's install, publish and version hooks, `pre`/`post` scripts for another script (when your package manager runs them), and Composer events such as `post-install-cmd`. These are hidden unless this is on.
+- **Package Manager:** **Automatic** uses the `packageManager` field in `package.json`, then `devEngines.packageManager`, then the lockfile (bun, pnpm, Yarn, then npm), and otherwise npm. Choose one to always use it.
+- **Show Lifecycle Scripts:** off by default. npm and Composer run some scripts for you: npm's install, publish and version hooks, `pre`/`post` scripts for another script (when your package manager runs them), and Composer events such as `post-install-cmd`. Turn this on to list them too.
 
 ### Monorepos
 
-- **Workspace Packages:** off by default. When on, tasks from workspace packages are listed too, named `<package>: <script>` (e.g. `@acme/api: build`; the folder is used if a package has no name) and run in the package's folder with the project's package manager. Workspaces are read from `package.json` `workspaces` (npm, Yarn, bun), `pnpm-workspace.yaml` `packages`, and `deno.json` `workspace`. Patterns can use `*`, `**` and `!` exclusions; `node_modules` and hidden folders are skipped. Scripts named `build` or `clean` in a package also run with Build and Clean.
+- **Workspace Packages:** off by default. When on, tasks from workspace packages are listed as `<package>: <script>`, e.g. `@acme/api: build` (or the folder, if a package has no name), and run in the package's folder with the project's package manager.
+  - Workspaces are read from `package.json` `workspaces` (npm, Yarn, bun), `pnpm-workspace.yaml` `packages` and `deno.json` `workspace`.
+  - Patterns can use `*`, `**` and `!` exclusions; `node_modules` and hidden folders are skipped.
+  - A package's `build` and `clean` scripts also run with Build and Clean.
 
 ### Maid
 
-- **maid Path:** leave empty to use `maid` from your `PATH`. If another tool called `maid` comes first on your `PATH` (npm's `maid` package is an unrelated tool), set this to theMackabu's maid, e.g. `~/.cargo/bin/maid`. The "A different maid is installed" notification's Settings button opens this.
+- **maid Path:** leave empty to use `maid` from your `PATH`. If a different `maid` comes first on your `PATH`, set this to theMackabu's maid, e.g. `~/.cargo/bin/maid`. The "A different maid is installed" notification's **Settings** button opens this.
 
 ### just
 
@@ -143,69 +82,66 @@ Turn each kind of task on or off. A source is only read when the project has its
 
 ### Make
 
-- **Find Targets By:** **Asking make** (the default) uses make's own list, so it finds every target, including those from included files, but make evaluates the Makefile to do this, running any `$(shell …)` in it. **Reading the Makefile** reads the Makefile and the files it includes by name, and runs nothing. Either way, `.PHONY` targets are listed if the Makefile declares any; otherwise, targets that look like names (not files or patterns).
+- **Find Targets By:**
+  - **Asking make** (the default) uses make's own list, so it finds every target, including those in included files. To do this, make evaluates the Makefile, running any `$(shell …)` in it.
+  - **Reading the Makefile** reads the Makefile and the files it includes by name, and runs nothing.
+  - Either way, `.PHONY` targets are listed if the Makefile declares any; otherwise, targets that look like names rather than files or patterns.
 
 ### Laravel
 
-- **Artisan Commands:** **Common** lists everyday commands (`serve`, `test`, `migrate`, `migrate:fresh`, `migrate:rollback`, `migrate:status`, `db:seed`, `queue:work`, `queue:listen`, `schedule:work`, `schedule:run`, `pail`, `optimize`, `optimize:clear`, `route:list`, `about`, `storage:link`) plus every `app:` command. **All** lists every command that needs no arguments. Commands that need a terminal (`tinker`, `dev`) are never listed. Listing starts the Laravel app, which runs your project's code; turn the source off for projects you don't trust.
+- **Artisan Commands:**
+  - **Common** lists everyday commands (`serve`, `test`, `migrate`, `migrate:fresh`, `migrate:rollback`, `migrate:status`, `db:seed`, `queue:work`, `queue:listen`, `schedule:work`, `schedule:run`, `pail`, `optimize`, `optimize:clear`, `route:list`, `about`, `storage:link`) plus every `app:` command.
+  - **All** lists every command that needs no arguments.
+  - Commands that need a terminal (`tinker`, `dev`) are never listed.
+  - Listing starts the Laravel app, which runs your project's code; turn the source off for projects you don't trust.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+## Development
 
-<!-- ROADMAP -->
+You'll need [Nova](https://nova.app), [Node.js](https://nodejs.org) 22 or later and [Yarn](https://classic.yarnpkg.com) 1.
 
-## Roadmap
+```sh
+git clone https://github.com/little-green-man/nova-taskfinder.git
+cd nova-taskfinder
+yarn              # install dependencies
+yarn build        # or `yarn watch` to rebuild on every change
+yarn activate     # load the build in Nova as a development extension
+```
 
-- [x] Move to TypeScript
-- [ ] Build testing in
-- [ ] Find a solution to [#10](https://github.com/little-green-man/nova-taskfinder/issues/10)
+Before running `yarn activate`, disable the Extension Library copy of Automatic Tasks. Leave the window that opens for `build/taskfinder.novaextension` minimised; Nova reloads the extension from it after each build.
 
-See the [open issues](https://github.com/little-green-man/nova-taskfinder/issues) for a full list of proposed features (and known issues).
+| Command                                                  | What it does                                                  |
+| -------------------------------------------------------- | ------------------------------------------------------------- |
+| `yarn test`                                              | Unit and source tests; no tools need to be installed          |
+| `yarn lint`                                              | Type checks with TypeScript                                   |
+| `yarn format`                                            | Formats the code with Prettier (`yarn format:check` to check) |
+| `yarn pop-tests`                                         | Opens every test project in `tests/projects/` in Nova         |
+| `nova extension validate build/taskfinder.novaextension` | Validates the extension before release                        |
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- CONTRIBUTING -->
+[`DESIGN.md`](DESIGN.md) explains how the extension works, the Nova quirks it works around, and how to add a new source. [`tests/README.md`](tests/README.md) lists what each test project should show.
 
 ## Contributing
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+Bug reports, ideas and pull requests are welcome. Planned work and known issues are in [GitHub issues](https://github.com/little-green-man/nova-taskfinder/issues).
 
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
+For a pull request:
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`), make and test your changes
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+1. Fork the repository and create a branch from `master`.
+2. Make your change, with tests where it changes behaviour (see [`DESIGN.md`](DESIGN.md) → Testing).
+3. Run `yarn format`, `yarn lint` and `yarn test`, and check the change in Nova with `yarn activate`.
+4. Open a pull request describing the change. CI runs the same checks, and must pass before merging.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+If you publish your own variant of the extension, change its name and identifier in `build/taskfinder.novaextension/extension.json` first.
 
-<!-- LICENSE -->
+## Licence
 
-## License
+MIT. See [`LICENSE.txt`](LICENSE.txt).
 
-Distributed under the MIT License. See `LICENSE.txt` for more information.
+## Acknowledgements
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- CONTACT -->
-
-## Contact
-
-Elliot - [@elliot](https://social.lgm.ltd/@elliot), or hello [at] lgm.ltd
-
-Project Link: [https://github.com/little-green-man/nova-taskfinder](https://github.com/little-green-man/nova-taskfinder)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- ACKNOWLEDGMENTS -->
-
-## Acknowledgments
-
-So many thanks go to:
+Made by [Little Green Man](https://lgm.ltd), with thanks to:
 
 - [Sajjaad Farzad](https://github.com/theMackabu)
 - [Reüel van der Steege](https://github.com/rvdsteege)
 - [Toni Förster](https://github.com/stonerl)
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+Questions or feedback: Elliot, on Mastodon ([@elliot@rtsn.dev](https://rtsn.dev/@elliot)) or Bluesky ([@elliotali.com](https://bsky.app/profile/elliotali.com)), or hello [at] lgm.ltd.

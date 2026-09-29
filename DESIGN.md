@@ -56,6 +56,15 @@ tests/fixtures/              captured real tool output used by the tests (anonym
 
 Planned work lives in GitHub issues (https://github.com/little-green-man/nova-taskfinder/issues), with the reasoning behind each idea. `SPRINT.md` is gitignored, for a local plan while a release is in progress.
 
+**Two READMEs:** `README.md` is the GitHub page, for users and contributors. `build/taskfinder.novaextension/README.md` is the extension's Details page in the Extension Library, for users only.
+
+- **Shared, word for word:** the intro, Supported tools, Features and the whole **Settings** section. The settings' (?) buttons link to the GitHub copy's Settings headings, so keep those heading names.
+- **The Extension Library copy:**
+  - uses plain Markdown (no HTML blocks or `> [!NOTE]` alerts) and full URLs, since relative links would resolve against the Extension Library;
+  - has no title block, install steps or changelog link, because the page already shows the name, description, Install button and changelog;
+  - has Requirements instead of Install, and a short "Feedback and source code" section instead of Development and Contributing.
+- It only reaches users with the next release.
+
 The bundle is a Nova extension folder, so `build/taskfinder.novaextension` _is_ the shipped extension. Everything in it except `Scripts/` is source-controlled and edited by hand.
 
 ## Architecture
