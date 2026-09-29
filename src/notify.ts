@@ -39,8 +39,12 @@ function notify(id: string, title: string, body: string, actions: NotificationAc
 	);
 }
 
-/** Removes a notification if it's still showing, e.g. once the file is fixed or the tool is found. */
+/**
+ * The problem has gone (file fixed, tool found): remove its notification if it's still showing, and forget it was shown,
+ * so it notifies again if the problem comes back. While a problem persists, it's shown only once per window.
+ */
 function clearNotification(id: string) {
+	shown.delete(id);
 	if (!visible.has(id)) return;
 	visible.delete(id);
 	nova.notifications.cancel(requestId(id));

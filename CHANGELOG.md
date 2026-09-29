@@ -2,6 +2,7 @@
 
 - Fixed: a tool that hangs while listing tasks (for example `make` asking to install Apple's command-line tools, or a Laravel app waiting on its database) is now stopped after 15 seconds, with a notification offering Refresh, instead of that source's tasks never appearing
 - Listing processes still running are stopped when the extension stops
+- A problem that's fixed and later comes back (e.g. `package.json` broken again) now shows its notification again
 - Internal tidying: a shared pipeline for all task sources, more tests (including start-up and shutdown), consistent formatting, and automated checks on every pull request
 
 ## Version 7.2
