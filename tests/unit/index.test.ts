@@ -86,6 +86,12 @@ test('settings that change a listing reload only that source', async () => {
 	state.reloads.length = 0;
 	setConfig('global', 'taskfinder.show-lifecycle-scripts', true);
 	assert.deepEqual(state.reloads, ['taskfinder-tasks-node', 'taskfinder-tasks-composer']);
+	state.reloads.length = 0;
+	setConfig('global', 'taskfinder.workspace-packages', true);
+	assert.deepEqual(state.reloads, ['taskfinder-tasks-node', 'taskfinder-tasks-deno']);
+	state.reloads.length = 0;
+	setConfig('global', 'taskfinder.maid-path', '/opt/maid');
+	assert.deepEqual(state.reloads, ['taskfinder-tasks-maidfile']);
 	stopped();
 });
 

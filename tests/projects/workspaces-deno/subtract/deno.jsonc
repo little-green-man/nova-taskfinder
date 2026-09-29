@@ -1,0 +1,4 @@
+{
+	// no name, so the folder is used
+	"tasks": { "build": "echo 'subtract: build'", },
+}

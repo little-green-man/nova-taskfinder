@@ -13,6 +13,10 @@ interface ListedTask {
 	name: string;
 	command: string;
 	args: string[];
+	/** Folder to run in, relative to the root (workspace packages) */
+	cwd?: string;
+	/** The script's own name, for Build/Clean, when `name` has a package prefix */
+	script?: string;
 }
 
 /** What a listing found: tasks, or a problem to tell the user about. */
@@ -63,6 +67,8 @@ interface Source {
 	tool?: { command: string; needed: 'list' | 'run' } | ((rootFile: string) => { command: string; needed: 'list' | 'run' } | undefined);
 	/** Custom notification ids, where they predate this module */
 	ids?: Partial<Record<ProblemKind, string>>;
+	/** Extra buttons for the `missing` and `wrong-tool` notifications, before Turn Off (e.g. Maid's path setting) */
+	toolActions?: NotificationAction[];
 	/** Messages for problems only some sources have */
 	oldVersion?: string;
 	wrongTool?: { title: string; body: string };
@@ -89,7 +95,7 @@ function notifyMissing(source: Source, command: string, needed: 'list' | 'run') 
 		idFor(source, 'missing'),
 		`${names.tool} isn't installed`,
 		`This project has ${names.file}, but ${command} isn't on your PATH, so its ${names.noun} ${outcome}. Turn Off stops ${names.turnOff} in this project.`,
-		[howToInstall(source.installKey), turnOff(source.settingKey)]
+		[howToInstall(source.installKey), ...(source.toolActions ?? []), turnOff(source.settingKey)]
 	);
 }
 
@@ -110,6 +116,7 @@ function notifyProblem(source: Source, rootFile: string, listing: Listing): bool
 		case 'wrong-tool':
 			notify(idFor(source, 'wrong-tool'), source.wrongTool?.title ?? `${names.tool} isn't the expected tool`, source.wrongTool?.body ?? '', [
 				howToInstall(source.installKey),
+				...(source.toolActions ?? []),
 				turnOff(source.settingKey),
 			]);
 			return true;
@@ -145,7 +152,7 @@ function finish(source: Source, listing: Listing, rootFile: string, started: num
 	if (notifyProblem(source, rootFile, listing) || listing.kind !== 'ok') return [];
 	clearProblems(source);
 
-	const tasks = listing.tasks.map(({ name, command, args }) => createTask(name, command, args));
+	const tasks = listing.tasks.map(({ name, command, args, cwd, script }) => createTask(name, command, args, { cwd, script }));
 	console.info(`${source.id}: ${tasks.length} ${source.names.noun} (${Date.now() - started} ms)`);
 	return tasks;
 }

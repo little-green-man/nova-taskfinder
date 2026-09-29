@@ -10,6 +10,7 @@
 - Scripts named `build`/`compile` also run with Build (⌘B), and `clean` with Clean (⇧⌘K)
 - Lifecycle scripts that run automatically (npm hooks such as `postinstall`, Composer events such as `post-install-cmd`) are hidden; turn on "Show Lifecycle Scripts" to list them
 - Detects your package manager (npm, yarn, pnpm or bun) from `packageManager`, `devEngines` or the lockfile, or choose one globally or per project
+- Optionally lists tasks from monorepo workspace packages (npm, Yarn, pnpm, bun and Deno workspaces)
 - Choose which task types to include, globally or per project
 - Settings apply immediately, without restarting the workspace
 
@@ -33,6 +34,14 @@ Turn each kind of task on or off. A source is only read when the project has its
 
 - **Package Manager:** Automatic uses the `packageManager` field in `package.json`, then `devEngines.packageManager`, then the lockfile (bun, pnpm, yarn, then npm), and otherwise npm. Choose one to always use it.
 - **Show Lifecycle Scripts:** off by default. npm and Composer run some scripts for you: npm's install, publish and version hooks, `pre`/`post` scripts for another script (when your package manager runs them), and Composer events such as `post-install-cmd`. These are hidden unless this is on.
+
+### Monorepos
+
+- **Workspace Packages:** off by default. When on, tasks from workspace packages are listed too, named `<package>: <script>` (e.g. `@acme/api: build`; the folder is used if a package has no name) and run in the package's folder with the project's package manager. Workspaces are read from `package.json` `workspaces` (npm, Yarn, bun), `pnpm-workspace.yaml` `packages`, and `deno.json` `workspace`. Patterns can use `*`, `**` and `!` exclusions; `node_modules` and hidden folders are skipped. Scripts named `build` or `clean` in a package also run with Build and Clean.
+
+### Maid
+
+- **maid Path:** leave empty to use `maid` from your `PATH`. If another tool called `maid` comes first on your `PATH` (npm's `maid` package is an unrelated tool), set this to theMackabu's maid, e.g. `~/.cargo/bin/maid`. The "A different maid is installed" notification's Settings button opens this.
 
 ### just
 

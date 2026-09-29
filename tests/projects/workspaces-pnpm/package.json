@@ -1,0 +1,7 @@
+{
+	"name": "mono",
+	"private": true,
+	"scripts": {
+		"lint": "echo 'root: lint'"
+	}
+}

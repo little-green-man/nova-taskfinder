@@ -1,0 +1,4 @@
+{
+	"name": "core",
+	"scripts": { "test": "echo 'core (found by libs/**): test'" }
+}

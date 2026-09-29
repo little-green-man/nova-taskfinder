@@ -111,7 +111,7 @@ g.nova = {
 		reloadTasks: (id: string) => state.reloads.push(id),
 	},
 	config: config(state.globalConfig),
-	path: { join, dirname, basename },
+	path: { join, dirname, basename, expanduser: (path: string) => path.replace(/^~(?=\/|$)/, '/home') },
 	fs: {
 		stat: (path: string) => {
 			try {

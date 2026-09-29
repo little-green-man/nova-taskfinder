@@ -38,6 +38,7 @@ src/                         TypeScript source (the only code you edit)
   notify.ts                  user notifications and their actions
   tasks.ts                   createTask() and the lifecycle setting
   formats.ts                 types for the JSON the sources read (package.json, tool output…); all fields optional
+  workspaces.ts              pure monorepo rules: workspace patterns per format, glob expansion, member task names — unit-tested
   parsers/                   one source definition per file (run by source.ts)
   images/                    source artwork (Acorn)
 build/taskfinder.novaextension/
@@ -138,6 +139,19 @@ Lifecycle:
   - `pre<x>`/`post<x>`, only when `<x>` exists and the package manager runs them (`runsPrePostHooks()`, see below);
   - Composer command, installer and package events, but not plugin events (`init`, `command`), which are likely real scripts.
 
+### Workspace packages (monorepos, 7.4.0)
+
+Off by default (`taskfinder.workspace-packages`). When on, the Node and Deno sources also list their workspace members:
+
+- **Patterns** (`src/workspaces.ts`):
+  - `packageJsonWorkspaces()` reads `workspaces`, an array (npm, Yarn 2+, bun) or `{ packages }` (Yarn 1);
+  - `pnpmWorkspaces()` reads `pnpm-workspace.yaml`'s `packages:` list, using a small reader for that key rather than a YAML parser;
+  - `denoWorkspaces()` reads `workspace`, an array or `{ members }`.
+- **Expansion:** `expandWorkspaces(patterns, list)` matches folders using a listing function (`listRootFolders()` in Nova, a plain object in tests). It supports literal paths, `*`/`?` in a segment, `**` (at most 5 levels deep) and `!` exclusions. It skips `node_modules`, dot folders, `..` and the root. Folders without a manifest are dropped.
+- **Tasks:** each is named `memberTaskName()`, i.e. `<manifest name>: <script>` or `<folder>: <script>`. It runs in the member folder (`ListedTask.cwd`, joined to the root in `createTask`) with the root's package manager. Build and Clean bind by the script's own name (`ListedTask.script`). The same lifecycle-hook rules apply.
+- **Watching:** `nodeFiles` and `denoFiles` are updated in place with each member's manifest, as `makeFiles` is with includes. `firstRootFile()` accepts nested paths and lists each file's own folder for the exact-name match. Root detection uses separate constant lists, so a member's file never counts as the project's.
+- **Composer** has no workspace standard, so it's not included.
+
 ### Node package manager
 
 `taskfinder.package-manager` is `auto` (default), `npm`, `yarn`, `pnpm` or `bun`. A concrete value overrides detection. `detectPackageManager()` (`src/scripts.ts`) checks, in order:
@@ -187,7 +201,7 @@ Every setting exists at two scopes with the same key:
 - **Global** (`config` in `extension.json`, Extensions → Automatic Tasks → Settings): concrete defaults (`true`, `"auto"`).
 - **Workspace** (`configWorkspace`, Project Settings): enum whose first value is `null` labelled "Use Global Setting", default `null`. (Until 7.2.0 the manifest used the undocumented `config-workspace`, which also worked; stored values are keyed by setting, so the rename kept them — confirmed in Nova.)
 
-**Layout (7.2.0):** both panes share one layout — a **Task Sources** section of the eight `auto-<source>` settings titled "Tool (file)", with a **Refresh Tasks** `command` button as its last item, then one section per tool with options (Node and Composer, just, Make, Laravel). (A top-level item after the last section renders as if it belonged to that section, so the button lives inside Task Sources.) Each section's `link` (the (?) button) points to the matching subsection of the GitHub README's Settings section, which holds the detail kept out of descriptions. Two-choice options use `radio: true`; the eight sources and Package Manager stay pop-ups (`radio: false`). Titles are Title Case, descriptions one line.
+**Layout (7.2.0, extended in 7.4.0):** both panes share one layout — a **Task Sources** section of the eight `auto-<source>` settings titled "Tool (file)", with a **Refresh Tasks** `command` button as its last item, then one section per tool or topic with options (Node and Composer, Monorepos, Maid, just, Make, Laravel). Non-enum fields (maid Path is a `path` field) have no `resolve` and aren't in `src/settings.ts`. (A top-level item after the last section renders as if it belonged to that section, so the button lives inside Task Sources.) Each section's `link` (the (?) button) points to the matching subsection of the GitHub README's Settings section, which holds the detail kept out of descriptions. Two-choice options use `radio: true`; the eight sources and Package Manager stay pop-ups (`radio: false`). Titles are Title Case, descriptions one line.
 
 **Project Settings labels:** every Project Settings enum has `resolve: "<key>.choices"`. `index.ts` registers one command per setting that returns `projectChoices(key, nova.config.get(key))` from `src/settings.ts`, so the first choice reads "Use Global Setting (On)" (confirmed working in Project Settings, 7.2.0). The static `values` (plain "Use Global Setting") are the fallback. `src/settings.ts` is the source of truth for choice labels; `tests/unit/settings.test.ts` checks the manifest against it (same keys and order in both panes, matching values, `resolve` names, no "Include …" titles, Refresh present).
 
@@ -199,7 +213,7 @@ Every setting exists at two scopes with the same key:
 
 **Decision (7.0.0):** the package manager defaults to `auto` (was `npm`); a major version because existing users' behaviour changes.
 
-Settings: `auto-<source>` for node, composer, taskfile, maidfile, just, deno, make, artisan (default on); `package-manager` (`auto`); `show-lifecycle-scripts` (off); `just-confirm-recipes` (`exclude` | `yes`); `make-listing` (`database` | `file`); `artisan-commands` (`common` | `all`).
+Settings: `auto-<source>` for node, composer, taskfile, maidfile, just, deno, make, artisan (default on); `package-manager` (`auto`); `show-lifecycle-scripts` (off); `workspace-packages` (off); `maid-path` (a `path` field, empty for `maid` on `PATH`; a blank Project Settings value follows the preference; quoted with `shellQuote()` and `~`-expanded); `just-confirm-recipes` (`exclude` | `yes`); `make-listing` (`database` | `file`); `artisan-commands` (`common` | `all`).
 
 **Decision (7.2.0):** settings were reorganised for clarity (layout above) without changing keys or stored values.
 
@@ -217,6 +231,7 @@ Things learnt the hard way or not obvious from the docs.
 - **`nova.fs.watch`** docs don't say what path the callback receives (absolute or relative) or how the glob is matched. Confirmed (7.2.1): `*.mk` fires for an included `extra.mk`. `isWatchedFile()` in `src/watch.ts` handles both path forms; tested in Nova (6.0.1): root edits reload, `npm install` doesn't cause a burst of reloads.
 - **`TaskProcessAction` defaults:** `cwd` defaults to the project folder; if `matchers` is omitted Nova applies its standard issue matchers. Passing `matchers` replaces that set.
 - **`Task`** has only `name`, `image`, `buildBeforeRunning` and actions (`Task.Build`, `Task.Run`, `Task.Clean`). No description field. Any action not set disables that button/menu item for the task.
+- **Tasks menu headings** are the Task Assistant `name` (`Feature.name`). Since 7.4.0 they match the settings' Task Sources titles ("Node (package.json)"…); `tests/unit/settings.test.ts` checks this. Assistant `id`s are unchanged.
 - **Task icons can't be set for extension-listed tasks.** `Task.image` is ignored for Task Assistant tasks: the Tasks menu shows the same Run icon for every task, and the toolbar shows the extension's icon for whichever task is selected. Tested in 7.4.0 with built-in names (`__filetype.js`, `__builtin.action`…) and a bundled `Images/<name>/` PNG. Panic staff say task icons appear in the Project Settings sidebar and the toolbar for **task templates** a user adds, which Task Assistant tasks aren't (https://devforum.nova.app/t/task-template-icon-question/2223). What does distinguish sources is the Tasks menu's section heading, which is the `name` passed to `registerTaskAssistant` (`Feature.name`).
 - **Notifications:** `NotificationRequest` has `title`, `body`, `actions` (buttons) and a `type` only for text input; a request with the same identifier replaces the previous one; `nova.notifications.cancel(id)` removes it. The buttons are small, so keep labels to a word or two. Confirmed in Nova (7.2.1): notifications stay until dismissed, each window has its own extension instance (so "once per window" holds), and `cancel()` removes a showing notification.
 - **Timers:** `setTimeout`/`clearTimeout` exist in Nova's runtime. The main `tsconfig` limits `types` to `nova-editor-node` so Node's types (used by tests) don't change them.
