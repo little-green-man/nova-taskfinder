@@ -132,6 +132,94 @@ For a pull request:
 
 If you publish your own variant of the extension, change its name and identifier in `build/taskfinder.novaextension/extension.json` first.
 
+### Adding a source
+
+Each source (Node, Composer, Task…) is a short **definition** in `src/parsers/`. A shared pipeline (`src/source.ts`) does the rest:
+
+- finds the source's file at the top of the project;
+- checks its tool is installed;
+- lists the tasks, stopping after 15 seconds;
+- shows a notification if something's wrong, with buttons to fix it;
+- adds the tasks to Nova, with Build and Clean for `build` and `clean`.
+
+As a worked example, suppose a tool called `mytool` keeps its tasks in `mytool.yml`, and `mytool list --json` prints `{"tasks": ["build", "test"]}`.
+
+**1. Write the definition**, `src/parsers/mytool.ts`:
+
+```ts
+import { errorDetail } from '../diagnose';
+import { run } from '../process';
+import { cliAssistant } from '../source';
+import type { CliSource } from '../source';
+
+export const mytoolFiles = ['mytool.yml'];
+
+export const mytoolSource: CliSource = {
+	id: 'mytool', // used in logs and notification ids (mytool-missing, mytool-error…)
+	names: { tool: 'mytool', file: 'a mytool.yml', listing: 'mytool tasks', noun: 'tasks', turnOff: 'reading mytool.yml' },
+	rootFiles: mytoolFiles, // the files that mean a project uses mytool
+	settingKey: 'taskfinder.auto-mytool', // the on/off setting, for the notifications' Turn Off button
+	installKey: 'mytool', // its install link, in installUrls (src/notify.ts)
+	tool: { command: 'mytool', needed: 'list' }, // listing needs mytool, so it's checked first
+
+	async list() {
+		const result = await run('mytool', ['list', '--json']);
+		if (result.timedOut) return { kind: 'timeout' };
+		try {
+			const tasks: string[] = JSON.parse(result.stdout).tasks;
+			return { kind: 'ok', tasks: tasks.map((name) => ({ name, command: 'mytool', args: ['run', name] })) };
+		} catch {
+			return { kind: 'error', detail: errorDetail(result.stderr, 'mytool failed to list its tasks') };
+		}
+	},
+};
+
+export default cliAssistant(mytoolSource);
+```
+
+A source that reads its file directly, without running a tool (like Node or Deno), is a `FileSource` with a synchronous `list()` and `fileAssistant()`. Keep parsing and decisions in the pure modules (`src/recipes.ts`, `src/diagnose.ts`) where they can be unit-tested.
+
+**2. Register it.** Export it from `src/parsers/index.ts`, then add it to `src/features.ts`:
+
+```ts
+feature(mytoolSource, MytoolParser, {
+	name: 'mytool (mytool.yml)', // the Tasks menu heading; matches the setting's title
+	globs: ['*mytool.yml'], // what Nova watches
+	files: mytoolFiles, // changes to these reload the tasks
+	id: 'taskfinder-tasks-mytool',
+}),
+```
+
+**3. Add its settings** in `build/taskfinder.novaextension/extension.json`:
+
+- an `onWorkspaceContains:mytool.yml` activation event;
+- `taskfinder.auto-mytool` in **Task Sources**, in both `config` (a boolean, default `true`) and `configWorkspace` (a pop-up with `resolve`);
+- its choices in `src/settings.ts`.
+
+The tests check that all of these stay in step.
+
+**4. Add its install link** to `installUrls` in `src/notify.ts`. The "isn't installed", "has an error" and "took too long" notifications then work automatically.
+
+**5. Test it.** Capture real output from `mytool` (success and failure) into `tests/fixtures/`, and add a test in `tests/unit/parsers/`. The stand-in Nova in `tests/unit/nova.ts` runs your source without Nova or `mytool` installed:
+
+```ts
+test('mytool: lists tasks', async () => {
+	useProject('mytool-only'); // tests/projects/mytool-only/mytool.yml
+	install('mytool');
+	script('mytool list --json', { stdout: fixture('mytool-list.json') });
+	assert.deepEqual((await new MytoolParser().provideTasks()).map(summarise), [
+		['build', 'run+build', 'mytool run build'],
+		['test', 'run', 'mytool run test'],
+	]);
+});
+```
+
+Add a test project in `tests/projects/` (and a broken one) with a row in [`tests/README.md`](tests/README.md), then try it in Nova with `yarn pop-tests`.
+
+**6. Document it:** a row in both READMEs' Supported tools tables, any settings in the Settings sections, and a line in `CHANGELOG.md`.
+
+The full checklist, and the Nova quirks behind these conventions, are in [`DESIGN.md`](DESIGN.md) → Adding a source.
+
 ## Licence
 
 MIT. See [`LICENSE.txt`](LICENSE.txt).
