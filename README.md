@@ -86,6 +86,10 @@ Turn each kind of task on or off. A source is only read when the project has its
   - Patterns can use `*`, `**` and `!` exclusions; `node_modules` and hidden folders are skipped.
   - A package's `build` and `clean` scripts also run with Build and Clean.
 
+### Taskfile
+
+- **Task Flags:** empty by default. Added before each task's name, e.g. `--output=prefixed` labels each line with its task, and `--output=group` shows each task's output once it finishes (so a long-running task such as a server shows nothing until it stops). A project can set the same with `output:` in its Taskfile.
+
 ### Maid
 
 - **maid Path:** leave empty to use `maid` from your `PATH`. If a different `maid` comes first on your `PATH`, set this to theMackabu's maid, e.g. `~/.cargo/bin/maid`. The "A different maid is installed" notification's **Settings** button opens this.
@@ -100,6 +104,8 @@ Turn each kind of task on or off. A source is only read when the project has its
   - **Asking make** (the default) uses make's own list, so it finds every target, including those in included files. To do this, make evaluates the Makefile, running any `$(shell …)` in it.
   - **Reading the Makefile** reads the Makefile and the files it includes by name, and runs nothing.
   - Either way, `.PHONY` targets are listed if the Makefile declares any; otherwise, targets that look like names rather than files or patterns.
+- **Parallel Jobs:** **One at a time** (the default) runs `make <target>`. **One per CPU core** runs `make -j$(sysctl -n hw.ncpu) <target>`, which is faster for big builds, but Makefiles with missing dependencies may fail or build in the wrong order.
+- **Make Flags:** added before each target. The default, `--output-sync=target`, keeps each target's output together when jobs run in parallel. It's only passed with **One per CPU core** and GNU make 4.0 or later; macOS's own make is 3.81, so install a newer one (e.g. `brew install make`, then put its `gnubin` folder first on your `PATH`) to use it. It holds back each target's output until that target finishes, so for long-running targets such as `make serve`, use `--output-sync=line` instead.
 
 ### Laravel
 

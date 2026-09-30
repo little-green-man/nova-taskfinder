@@ -1,3 +1,8 @@
+## Unreleased
+
+- **Make:** a new **Parallel Jobs** setting (off by default) runs targets with `-j$(sysctl -n hw.ncpu)`, one job per CPU core, and a **Make Flags** setting adds flags before each target. Its default, `--output-sync=target`, keeps each target's output together when running in parallel with GNU make 4.0 or later
+- **Taskfile:** a new **Task Flags** setting (empty by default) adds flags before each task's name, e.g. `--output=prefixed`
+
 ## Version 7.5
 
 - **VS Code tasks:** projects with a `.vscode/tasks.json` get its `shell`, `process` and `npm` tasks, with `dependsOn`, top-level defaults, `osx` overrides and the build group (⌘B). Variables such as `${workspaceFolder}` are filled in, and the open file's (`${file}`, `${fileDirname}`…) when the task runs. Tasks that need VS Code itself are skipped ([#10](https://github.com/little-green-man/nova-taskfinder/issues/10))

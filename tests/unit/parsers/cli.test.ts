@@ -56,6 +56,14 @@ test('taskfile-only: namespaced and dotted names, wildcard skipped', async () =>
 	]);
 });
 
+test('taskfile: Task Flags go before the task name', async () => {
+	useProject('taskfile-only');
+	install('task');
+	script(TASK_LIST, { stdout: fixture('task-list.json') });
+	state.globalConfig.set('taskfinder.taskfile-flags', '--concurrency 1');
+	assert.deepEqual((await taskfileTasks())[0], ['build', 'run+build', 'task --concurrency 1 build']);
+});
+
 test('no root Taskfile: task is never run (it would search parent folders)', async () => {
 	useProject('root-only/child');
 	install('task');

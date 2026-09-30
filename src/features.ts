@@ -80,6 +80,7 @@ const features: Feature[] = [
 		globs: ['*askfile*'],
 		files: taskfileFiles,
 		id: 'taskfinder-tasks-taskfile',
+		settings: ['taskfinder.taskfile-flags'],
 	}),
 	feature(maidSource, MaidfileParser, {
 		name: 'Maidfile',
@@ -108,7 +109,7 @@ const features: Feature[] = [
 		globs: ['*akefile', '*.mk'],
 		files: makeFiles,
 		id: 'taskfinder-tasks-make',
-		settings: ['taskfinder.make-listing'],
+		settings: ['taskfinder.make-listing', 'taskfinder.make-jobs', 'taskfinder.make-flags'],
 	}),
 	feature(artisanSource, ArtisanParser, {
 		name: 'Laravel (artisan)',

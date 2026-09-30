@@ -1,5 +1,7 @@
+import { getConfigWithWorkspaceOverride } from '../config';
 import { diagnoseTaskfile } from '../diagnose';
 import { run } from '../process';
+import { flagWords } from '../recipes';
 import { cliAssistant } from '../source';
 import type { CliSource } from '../source';
 
@@ -30,7 +32,8 @@ export const taskfileSource: CliSource = {
 
 		/* wildcard tasks (e.g. start:*) need an argument, so can't be run as-is */
 		const names = diagnosis.value.map(({ name }) => name).filter((name): name is string => typeof name === 'string' && !name.includes('*'));
-		return { kind: 'ok', tasks: names.map((name) => ({ name, command: 'task', args: [name] })) };
+		const flags = flagWords(getConfigWithWorkspaceOverride('taskfinder.taskfile-flags'));
+		return { kind: 'ok', tasks: names.map((name) => ({ name, command: 'task', args: [...flags, name] })) };
 	},
 };
 

@@ -1,7 +1,7 @@
 import { getConfigWithWorkspaceOverride } from '../config';
 import { diagnoseMake } from '../diagnose';
 import { readRootFile, run } from '../process';
-import { makeRulesFromDatabase, makeRulesFromText, makeTargets } from '../recipes';
+import { flagWords, isOutputSync, makeArgs, makeMajorVersion, makeRulesFromDatabase, makeRulesFromText, makeTargets } from '../recipes';
 import type { MakeRules } from '../recipes';
 import { cliAssistant } from '../source';
 import type { CliSource } from '../source';
@@ -17,6 +17,14 @@ export const makeFiles: string[] = [...makefileNames];
 
 /* Make's database is complete but evaluates the Makefile ($(shell …)); reading the file runs nothing */
 const usesDatabase = () => getConfigWithWorkspaceOverride('taskfinder.make-listing') !== 'file';
+
+/** Flags before each target: -j and the Make Flags setting. make's version is only checked when output sync could apply. */
+async function runArgs(): Promise<string[]> {
+	const parallel = getConfigWithWorkspaceOverride('taskfinder.make-jobs') === 'auto';
+	const flags = flagWords(getConfigWithWorkspaceOverride('taskfinder.make-flags'));
+	const version = parallel && flags.some(isOutputSync) ? makeMajorVersion((await run('make', ['--version'])).stdout) : undefined;
+	return makeArgs(flags, parallel, version);
+}
 
 /** The Makefile and its literal includes, read as text. Also refreshes the watched include files. */
 function readRules(makefile: string): MakeRules {
@@ -53,7 +61,8 @@ export const makeSource: CliSource = {
 			rules = makeRulesFromDatabase(diagnosis.value);
 		}
 
-		return { kind: 'ok', tasks: makeTargets(rules).map((target) => ({ name: target, command: 'make', args: [target] })) };
+		const args = await runArgs();
+		return { kind: 'ok', tasks: makeTargets(rules).map((target) => ({ name: target, command: 'make', args: [...args, target] })) };
 	},
 };
 
