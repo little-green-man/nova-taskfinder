@@ -1,7 +1,18 @@
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { readFileSync } from 'node:fs';
-import { artisanCommands, denoTasks, justRecipes, makeRulesFromDatabase, makeRulesFromText, makeTargets, parseJsonc } from '../../src/recipes';
+import {
+	artisanCommands,
+	denoTasks,
+	flagWords,
+	justRecipes,
+	makeArgs,
+	makeMajorVersion,
+	makeRulesFromDatabase,
+	makeRulesFromText,
+	makeTargets,
+	parseJsonc,
+} from '../../src/recipes';
 import { artisanErrorLocation, diagnoseArtisan, diagnoseJust, diagnoseMake, errorDetail } from '../../src/diagnose';
 
 const read = (path: string) => readFileSync(path, 'utf8');
@@ -86,6 +97,25 @@ test('makeRulesFromDatabase: includes included files, skips Not a target, sorted
 	assert.deepEqual(makeTargets(rules), ['build', 'clean', 'lint', 'test']);
 	assert.ok(rules.targets.includes('app.o') && rules.targets.includes('docs/site'));
 	assert.ok(!rules.targets.includes('Makefile'));
+});
+
+test('flagWords: splits on whitespace; empty or unset is none', () => {
+	assert.deepEqual(flagWords('  --concurrency   1 '), ['--concurrency', '1']);
+	assert.deepEqual(flagWords(''), []);
+	assert.deepEqual(flagWords(null), []);
+});
+
+test('makeMajorVersion: GNU make only', () => {
+	assert.equal(makeMajorVersion('GNU Make 3.81\nCopyright (C) 2006'), 3);
+	assert.equal(makeMajorVersion('GNU Make 4.4.1\nBuilt for aarch64-apple-darwin'), 4);
+	assert.equal(makeMajorVersion(''), undefined);
+});
+
+test('makeArgs: -j per core when parallel; output sync only with -j on make 4+', () => {
+	assert.deepEqual(makeArgs(['--output-sync=target', '-s'], false), ['-s']);
+	assert.deepEqual(makeArgs(['--output-sync=target', '-s'], true, 4), ['-j$(sysctl -n hw.ncpu)', '--output-sync=target', '-s']);
+	assert.deepEqual(makeArgs(['-Otarget', '--output-sync', '-k'], true, 3), ['-j$(sysctl -n hw.ncpu)', '-k']);
+	assert.deepEqual(makeArgs(['-O'], true), ['-j$(sysctl -n hw.ncpu)', '-O']);
 });
 
 test('makeTargets: without .PHONY, only name-like targets', () => {

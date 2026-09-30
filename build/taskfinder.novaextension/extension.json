@@ -166,6 +166,20 @@
 			]
 		},
 		{
+			"title": "Taskfile",
+			"type": "section",
+			"link": "https://github.com/little-green-man/nova-taskfinder#taskfile",
+			"children": [
+				{
+					"key": "taskfinder.taskfile-flags",
+					"title": "Task Flags",
+					"description": "Added before each task's name, e.g. --output=prefixed labels each line with its task; --output=group shows each task's output once it finishes.",
+					"type": "string",
+					"placeholder": "None"
+				}
+			]
+		},
+		{
 			"title": "Maid",
 			"type": "section",
 			"link": "https://github.com/little-green-man/nova-taskfinder#maid",
@@ -212,6 +226,25 @@
 						["file", "Reading the Makefile: runs nothing"]
 					],
 					"default": "database"
+				},
+				{
+					"key": "taskfinder.make-jobs",
+					"title": "Parallel Jobs",
+					"description": "One per CPU core runs targets with -j$(sysctl -n hw.ncpu). Makefiles with missing dependencies may fail or build out of order.",
+					"type": "enum",
+					"radio": true,
+					"values": [
+						["off", "One at a time"],
+						["auto", "One per CPU core"]
+					],
+					"default": "off"
+				},
+				{
+					"key": "taskfinder.make-flags",
+					"title": "Make Flags",
+					"description": "Added before each target. --output-sync keeps each target's output together when running in parallel; it needs GNU make 4.0 or later, and is left out for older make (macOS includes 3.81). It holds output until each target finishes; use --output-sync=line for long-running targets such as servers.",
+					"type": "string",
+					"default": "--output-sync=target"
 				}
 			]
 		},
@@ -425,6 +458,20 @@
 			]
 		},
 		{
+			"title": "Taskfile",
+			"type": "section",
+			"link": "https://github.com/little-green-man/nova-taskfinder#taskfile",
+			"children": [
+				{
+					"key": "taskfinder.taskfile-flags",
+					"title": "Task Flags",
+					"description": "Leave empty to use the extension's preference.",
+					"type": "string",
+					"placeholder": "Use Global Setting"
+				}
+			]
+		},
+		{
 			"title": "Maid",
 			"type": "section",
 			"link": "https://github.com/little-green-man/nova-taskfinder#maid",
@@ -476,6 +523,26 @@
 					],
 					"resolve": "taskfinder.make-listing.choices",
 					"default": null
+				},
+				{
+					"key": "taskfinder.make-jobs",
+					"title": "Parallel Jobs",
+					"type": "enum",
+					"radio": true,
+					"values": [
+						[null, "Use Global Setting"],
+						["off", "One at a time"],
+						["auto", "One per CPU core"]
+					],
+					"resolve": "taskfinder.make-jobs.choices",
+					"default": null
+				},
+				{
+					"key": "taskfinder.make-flags",
+					"title": "Make Flags",
+					"description": "Leave empty to use the extension's preference.",
+					"type": "string",
+					"placeholder": "Use Global Setting"
 				}
 			]
 		},

@@ -159,6 +159,30 @@ function makeTargets({ targets, phony }: MakeRules): string[] {
 	return unique.filter((name) => !/[/.]/.test(name) && !name.startsWith('_'));
 }
 
+/** Words of a flags setting, e.g. `--concurrency 1`; tasks run through the shell, which reads quotes and `$(…)` in them. */
+const flagWords = (value: unknown): string[] => (typeof value === 'string' ? value.trim().split(/\s+/).filter(Boolean) : []);
+
+/* One job per CPU core, counted by the shell when the task runs */
+const MAKE_JOBS_AUTO = '-j$(sysctl -n hw.ncpu)';
+
+/* -O / --output-sync: needs GNU make 4.0 or later, and only matters with -j */
+const isOutputSync = (word: string) => /^(-O\S*|--output-sync(=\S*)?)$/.test(word);
+
+/** Major version from `make --version` ("GNU Make 3.81"); undefined if it isn't GNU make's output. */
+function makeMajorVersion(output: string): number | undefined {
+	const match = /^GNU Make (\d+)/m.exec(output);
+	return match ? Number(match[1]) : undefined;
+}
+
+/**
+ * Arguments before a Make target: `-j` per core when parallel, then the flags. Output sync is dropped
+ * when it can't help (no `-j`) or would stop make running (make before 4.0, e.g. macOS's 3.81).
+ */
+function makeArgs(flags: string[], parallel: boolean, makeVersion?: number): string[] {
+	const sync = parallel && (makeVersion === undefined || makeVersion >= 4);
+	return [...(parallel ? [MAKE_JOBS_AUTO] : []), ...flags.filter((word) => sync || !isOutputSync(word))];
+}
+
 /* Laravel artisan */
 
 type ArtisanMode = 'common' | 'all';
@@ -201,5 +225,17 @@ function artisanCommands(json: ArtisanList | undefined, mode: ArtisanMode): stri
 		.filter((name) => mode === 'all' || artisanCommon.has(name) || name.startsWith('app:'));
 }
 
-export { justRecipes, parseJsonc, denoTasks, makeRulesFromText, makeRulesFromDatabase, makeTargets, artisanCommands };
+export {
+	justRecipes,
+	parseJsonc,
+	denoTasks,
+	makeRulesFromText,
+	makeRulesFromDatabase,
+	makeTargets,
+	flagWords,
+	isOutputSync,
+	makeMajorVersion,
+	makeArgs,
+	artisanCommands,
+};
 export type { ListedTask, JustConfirmMode, MakeRules, ArtisanMode };

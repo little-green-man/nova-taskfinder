@@ -117,6 +117,20 @@ test('make-only: Read Makefile runs nothing and follows literal includes', async
 	assert.deepEqual(state.ran, []);
 });
 
+test('make: Parallel Jobs adds -j per core and the flags; output sync is left out for make 3.81', async () => {
+	useProject('make-only');
+	state.globalConfig.set('taskfinder.make-listing', 'file');
+	state.globalConfig.set('taskfinder.make-flags', '--output-sync=target');
+	assert.equal((await tasksOf(new MakeParser()))[0][2], 'make build', 'no -j, so no output sync');
+
+	state.workspaceConfig.set('taskfinder.make-jobs', 'auto');
+	script('make --version', { stdout: 'GNU Make 4.4.1\n' });
+	assert.equal((await tasksOf(new MakeParser()))[0][2], 'make -j$(sysctl -n hw.ncpu) --output-sync=target build');
+
+	script('make --version', { stdout: 'GNU Make 3.81\n' });
+	assert.equal((await tasksOf(new MakeParser()))[0][2], 'make -j$(sysctl -n hw.ncpu) build');
+});
+
 test('make: missing (database mode) and broken Makefile', async () => {
 	useProject('make-only');
 	await tasksOf(new MakeParser());

@@ -66,6 +66,10 @@ const choices: Record<string, Choice[]> = {
 		['database', 'Asking make'],
 		['file', 'Reading the Makefile'],
 	],
+	'taskfinder.make-jobs': [
+		['off', 'One at a time'],
+		['auto', 'One per CPU core'],
+	],
 	'taskfinder.artisan-commands': [
 		['common', 'Common'],
 		['all', 'All'],
